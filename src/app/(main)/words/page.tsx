@@ -9,10 +9,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { WordCardGrid, CategoryTree } from '@/components/words';
+import { WordCardGrid, CategoryTree, MoveWordsDialog } from '@/components/words';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
-import { PlusCircle, Search, Settings } from 'lucide-react';
+import { PlusCircle, Search, Settings, CheckSquare, X, ArrowRightLeft, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { formatCategoryLabel } from '@/lib/format';
 import { buildCategoryTree } from '@/lib/category-tree';
@@ -29,6 +29,11 @@ export default function WordsPage() {
   const [editWord, setEditWord] = useState<Word | null>(null);
   const [editForm, setEditForm] = useState({ word: '', meaning: '' });
   const [loading, setLoading] = useState(true);
+
+  // 선택 모드 상태
+  const [selectMode, setSelectMode] = useState(false);
+  const [selectedWordIds, setSelectedWordIds] = useState<Set<string>>(new Set());
+  const [moveDialogOpen, setMoveDialogOpen] = useState(false);
 
   const loadCategories = useCallback(async () => {
     if (!user) return;
@@ -60,6 +65,7 @@ export default function WordsPage() {
   const handleSelectCategory = (cat: Category) => {
     setSelectedCategory(cat);
     loadWords(cat.id);
+    exitSelectMode();
   };
 
   const handleDeleteWord = async (wordId: string) => {
@@ -67,17 +73,6 @@ export default function WordsPage() {
     await supabase.from('words').delete().eq('id', wordId);
     setWords((prev) => prev.filter((w) => w.id !== wordId));
     toast.success('단어가 삭제되었습니다.');
-  };
-
-  const handleDeleteCategory = async (catId: string) => {
-    if (!confirm('이 카테고리와 포함된 모든 단어를 삭제하시겠습니까?')) return;
-    await supabase.from('categories').delete().eq('id', catId);
-    setCategories((prev) => prev.filter((c) => c.id !== catId));
-    if (selectedCategory?.id === catId) {
-      setSelectedCategory(null);
-      setWords([]);
-    }
-    toast.success('카테고리가 삭제되었습니다.');
   };
 
   const handleEditSave = async () => {
@@ -91,6 +86,51 @@ export default function WordsPage() {
     );
     setEditWord(null);
     toast.success('단어가 수정되었습니다.');
+  };
+
+  /** 선택 모드 종료 */
+  const exitSelectMode = () => {
+    setSelectMode(false);
+    setSelectedWordIds(new Set());
+  };
+
+  /** 단어 선택 토글 */
+  const toggleWordSelect = (wordId: string) => {
+    setSelectedWordIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(wordId)) next.delete(wordId);
+      else next.add(wordId);
+      return next;
+    });
+  };
+
+  /** 전체 선택/해제 */
+  const toggleSelectAll = () => {
+    if (selectedWordIds.size === words.length) {
+      setSelectedWordIds(new Set());
+    } else {
+      setSelectedWordIds(new Set(words.map((w) => w.id)));
+    }
+  };
+
+  /** 선택한 단어 일괄 삭제 */
+  const handleBulkDelete = async () => {
+    if (!confirm(`선택한 ${selectedWordIds.size}개의 단어를 삭제하시겠습니까?`)) return;
+    const ids = Array.from(selectedWordIds);
+    await supabase.from('words').delete().in('id', ids);
+    setWords((prev) => prev.filter((w) => !selectedWordIds.has(w.id)));
+    toast.success(`${ids.length}개의 단어가 삭제되었습니다.`);
+    exitSelectMode();
+  };
+
+  /** 선택한 단어를 다른 카테고리로 이동 */
+  const handleMoveConfirm = async (targetCategory: Category) => {
+    const ids = Array.from(selectedWordIds);
+    await supabase.from('words').update({ category_id: targetCategory.id }).in('id', ids);
+    setWords((prev) => prev.filter((w) => !selectedWordIds.has(w.id)));
+    setMoveDialogOpen(false);
+    toast.success(`${ids.length}개의 단어가 이동되었습니다.`);
+    exitSelectMode();
   };
 
   const filteredCategories = categories.filter((cat) => {
@@ -164,15 +204,57 @@ export default function WordsPage() {
                   </h2>
                   <Badge variant="outline">{words.length}개</Badge>
                 </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="text-red-500 hover:text-red-600"
-                  onClick={() => handleDeleteCategory(selectedCategory.id)}
-                >
-                  카테고리 삭제
-                </Button>
+                {!selectMode ? (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setSelectMode(true)}
+                    disabled={words.length === 0}
+                  >
+                    <CheckSquare className="h-4 w-4 mr-1" />
+                    단어 선택
+                  </Button>
+                ) : (
+                  <Button variant="outline" size="sm" onClick={exitSelectMode}>
+                    <X className="h-4 w-4 mr-1" />
+                    선택 취소
+                  </Button>
+                )}
               </div>
+
+              {/* 선택 모드 액션바 */}
+              {selectMode && (
+                <div className="flex items-center gap-2 bg-gray-50 rounded-lg px-4 py-2.5">
+                  <Button variant="ghost" size="sm" onClick={toggleSelectAll}>
+                    {selectedWordIds.size === words.length ? '전체 해제' : '전체 선택'}
+                  </Button>
+                  <span className="text-sm text-gray-500">
+                    {selectedWordIds.size}개 선택됨
+                  </span>
+                  <div className="ml-auto flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={selectedWordIds.size === 0}
+                      onClick={() => setMoveDialogOpen(true)}
+                    >
+                      <ArrowRightLeft className="h-4 w-4 mr-1" />
+                      이동
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-red-500 hover:text-red-600"
+                      disabled={selectedWordIds.size === 0}
+                      onClick={handleBulkDelete}
+                    >
+                      <Trash2 className="h-4 w-4 mr-1" />
+                      삭제
+                    </Button>
+                  </div>
+                </div>
+              )}
+
               <WordCardGrid
                 words={words}
                 onEdit={(word) => {
@@ -180,6 +262,9 @@ export default function WordsPage() {
                   setEditForm({ word: word.word, meaning: word.meaning });
                 }}
                 onDelete={handleDeleteWord}
+                selectMode={selectMode}
+                selectedIds={selectedWordIds}
+                onToggleSelect={toggleWordSelect}
               />
             </div>
           ) : (
@@ -221,6 +306,18 @@ export default function WordsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* 단어 이동 다이얼로그 */}
+      {selectedCategory && (
+        <MoveWordsDialog
+          open={moveDialogOpen}
+          onOpenChange={setMoveDialogOpen}
+          categories={categories}
+          excludeCategoryId={selectedCategory.id}
+          selectedCount={selectedWordIds.size}
+          onConfirm={handleMoveConfirm}
+        />
+      )}
     </div>
   );
 }

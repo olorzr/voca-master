@@ -131,7 +131,10 @@
   }
 }
 
-/* A4 인쇄 전용 스타일 */
+/* ========================================= */
+/* A4 인쇄 전용 스타일 (단어장/시험지/답안지) */
+/* ========================================= */
+
 .a4-page {
   width: 210mm;
   min-height: 297mm;
@@ -139,106 +142,155 @@
   background: white;
 }
 
-/* 시험지/단어장 프린트 스타일 */
-.exam-header-frame {
-  border: 2px solid #333;
+/* UNIT 배지 */
+.unit-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 54px;
+  height: 54px;
   border-radius: 12px;
-  padding: 20px 24px 16px;
-  position: relative;
+  flex-shrink: 0;
 }
-
-.exam-header-frame::before {
-  content: '';
-  position: absolute;
-  inset: 3px;
-  border: 1px solid #ccc;
-  border-radius: 9px;
-  pointer-events: none;
+.unit-badge__label {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  opacity: 0.85;
 }
-
-.exam-row-even {
-  background-color: #f5fafa;
+.unit-badge__number {
+  font-size: 24px;
+  font-weight: 900;
+  line-height: 1;
 }
+.unit-badge--purple { background: #6B5CA5; color: #fff; }
+.unit-badge--pink { background: #C83C6E; color: #fff; }
 
-.exam-num-badge {
+/* 섹션 헤더 바 (A, B, C…) */
+.section-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 14px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #fff;
+}
+.section-bar--purple { background: #3D2D6B; }
+.section-bar--pink { background: #8B1A4A; }
+.section-bar__letter {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   width: 22px;
   height: 22px;
-  border-radius: 6px;
-  background-color: #e8f6f5;
-  border: 1px solid #c8ece9;
+  border-radius: 5px;
+  background: rgba(255,255,255,0.2);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+/* 시험지 문제 행 */
+.q-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 6px;
+  border-radius: 4px;
+}
+.q-row:nth-child(even) { background: #F8F5FD; }
+.q-num {
   font-size: 11px;
-  font-weight: 700;
-  color: #4a9e97;
+  font-weight: 800;
+  width: 22px;
+  text-align: center;
   flex-shrink: 0;
 }
-
-.exam-answer-line {
-  border-bottom: 1.5px dashed #bbb;
-  min-width: 100px;
+.q-num--purple { color: #6B5CA5; }
+.q-text {
+  font-size: 12px;
+  flex: 1;
+  color: #333;
+  line-height: 1.4;
+}
+.q-answer {
+  font-size: 12px;
+  font-weight: 700;
+  color: #222;
+  min-width: 80px;
+  text-align: right;
+}
+.q-blank {
+  min-width: 90px;
   height: 1.2em;
+  border-bottom: 1.5px dashed #bbb;
 }
 
-.wordbook-table {
-  width: 100%;
-  border-collapse: separate;
-  border-spacing: 0;
-  border: 1.5px solid #d1d5db;
-  border-radius: 8px;
+/* 단어장 테이블 */
+.wb-thead {
+  display: flex;
+  align-items: center;
+  padding: 7px 10px;
+  background: #FDE8F0;
+  border: 1.5px solid #F0C6D6;
+  border-bottom: none;
+  border-radius: 8px 8px 0 0;
+  font-size: 10px;
+  font-weight: 700;
+  color: #C83C6E;
+  gap: 6px;
+}
+.wb-body {
+  border: 1.5px solid #F0C6D6;
+  border-top: 1.5px solid #F0C6D6;
+  border-radius: 0 0 8px 8px;
   overflow: hidden;
 }
-
-.wordbook-table th {
-  background-color: #e8f6f5;
-  border-bottom: 1.5px solid #d1d5db;
-  padding: 6px 10px;
-  font-size: 11px;
-  font-weight: 700;
-  color: #4a9e97;
-  text-align: left;
-}
-
-.wordbook-table td {
+.wb-row {
+  display: flex;
+  align-items: center;
   padding: 7px 10px;
   font-size: 12px;
-  border-bottom: 1px solid #e5e7eb;
+  gap: 6px;
+  border-bottom: 1px solid #FCE8EF;
+}
+.wb-row:last-child { border-bottom: none; }
+.wb-row:nth-child(even) { background: #FFF8FA; }
+.wb-row__num {
+  width: 24px;
+  text-align: center;
+  font-weight: 700;
+  font-size: 10px;
+  color: #C83C6E;
+  flex-shrink: 0;
+}
+.wb-row__word {
+  flex: 1;
+  font-weight: 600;
+  color: #222;
+}
+.wb-row__meaning {
+  flex: 1.2;
+  color: #555;
 }
 
-.wordbook-table tr:last-child td {
-  border-bottom: none;
-}
-
-.wordbook-table tr:nth-child(even) td {
-  background-color: #fafafa;
-}
-
+/* 공통 푸터 */
 .exam-footer {
   border-top: 1px solid #e5e7eb;
   padding-top: 8px;
-  margin-top: auto;
   text-align: center;
   font-size: 9px;
   color: #aaa;
   letter-spacing: 2px;
 }
 
+/* 인쇄 미디어 쿼리 */
 @media print {
-  @page {
-    size: A4;
-    margin: 15mm;
-  }
-
-  body {
-    background: white !important;
-  }
-
-  .no-print,
-  [data-no-print] {
-    display: none !important;
-  }
-
+  @page { size: A4; margin: 15mm; }
+  body { background: white !important; }
+  .no-print, [data-no-print] { display: none !important; }
   .a4-page {
     width: 100%;
     min-height: auto;
@@ -247,26 +299,18 @@
     box-shadow: none !important;
     border: none !important;
   }
+  header, nav { display: none !important; }
 
-  header, nav {
-    display: none !important;
-  }
-
-  /* 흑백 인쇄 호환 - 구조(테두리/패턴)로 구분 */
-  .exam-row-even {
-    background-color: #f3f3f3 !important;
-  }
-
-  .exam-num-badge {
-    background-color: #eee !important;
-    border-color: #ccc !important;
-    color: #333 !important;
-  }
-
-  .wordbook-table th {
-    background-color: #eee !important;
-    color: #333 !important;
-  }
+  /* 흑백 인쇄 호환 */
+  .unit-badge--purple, .unit-badge--pink { background: #444 !important; }
+  .section-bar--purple, .section-bar--pink { background: #333 !important; }
+  .q-row:nth-child(even) { background: #f3f3f3 !important; }
+  .q-num--purple { color: #333 !important; }
+  .wb-thead { background: #eee !important; border-color: #ccc !important; color: #333 !important; }
+  .wb-body { border-color: #ccc !important; }
+  .wb-row:nth-child(even) { background: #f9f9f9 !important; }
+  .wb-row__num { color: #333 !important; }
+  .wb-row { border-color: #e5e5e5 !important; }
 }
 
 @media screen {
