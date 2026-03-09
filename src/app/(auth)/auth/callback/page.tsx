@@ -1,14 +1,13 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { Suspense, useEffect, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 
 /**
- * OAuth 인증 후 Supabase 세션을 수립하는 콜백 페이지.
- * token_hash를 verifyOtp로 검증하여 로그인을 완료한다.
+ * OAuth 인증 후 Supabase 세션을 수립하는 내부 컴포넌트.
  */
-export default function AuthCallbackPage() {
+function CallbackHandler() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const verified = useRef(false);
@@ -36,9 +35,19 @@ export default function AuthCallbackPage() {
       });
   }, [router, searchParams]);
 
+  return null;
+}
+
+/**
+ * OAuth 인증 후 Supabase 세션을 수립하는 콜백 페이지.
+ */
+export default function AuthCallbackPage() {
   return (
     <div className="min-h-screen flex items-center justify-center">
       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+      <Suspense>
+        <CallbackHandler />
+      </Suspense>
     </div>
   );
 }

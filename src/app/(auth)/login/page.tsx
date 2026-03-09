@@ -1,7 +1,7 @@
 'use client';
 
+import { Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { BookOpen } from 'lucide-react';
 
@@ -17,13 +17,22 @@ const ERROR_MESSAGES: Record<string, string> = {
 };
 
 /**
- * 로그인 페이지. 네이버 웍스 OAuth로 로그인한다.
+ * 에러 메시지를 표시하는 내부 컴포넌트.
  */
-export default function LoginPage() {
+function ErrorMessage() {
   const searchParams = useSearchParams();
   const errorCode = searchParams.get('error');
   const errorMessage = errorCode ? ERROR_MESSAGES[errorCode] ?? '알 수 없는 오류가 발생했습니다.' : null;
 
+  if (!errorMessage) return null;
+
+  return <p className="text-sm text-red-600 text-center">{errorMessage}</p>;
+}
+
+/**
+ * 로그인 페이지. 네이버 웍스 OAuth로 로그인한다.
+ */
+export default function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
       <Card className="w-full max-w-md">
@@ -35,9 +44,9 @@ export default function LoginPage() {
           <CardDescription>국어학원 단어 관리 및 시험지 생성 시스템</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          {errorMessage && (
-            <p className="text-sm text-red-600 text-center">{errorMessage}</p>
-          )}
+          <Suspense>
+            <ErrorMessage />
+          </Suspense>
           <a
             href="/api/auth/naver-works"
             className="flex h-10 w-full items-center justify-center rounded-lg bg-[#03C75A] text-sm font-medium text-white transition-colors hover:bg-[#02b351]"
