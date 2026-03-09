@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Eye, Trash2, FileText, Calendar } from 'lucide-react';
+import { Eye, Trash2, FileText, Calendar, RefreshCw } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { formatDateKR } from '@/lib/format';
 
@@ -17,12 +17,14 @@ interface ExamRecord {
 interface ExamHistoryCardProps {
   exam: ExamRecord;
   onDelete: (id: string) => void;
+  onRetest: (id: string) => void;
+  retesting?: boolean;
 }
 
 /**
  * 시험지 이력을 카드로 표시하는 컴포넌트.
  */
-export default function ExamHistoryCard({ exam, onDelete }: ExamHistoryCardProps) {
+export default function ExamHistoryCard({ exam, onDelete, onRetest, retesting }: ExamHistoryCardProps) {
   return (
     <div className="group relative bg-white border border-gray-100 rounded-xl p-5 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
       {/* 아이콘 + 제목 */}
@@ -59,6 +61,14 @@ export default function ExamHistoryCard({ exam, onDelete }: ExamHistoryCardProps
             <Eye className="h-4 w-4" />
           </button>
         </Link>
+        <button
+          onClick={() => onRetest(exam.id)}
+          disabled={retesting}
+          className="p-1.5 rounded-md hover:bg-primary/10 hover:text-primary text-gray-400 transition-colors disabled:opacity-50"
+          aria-label="재시험지 생성"
+        >
+          <RefreshCw className={`h-4 w-4 ${retesting ? 'animate-spin' : ''}`} />
+        </button>
         <button
           onClick={() => onDelete(exam.id)}
           className="p-1.5 rounded-md hover:bg-red-50 hover:text-red-500 text-gray-400 transition-colors"

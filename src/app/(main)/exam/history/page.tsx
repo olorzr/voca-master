@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth-context';
 import { Button } from '@/components/ui/button';
@@ -23,8 +24,10 @@ interface ExamRecord {
  */
 export default function ExamHistoryPage() {
   const { user } = useAuth();
+  const router = useRouter();
   const [exams, setExams] = useState<ExamRecord[]>([]);
   const [loading, setLoading] = useState(true);
+  const [retestingId, setRetestingId] = useState<string | null>(null);
 
   const loadExams = useCallback(async () => {
     if (!user) return;
@@ -48,6 +51,68 @@ export default function ExamHistoryPage() {
     toast.success('시험지가 삭제되었습니다.');
   };
 
+  /** 기존 시험의 단어를 셔플하여 재시험지를 생성한다. */
+  const handleRetest = async (examId: string) => {
+    if (!user) return;
+    setRetestingId(examId);
+
+    const originalExam = exams.find((e) => e.id === examId);
+    if (!originalExam) {
+      setRetestingId(null);
+      return;
+    }
+
+    const { data: originalWords } = await supabase
+      .from('exam_words')
+      .select('*')
+      .eq('exam_id', examId)
+      .order('order_index');
+
+    if (!originalWords || originalWords.length === 0) {
+      toast.error('원본 시험지의 단어를 불러올 수 없습니다.');
+      setRetestingId(null);
+      return;
+    }
+
+    const shuffled = [...originalWords].sort(() => Math.random() - 0.5);
+
+    const { data: newExam, error: examErr } = await supabase
+      .from('exams')
+      .insert({
+        title: `${originalExam.title} (재시험)`,
+        pass_percentage: originalExam.pass_percentage,
+        total_questions: originalExam.total_questions,
+        pass_count: originalExam.pass_count,
+        user_id: user.id,
+      })
+      .select()
+      .single();
+
+    if (examErr || !newExam) {
+      toast.error('재시험지 생성 중 오류가 발생했습니다.');
+      setRetestingId(null);
+      return;
+    }
+
+    const newWords = shuffled.map((w, i) => ({
+      exam_id: newExam.id,
+      word_id: w.word_id,
+      word: w.word,
+      meaning: w.meaning,
+      order_index: i,
+    }));
+
+    const { error: ewErr } = await supabase.from('exam_words').insert(newWords);
+    if (ewErr) {
+      toast.error('재시험지 단어 저장 중 오류가 발생했습니다.');
+      setRetestingId(null);
+      return;
+    }
+
+    toast.success('재시험지가 생성되었습니다.');
+    setRetestingId(null);
+    router.push(`/exam/view?id=${newExam.id}`);
+  };
 
   if (loading) {
     return (
@@ -76,6 +141,8 @@ export default function ExamHistoryPage() {
               key={exam.id}
               exam={exam}
               onDelete={handleDelete}
+              onRetest={handleRetest}
+              retesting={retestingId === exam.id}
             />
           ))}
         </div>

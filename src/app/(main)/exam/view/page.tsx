@@ -116,47 +116,74 @@ function ExamPaperView({
   words: ExamWord[];
   showAnswer: boolean;
 }) {
+  const half = Math.ceil(words.length / 2);
+  const leftCol = words.slice(0, half);
+  const rightCol = words.slice(half);
+
   return (
-    <div className="a4-page bg-white p-8 mx-auto">
-      {/* 헤더 */}
-      <div className="text-center border-b-2 border-primary pb-4 mb-6">
-        <p className="text-xs text-gray-400 mb-1" style={{ fontFamily: "'Gmarket Sans', sans-serif" }}>아라국어논술</p>
-        <h2 className="text-xl font-bold text-gray-900">{exam.title}</h2>
+    <div className="a4-page bg-white p-8 mx-auto flex flex-col">
+      {/* 헤더 프레임 */}
+      <div className="exam-header-frame text-center mb-6">
+        <p
+          className="text-[10px] tracking-[4px] text-gray-400 uppercase mb-2"
+          style={{ fontFamily: "'Gmarket Sans', sans-serif" }}
+        >
+          아라국어논술
+        </p>
+        <h2 className="text-lg font-bold text-gray-900 leading-tight">
+          {exam.title}
+        </h2>
         {showAnswer && (
-          <span className="inline-block mt-1 px-3 py-0.5 bg-primary/10 text-primary text-sm font-semibold rounded">
-            답안지
+          <span className="inline-block mt-2 px-4 py-0.5 border-2 border-gray-800 text-gray-800 text-xs font-bold rounded-full tracking-wider">
+            ANSWER SHEET
           </span>
         )}
-        <div className="flex justify-between items-center mt-3 text-sm text-gray-600">
-          <span>총 {exam.total_questions}문항</span>
-          <span className="font-semibold text-primary">
-            {exam.pass_count}개 이상 통과 ({exam.pass_percentage}%)
+        <div className="flex justify-between items-center mt-4 pt-3 border-t border-dashed border-gray-300 text-xs text-gray-500">
+          <span>총 <strong className="text-gray-800">{exam.total_questions}</strong>문항</span>
+          <span>
+            합격 <strong className="text-gray-800">{exam.pass_count}개</strong> 이상
+            ({exam.pass_percentage}%)
           </span>
         </div>
         {!showAnswer && (
-          <div className="flex justify-between items-center mt-2 text-sm">
-            <span>이름: ________________</span>
-            <span>날짜: ____년 ____월 ____일</span>
+          <div className="flex justify-between items-center mt-3 text-sm text-gray-700">
+            <span>이름 <span className="inline-block border-b border-gray-400 w-32 ml-1" /></span>
+            <span>날짜 <span className="inline-block border-b border-gray-400 w-36 ml-1" /></span>
           </div>
         )}
       </div>
 
-      {/* 문제 */}
-      <div className="grid grid-cols-2 gap-x-8 gap-y-2">
-        {words.map((w, idx) => (
-          <div key={w.id} className="flex items-start gap-2 py-1.5 border-b border-gray-100">
-            <span className="text-sm font-semibold text-gray-400 w-6 shrink-0">{idx + 1}.</span>
-            <span className="text-sm flex-1">{w.meaning}</span>
-            <span className="text-sm min-w-[120px] text-right">
-              {showAnswer ? (
-                <span className="text-primary font-semibold">{w.word}</span>
-              ) : (
-                <span className="inline-block border-b border-gray-300 w-full">&nbsp;</span>
-              )}
-            </span>
+      {/* 문제 2열 */}
+      <div className="grid grid-cols-2 gap-x-6 flex-1">
+        {[leftCol, rightCol].map((col, colIdx) => (
+          <div key={colIdx} className={colIdx === 1 ? 'border-l border-gray-200 pl-6' : 'pr-2'}>
+            {col.map((w, idx) => {
+              const num = colIdx === 0 ? idx + 1 : half + idx + 1;
+              return (
+                <div
+                  key={w.id}
+                  className={`flex items-center gap-2.5 py-[7px] px-2 rounded ${
+                    idx % 2 === 1 ? 'exam-row-even' : ''
+                  }`}
+                >
+                  <span className="exam-num-badge">{num}</span>
+                  <span className="text-[12px] leading-tight flex-1">{w.meaning}</span>
+                  {showAnswer ? (
+                    <span className="text-[12px] font-bold text-gray-800 min-w-[80px] text-right">
+                      {w.word}
+                    </span>
+                  ) : (
+                    <span className="exam-answer-line min-w-[90px]" />
+                  )}
+                </div>
+              );
+            })}
           </div>
         ))}
       </div>
+
+      {/* 푸터 */}
+      <div className="exam-footer mt-6">ARA KOREAN WRITING</div>
     </div>
   );
 }
@@ -168,26 +195,55 @@ function WordBookView({
   exam: ExamData;
   words: ExamWord[];
 }) {
+  const half = Math.ceil(words.length / 2);
+  const leftCol = words.slice(0, half);
+  const rightCol = words.slice(half);
+
   return (
-    <div className="a4-page bg-white p-8 mx-auto">
-      <div className="text-center border-b-2 border-primary pb-4 mb-6">
-        <p className="text-xs text-gray-400 mb-1" style={{ fontFamily: "'Gmarket Sans', sans-serif" }}>아라국어논술</p>
-        <h2 className="text-xl font-bold text-gray-900">{exam.title} - 단어장</h2>
-        <p className="text-sm text-gray-500 mt-1">총 {words.length}개 단어</p>
+    <div className="a4-page bg-white p-8 mx-auto flex flex-col">
+      {/* 헤더 */}
+      <div className="exam-header-frame text-center mb-6">
+        <p
+          className="text-[10px] tracking-[4px] text-gray-400 uppercase mb-2"
+          style={{ fontFamily: "'Gmarket Sans', sans-serif" }}
+        >
+          아라국어논술
+        </p>
+        <h2 className="text-lg font-bold text-gray-900">{exam.title}</h2>
+        <span className="inline-block mt-2 px-4 py-0.5 border border-gray-300 text-gray-500 text-xs rounded-full tracking-wider">
+          WORD BOOK · {words.length}
+        </span>
       </div>
 
-      <div className="grid grid-cols-2 gap-x-8">
-        {words.map((w, idx) => (
-          <div
-            key={w.id}
-            className="flex items-center gap-3 py-2 border-b border-gray-100"
-          >
-            <span className="text-sm font-semibold text-primary w-6 shrink-0">{idx + 1}</span>
-            <span className="text-sm font-medium flex-1">{w.word}</span>
-            <span className="text-sm text-gray-600 flex-1">{w.meaning}</span>
-          </div>
+      {/* 단어 테이블 2열 */}
+      <div className="grid grid-cols-2 gap-x-5 flex-1">
+        {[leftCol, rightCol].map((col, colIdx) => (
+          <table key={colIdx} className="wordbook-table">
+            <thead>
+              <tr>
+                <th className="w-8 text-center">#</th>
+                <th>단어</th>
+                <th>뜻</th>
+              </tr>
+            </thead>
+            <tbody>
+              {col.map((w, idx) => {
+                const num = colIdx === 0 ? idx + 1 : half + idx + 1;
+                return (
+                  <tr key={w.id}>
+                    <td className="text-center font-bold text-gray-400">{num}</td>
+                    <td className="font-semibold text-gray-900">{w.word}</td>
+                    <td className="text-gray-600">{w.meaning}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         ))}
       </div>
+
+      {/* 푸터 */}
+      <div className="exam-footer mt-6">ARA KOREAN WRITING</div>
     </div>
   );
 }

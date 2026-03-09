@@ -139,6 +139,91 @@
   background: white;
 }
 
+/* 시험지/단어장 프린트 스타일 */
+.exam-header-frame {
+  border: 2px solid #333;
+  border-radius: 12px;
+  padding: 20px 24px 16px;
+  position: relative;
+}
+
+.exam-header-frame::before {
+  content: '';
+  position: absolute;
+  inset: 3px;
+  border: 1px solid #ccc;
+  border-radius: 9px;
+  pointer-events: none;
+}
+
+.exam-row-even {
+  background-color: #f5fafa;
+}
+
+.exam-num-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  background-color: #e8f6f5;
+  border: 1px solid #c8ece9;
+  font-size: 11px;
+  font-weight: 700;
+  color: #4a9e97;
+  flex-shrink: 0;
+}
+
+.exam-answer-line {
+  border-bottom: 1.5px dashed #bbb;
+  min-width: 100px;
+  height: 1.2em;
+}
+
+.wordbook-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  border: 1.5px solid #d1d5db;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.wordbook-table th {
+  background-color: #e8f6f5;
+  border-bottom: 1.5px solid #d1d5db;
+  padding: 6px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #4a9e97;
+  text-align: left;
+}
+
+.wordbook-table td {
+  padding: 7px 10px;
+  font-size: 12px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.wordbook-table tr:last-child td {
+  border-bottom: none;
+}
+
+.wordbook-table tr:nth-child(even) td {
+  background-color: #fafafa;
+}
+
+.exam-footer {
+  border-top: 1px solid #e5e7eb;
+  padding-top: 8px;
+  margin-top: auto;
+  text-align: center;
+  font-size: 9px;
+  color: #aaa;
+  letter-spacing: 2px;
+}
+
 @media print {
   @page {
     size: A4;
@@ -165,6 +250,22 @@
 
   header, nav {
     display: none !important;
+  }
+
+  /* 흑백 인쇄 호환 - 구조(테두리/패턴)로 구분 */
+  .exam-row-even {
+    background-color: #f3f3f3 !important;
+  }
+
+  .exam-num-badge {
+    background-color: #eee !important;
+    border-color: #ccc !important;
+    color: #333 !important;
+  }
+
+  .wordbook-table th {
+    background-color: #eee !important;
+    color: #333 !important;
   }
 }
 
