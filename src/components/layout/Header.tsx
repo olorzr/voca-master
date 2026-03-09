@@ -1,0 +1,89 @@
+'use client';
+
+import Link from 'next/link';
+import { useAuth } from '@/lib/auth-context';
+import { Button } from '@/components/ui/button';
+import { BookOpen, LogOut, Menu, X } from 'lucide-react';
+import { useState } from 'react';
+
+/**
+ * 앱 상단 네비게이션 헤더. 데스크톱/모바일 반응형 메뉴를 제공한다.
+ */
+export default function Header() {
+  const { user, signOut } = useAuth();
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  const navLinks = [
+    { href: '/dashboard', label: '대시보드' },
+    { href: '/words', label: '단어 관리' },
+    { href: '/exam/create', label: '시험지 생성' },
+    { href: '/exam/history', label: '시험 이력' },
+  ];
+
+  return (
+    <header className="border-b bg-white sticky top-0 z-50" data-no-print>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-16">
+          <Link href="/dashboard" className="flex items-center gap-2">
+            <BookOpen className="h-7 w-7 text-primary" />
+            <span className="text-xl font-bold text-gray-900">Voca Master</span>
+          </Link>
+
+          {/* Desktop nav */}
+          <nav className="hidden md:flex items-center gap-1">
+            {navLinks.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className="px-3 py-2 text-sm font-medium text-gray-600 hover:text-primary hover:bg-gray-50 rounded-lg transition-colors"
+              >
+                {link.label}
+              </Link>
+            ))}
+          </nav>
+
+          <div className="hidden md:flex items-center gap-3">
+            <span className="text-sm text-gray-500">{user?.email}</span>
+            <Button variant="outline" size="sm" onClick={signOut}>
+              <LogOut className="h-4 w-4 mr-1" />
+              로그아웃
+            </Button>
+          </div>
+
+          {/* Mobile menu button */}
+          <button
+            className="md:hidden p-2"
+            onClick={() => setMobileOpen(!mobileOpen)}
+          >
+            {mobileOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+          </button>
+        </div>
+
+        {/* Mobile nav */}
+        {mobileOpen && (
+          <div className="md:hidden pb-4 space-y-1">
+            {navLinks.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className="block px-3 py-2 text-sm font-medium text-gray-600 hover:text-primary hover:bg-gray-50 rounded-lg"
+                onClick={() => setMobileOpen(false)}
+              >
+                {link.label}
+              </Link>
+            ))}
+            <div className="pt-2 border-t">
+              <span className="block px-3 py-1 text-sm text-gray-500">{user?.email}</span>
+              <button
+                onClick={signOut}
+                className="block px-3 py-2 text-sm font-medium text-red-600"
+              >
+                로그아웃
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    </header>
+  );
+}
