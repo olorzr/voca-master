@@ -25,9 +25,9 @@ describe('formatCategoryLabel', () => {
       level: '외부지문 및 프린트',
       school_name: 'OO중학교',
       chapter: '프린트1',
-      sub_chapter: '지문A',
+      sub_chapter: '',
     });
-    expect(formatCategoryLabel(cat)).toBe('OO중학교 - 프린트1 - 지문A');
+    expect(formatCategoryLabel(cat)).toBe('OO중학교 - 프린트1');
   });
 
   it('외부지문에 학교명이 없으면 "외부"로 표시한다', () => {
@@ -37,7 +37,7 @@ describe('formatCategoryLabel', () => {
       chapter: '프린트1',
       sub_chapter: '',
     });
-    expect(formatCategoryLabel(cat)).toBe('외부 - 프린트1 - ');
+    expect(formatCategoryLabel(cat)).toBe('외부 - 프린트1');
   });
 });
 

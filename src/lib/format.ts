@@ -8,9 +8,9 @@ import { EXTERNAL_LEVEL } from './constants';
  */
 export function formatCategoryLabel(cat: Category): string {
   if (cat.level === EXTERNAL_LEVEL) {
-    return `${cat.school_name || '외부'} - ${cat.chapter} - ${cat.sub_chapter}`;
+    return [cat.school_name || '외부', cat.chapter].filter(Boolean).join(' - ');
   }
-  return `${cat.grade} ${cat.publisher} ${cat.chapter} ${cat.sub_chapter}`.trim();
+  return [cat.grade, cat.publisher, cat.chapter, cat.sub_chapter].filter(Boolean).join(' ');
 }
 
 /**

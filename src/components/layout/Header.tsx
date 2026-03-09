@@ -16,6 +16,7 @@ export default function Header() {
   const navLinks = [
     { href: '/dashboard', label: '대시보드' },
     { href: '/words', label: '단어 관리' },
+    { href: '/words/categories', label: '카테고리 관리' },
     { href: '/exam/create', label: '시험지 생성' },
     { href: '/exam/history', label: '시험 이력' },
   ];

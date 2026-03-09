@@ -5,12 +5,9 @@ import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth-context';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
-import { Eye, Trash2, FileText } from 'lucide-react';
+import { FileText } from 'lucide-react';
 import { toast } from 'sonner';
-import { formatDateKR } from '@/lib/format';
+import { ExamHistoryCard } from '@/components/exam';
 
 interface ExamRecord {
   id: string;
@@ -72,67 +69,25 @@ export default function ExamHistoryPage() {
         </Link>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">생성된 시험지 목록</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {exams.length > 0 ? (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>제목</TableHead>
-                  <TableHead className="w-24 text-center">문항 수</TableHead>
-                  <TableHead className="w-28 text-center">합격 기준</TableHead>
-                  <TableHead className="w-48">생성일</TableHead>
-                  <TableHead className="w-24 text-right">작업</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {exams.map((exam) => (
-                  <TableRow key={exam.id}>
-                    <TableCell className="font-medium">{exam.title}</TableCell>
-                    <TableCell className="text-center">
-                      <Badge variant="outline">{exam.total_questions}문항</Badge>
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <Badge className="bg-primary/10 text-primary hover:bg-primary/20">
-                        {exam.pass_count}개/{exam.total_questions}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-sm text-gray-500">
-                      {formatDateKR(exam.created_at)}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-1">
-                        <Link href={`/exam/view?id=${exam.id}`}>
-                          <button className="p-1.5 hover:text-primary">
-                            <Eye className="h-4 w-4" />
-                          </button>
-                        </Link>
-                        <button
-                          onClick={() => handleDelete(exam.id)}
-                          className="p-1.5 hover:text-red-500"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          ) : (
-            <div className="text-center py-12 text-gray-500">
-              <FileText className="h-12 w-12 mx-auto mb-3 text-gray-300" />
-              <p>아직 생성된 시험지가 없습니다.</p>
-              <Link href="/exam/create">
-                <Button variant="outline" className="mt-4">시험지 만들기</Button>
-              </Link>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      {exams.length > 0 ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {exams.map((exam) => (
+            <ExamHistoryCard
+              key={exam.id}
+              exam={exam}
+              onDelete={handleDelete}
+            />
+          ))}
+        </div>
+      ) : (
+        <div className="text-center py-20 text-gray-400">
+          <FileText className="h-12 w-12 mx-auto mb-3" />
+          <p className="text-sm">아직 생성된 시험지가 없습니다.</p>
+          <Link href="/exam/create">
+            <Button variant="outline" className="mt-4">시험지 만들기</Button>
+          </Link>
+        </div>
+      )}
     </div>
   );
 }

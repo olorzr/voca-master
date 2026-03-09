@@ -10,15 +10,15 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { CategoryTree } from '@/components/words';
 import { FileText, Eye } from 'lucide-react';
 import { toast } from 'sonner';
 import { DEFAULT_PASS_PERCENTAGE, PERCENTAGE_BASE } from '@/lib/constants';
-import { formatCategoryLabel, groupCategoriesByLevel } from '@/lib/format';
+import { buildCategoryTree } from '@/lib/category-tree';
 
 /**
- * 시험지 생성 페이지 (카테고리 선택, 합격선 설정, 셔플 옵션)
+ * 시험지 생성 페이지 (트리 구조 카테고리 선택, 합격선 설정, 셔플 옵션)
  */
 export default function ExamCreatePage() {
   const { user } = useAuth();
@@ -47,7 +47,6 @@ export default function ExamCreatePage() {
     loadCategories();
   }, [loadCategories]);
 
-  // 선택된 카테고리의 단어 로드
   useEffect(() => {
     if (selectedCatIds.length === 0) {
       setWords([]);
@@ -73,7 +72,7 @@ export default function ExamCreatePage() {
   const totalQuestions = words.length;
   const passCount = Math.ceil((passPercentage / PERCENTAGE_BASE) * totalQuestions);
 
-  const grouped = groupCategoriesByLevel(categories);
+  const tree = buildCategoryTree(categories);
 
   const handleCreate = async () => {
     if (!user) return;
@@ -92,7 +91,6 @@ export default function ExamCreatePage() {
       ? [...words].sort(() => Math.random() - 0.5)
       : words;
 
-    // 시험지 생성
     const { data: exam, error: examErr } = await supabase
       .from('exams')
       .insert({
@@ -113,7 +111,6 @@ export default function ExamCreatePage() {
       return;
     }
 
-    // 시험지 단어 스냅샷 저장
     const examWords = orderedWords.map((w, i) => ({
       exam_id: exam.id,
       word_id: w.id,
@@ -179,35 +176,22 @@ export default function ExamCreatePage() {
             </CardContent>
           </Card>
 
-          {/* 카테고리 선택 */}
+          {/* 카테고리 트리 선택 */}
           <Card>
             <CardHeader>
               <CardTitle className="text-lg">카테고리 선택</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              {Object.entries(grouped).map(([level, cats]) => (
-                <div key={level}>
-                  <Badge variant="secondary" className="mb-2 bg-primary/10 text-primary">
-                    {level}
-                  </Badge>
-                  <div className="space-y-1">
-                    {cats.map((cat) => (
-                      <label
-                        key={cat.id}
-                        className="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 cursor-pointer"
-                      >
-                        <Checkbox
-                          checked={selectedCatIds.includes(cat.id)}
-                          onCheckedChange={() => toggleCategory(cat.id)}
-                        />
-                        <span className="text-sm">{formatCategoryLabel(cat)}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-              ))}
+            <CardContent>
+              <CategoryTree
+                nodes={tree}
+                selectedIds={selectedCatIds}
+                onToggle={toggleCategory}
+                multiSelect
+              />
               {categories.length === 0 && (
-                <p className="text-center text-gray-500 py-4">카테고리가 없습니다. 먼저 단어를 추가해주세요.</p>
+                <p className="text-center text-gray-500 py-4">
+                  카테고리가 없습니다. 먼저 단어를 추가해주세요.
+                </p>
               )}
             </CardContent>
           </Card>

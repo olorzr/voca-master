@@ -7,17 +7,18 @@ import { useAuth } from '@/lib/auth-context';
 import type { Category, Word } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { WordCardGrid, CategoryTree } from '@/components/words';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
-import { PlusCircle, Pencil, Trash2, Search, ChevronRight } from 'lucide-react';
+import { PlusCircle, Search, Settings } from 'lucide-react';
 import { toast } from 'sonner';
-import { formatCategoryLabel, groupCategoriesByLevel } from '@/lib/format';
+import { formatCategoryLabel } from '@/lib/format';
+import { buildCategoryTree } from '@/lib/category-tree';
 
 /**
- * 단어 관리 페이지. 카테고리 탐색, 단어 목록 조회/수정/삭제 기능을 제공한다.
+ * 단어 관리 페이지. 트리 구조로 카테고리 탐색, 단어 조회/수정/삭제 기능을 제공한다.
  */
 export default function WordsPage() {
   const { user } = useAuth();
@@ -98,7 +99,7 @@ export default function WordsPage() {
     return label.includes(searchQuery.toLowerCase()) || cat.level.includes(searchQuery);
   });
 
-  const grouped = groupCategoriesByLevel(filteredCategories);
+  const tree = buildCategoryTree(filteredCategories);
 
   if (loading) {
     return (
@@ -112,12 +113,20 @@ export default function WordsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-gray-900">단어 관리</h1>
-        <Link href="/words/new">
-          <Button className="bg-primary hover:bg-primary-hover text-white">
-            <PlusCircle className="h-4 w-4 mr-2" />
-            단어 추가
-          </Button>
-        </Link>
+        <div className="flex items-center gap-2">
+          <Link href="/words/categories">
+            <Button variant="outline" size="sm">
+              <Settings className="h-4 w-4 mr-1" />
+              카테고리 관리
+            </Button>
+          </Link>
+          <Link href="/words/new">
+            <Button className="bg-primary hover:bg-primary-hover text-white">
+              <PlusCircle className="h-4 w-4 mr-2" />
+              단어 추가
+            </Button>
+          </Link>
+        </div>
       </div>
 
       <div className="relative">
@@ -131,106 +140,52 @@ export default function WordsPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* 카테고리 목록 */}
+        {/* 카테고리 트리 */}
         <div className="space-y-4">
-          {Object.entries(grouped).map(([level, cats]) => (
-            <Card key={level}>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-semibold">
-                  <Badge variant="secondary" className="bg-primary/10 text-primary">
-                    {level}
-                  </Badge>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-1">
-                {cats.map((cat) => (
-                  <div
-                    key={cat.id}
-                    className={`flex items-center justify-between p-2 rounded-lg cursor-pointer text-sm transition-colors ${
-                      selectedCategory?.id === cat.id
-                        ? 'bg-primary/10 text-primary'
-                        : 'hover:bg-gray-50'
-                    }`}
-                    onClick={() => handleSelectCategory(cat)}
-                  >
-                    <span className="truncate flex-1">{formatCategoryLabel(cat)}</span>
-                    <div className="flex items-center gap-1">
-                      <button
-                        onClick={(e) => { e.stopPropagation(); handleDeleteCategory(cat.id); }}
-                        className="p-1 hover:text-red-500"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </button>
-                      <ChevronRight className="h-4 w-4 text-gray-400" />
-                    </div>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-          ))}
-          {filteredCategories.length === 0 && (
-            <p className="text-center text-gray-500 py-8">카테고리가 없습니다.</p>
-          )}
+          <Card>
+            <CardContent className="py-4">
+              <CategoryTree
+                nodes={tree}
+                selectedId={selectedCategory?.id}
+                onSelect={handleSelectCategory}
+              />
+            </CardContent>
+          </Card>
         </div>
 
         {/* 단어 목록 */}
         <div className="lg:col-span-2">
           {selectedCategory ? (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">
-                  {formatCategoryLabel(selectedCategory)}
-                  <Badge variant="outline" className="ml-2">{words.length}개</Badge>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {words.length > 0 ? (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="w-12">#</TableHead>
-                        <TableHead>단어</TableHead>
-                        <TableHead>뜻</TableHead>
-                        <TableHead className="w-24 text-right">작업</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {words.map((word, idx) => (
-                        <TableRow key={word.id}>
-                          <TableCell className="text-gray-400">{idx + 1}</TableCell>
-                          <TableCell className="font-medium">{word.word}</TableCell>
-                          <TableCell>{word.meaning}</TableCell>
-                          <TableCell className="text-right">
-                            <div className="flex justify-end gap-1">
-                              <button
-                                onClick={() => {
-                                  setEditWord(word);
-                                  setEditForm({ word: word.word, meaning: word.meaning });
-                                }}
-                                className="p-1.5 hover:text-primary"
-                              >
-                                <Pencil className="h-4 w-4" />
-                              </button>
-                              <button
-                                onClick={() => handleDeleteWord(word.id)}
-                                className="p-1.5 hover:text-red-500"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                ) : (
-                  <p className="text-center text-gray-500 py-8">등록된 단어가 없습니다.</p>
-                )}
-              </CardContent>
-            </Card>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <h2 className="text-lg font-bold text-gray-900">
+                    {formatCategoryLabel(selectedCategory)}
+                  </h2>
+                  <Badge variant="outline">{words.length}개</Badge>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-red-500 hover:text-red-600"
+                  onClick={() => handleDeleteCategory(selectedCategory.id)}
+                >
+                  카테고리 삭제
+                </Button>
+              </div>
+              <WordCardGrid
+                words={words}
+                onEdit={(word) => {
+                  setEditWord(word);
+                  setEditForm({ word: word.word, meaning: word.meaning });
+                }}
+                onDelete={handleDeleteWord}
+              />
+            </div>
           ) : (
-            <div className="flex items-center justify-center py-20 text-gray-400">
-              카테고리를 선택해주세요.
+            <div className="flex flex-col items-center justify-center py-20 text-gray-300">
+              <Search className="h-12 w-12 mb-3" />
+              <p className="text-sm">카테고리를 선택해주세요</p>
             </div>
           )}
         </div>

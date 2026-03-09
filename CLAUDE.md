@@ -160,6 +160,10 @@
 - [2026-03-09] App Router route 그룹 `(auth)`, `(main)`으로 인증 필요/불필요 영역 분리
 - [2026-03-09] 네이버 웍스(LINE WORKS) OAuth 로그인으로 전환 → email/password 인증 제거, `@araeducation.co.kr` 도메인만 허용, Supabase admin API + magic link로 세션 수립
 
+- [2026-03-10] 카테고리 마스터 테이블 도입 (publishers, major_chapters, sub_chapters, schools, school_materials) → 모든 사용자 공유, RLS는 authenticated만 체크. 기존 categories 테이블은 단어 그룹 매핑용으로 유지 (텍스트 값 저장)
+- [2026-03-10] 외부지문 트리 구조: 학교명 > 프린트/작품명 (2레벨), 중등/고등: 출판사 > 대단원 > 소단원 (3레벨)
+- [2026-03-10] CategoryTree 컴포넌트를 단어 관리/시험지 생성에서 공유 → 단일 선택(onSelect) / 다중 선택(onToggle+multiSelect) 모드 지원
+
 ## Gotchas
 - [2026-03-09] `@supabase/auth-helpers-nextjs`는 deprecated됨. 현재 직접 `@supabase/supabase-js` 사용 중
 - [2026-03-09] exam_words 테이블은 단어 스냅샷이므로 원본 단어를 수정해도 기존 시험지에는 영향 없음
