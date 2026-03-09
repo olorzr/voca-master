@@ -26,7 +26,7 @@ export default function Header() {
         <div className="flex items-center justify-between h-16">
           <Link href="/dashboard" className="flex items-center gap-2">
             <BookOpen className="h-7 w-7 text-primary" />
-            <span className="text-xl font-bold text-gray-900">Voca Master</span>
+            <span className="text-xl font-bold text-gray-900" style={{ fontFamily: "'Gmarket Sans', sans-serif" }}>아라국어논술</span>
           </Link>
 
           {/* Desktop nav */}

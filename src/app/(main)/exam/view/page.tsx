@@ -120,6 +120,7 @@ function ExamPaperView({
     <div className="a4-page bg-white p-8 mx-auto">
       {/* 헤더 */}
       <div className="text-center border-b-2 border-primary pb-4 mb-6">
+        <p className="text-xs text-gray-400 mb-1" style={{ fontFamily: "'Gmarket Sans', sans-serif" }}>아라국어논술</p>
         <h2 className="text-xl font-bold text-gray-900">{exam.title}</h2>
         {showAnswer && (
           <span className="inline-block mt-1 px-3 py-0.5 bg-primary/10 text-primary text-sm font-semibold rounded">
@@ -170,6 +171,7 @@ function WordBookView({
   return (
     <div className="a4-page bg-white p-8 mx-auto">
       <div className="text-center border-b-2 border-primary pb-4 mb-6">
+        <p className="text-xs text-gray-400 mb-1" style={{ fontFamily: "'Gmarket Sans', sans-serif" }}>아라국어논술</p>
         <h2 className="text-xl font-bold text-gray-900">{exam.title} - 단어장</h2>
         <p className="text-sm text-gray-500 mt-1">총 {words.length}개 단어</p>
       </div>

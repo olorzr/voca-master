@@ -15,8 +15,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Voca Master - 국어학원 단어 관리 시스템",
-  description: "단어 관리 및 시험지 생성 시스템",
+  title: "아라국어논술 - 단어 관리 시스템",
+  description: "아라국어논술 단어 관리 및 시험지 생성 시스템",
 };
 
 export default function RootLayout({

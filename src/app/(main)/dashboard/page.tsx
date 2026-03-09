@@ -44,7 +44,7 @@ export default function DashboardPage() {
     <div className="space-y-8">
       <div>
         <h1 className="text-2xl font-bold text-gray-900">대시보드</h1>
-        <p className="text-gray-500 mt-1">Voca Master에 오신 것을 환영합니다.</p>
+        <p className="text-gray-500 mt-1"><span style={{ fontFamily: "'Gmarket Sans', sans-serif", fontWeight: 700 }}>아라국어논술</span>에 오신 것을 환영합니다.</p>
       </div>
 
       {/* 통계 카드 */}
