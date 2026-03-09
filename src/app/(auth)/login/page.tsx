@@ -1,47 +1,28 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { useAuth } from '@/lib/auth-context';
+import { useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { BookOpen } from 'lucide-react';
-import { PASSWORD_MIN_LENGTH } from '@/lib/constants';
+
+const ERROR_MESSAGES: Record<string, string> = {
+  invalid_request: '인증 요청이 올바르지 않습니다. 다시 시도해주세요.',
+  token_failed: '네이버 웍스 인증에 실패했습니다. 다시 시도해주세요.',
+  user_info_failed: '사용자 정보를 가져오지 못했습니다.',
+  unauthorized_domain: '@araeducation.co.kr 계정만 사용할 수 있습니다.',
+  create_user_failed: '사용자 등록에 실패했습니다. 관리자에게 문의해주세요.',
+  session_failed: '로그인 세션 생성에 실패했습니다. 다시 시도해주세요.',
+  verification_failed: '인증 검증에 실패했습니다. 다시 시도해주세요.',
+  invalid_callback: '잘못된 인증 콜백입니다. 다시 시도해주세요.',
+};
 
 /**
- * 로그인/회원가입 페이지
+ * 로그인 페이지. 네이버 웍스 OAuth로 로그인한다.
  */
 export default function LoginPage() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [isSignUp, setIsSignUp] = useState(false);
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
-  const { signIn, signUp } = useAuth();
-  const router = useRouter();
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-    setLoading(true);
-
-    const action = isSignUp ? signUp : signIn;
-    const { error } = await action(email, password);
-
-    if (error) {
-      setError(error.message);
-      setLoading(false);
-    } else {
-      if (isSignUp) {
-        setError('회원가입이 완료되었습니다. 이메일을 확인해주세요.');
-        setLoading(false);
-      } else {
-        router.push('/dashboard');
-      }
-    }
-  };
+  const searchParams = useSearchParams();
+  const errorCode = searchParams.get('error');
+  const errorMessage = errorCode ? ERROR_MESSAGES[errorCode] ?? '알 수 없는 오류가 발생했습니다.' : null;
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
@@ -53,52 +34,19 @@ export default function LoginPage() {
           <CardTitle className="text-2xl font-bold">Voca Master</CardTitle>
           <CardDescription>국어학원 단어 관리 및 시험지 생성 시스템</CardDescription>
         </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">이메일</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="email@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">비밀번호</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                minLength={PASSWORD_MIN_LENGTH}
-              />
-            </div>
-            {error && (
-              <p className={`text-sm ${error.includes('완료') ? 'text-green-600' : 'text-red-600'}`}>
-                {error}
-              </p>
-            )}
-            <Button
-              type="submit"
-              className="w-full bg-primary hover:bg-primary-hover text-white"
-              disabled={loading}
-            >
-              {loading ? '처리 중...' : isSignUp ? '회원가입' : '로그인'}
-            </Button>
-          </form>
-          <div className="mt-4 text-center">
-            <button
-              className="text-sm text-gray-500 hover:text-primary"
-              onClick={() => { setIsSignUp(!isSignUp); setError(''); }}
-            >
-              {isSignUp ? '이미 계정이 있으신가요? 로그인' : '계정이 없으신가요? 회원가입'}
-            </button>
-          </div>
+        <CardContent className="space-y-4">
+          {errorMessage && (
+            <p className="text-sm text-red-600 text-center">{errorMessage}</p>
+          )}
+          <a
+            href="/api/auth/naver-works"
+            className="flex h-10 w-full items-center justify-center rounded-lg bg-[#03C75A] text-sm font-medium text-white transition-colors hover:bg-[#02b351]"
+          >
+            네이버 웍스로 로그인
+          </a>
+          <p className="text-xs text-gray-400 text-center">
+            @araeducation.co.kr 계정만 로그인할 수 있습니다
+          </p>
         </CardContent>
       </Card>
     </div>
