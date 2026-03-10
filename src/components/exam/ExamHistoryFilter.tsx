@@ -41,7 +41,7 @@ export default function ExamHistoryFilter({
         <div className="relative flex-1 w-full sm:max-w-xs">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-pink-300" />
           <Input
-            placeholder="🔍 시험지 제목으로 검색..."
+            placeholder="시험지 제목으로 검색..."
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
             className="pl-9 pr-8 border-pink-200 focus:border-pink-400 focus:ring-pink-200"
@@ -106,7 +106,7 @@ export default function ExamHistoryFilter({
             onClick={onClearFilters}
             className="text-xs text-pink-500 hover:text-pink-700 hover:bg-pink-50"
           >
-            ✨ 초기화
+            초기화
           </Button>
         )}
       </div>
@@ -116,7 +116,7 @@ export default function ExamHistoryFilter({
         <div className="border border-pink-200 rounded-xl bg-pink-50/30 p-4 max-h-64 overflow-y-auto">
           {categoryTree.length > 0 ? (
             <>
-              <p className="text-xs text-pink-400 mb-2">📚 출제 범위를 선택해서 필터링하세요!</p>
+              <p className="text-xs text-pink-400 mb-2">출제 범위를 선택해서 필터링하세요</p>
               <CategoryTree
                 nodes={categoryTree}
                 selectedIds={filterCategoryIds}
@@ -125,7 +125,7 @@ export default function ExamHistoryFilter({
               />
             </>
           ) : (
-            <p className="text-xs text-gray-400 text-center py-2">카테고리가 없습니다 🥲</p>
+            <p className="text-xs text-gray-400 text-center py-2">카테고리가 없습니다</p>
           )}
         </div>
       )}

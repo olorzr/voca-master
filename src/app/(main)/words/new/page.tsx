@@ -123,7 +123,7 @@ export default function NewWordsPage() {
             돌아가기
           </Button>
         </Link>
-        <h1 className="text-2xl font-bold text-gray-900">단어 입력</h1>
+        <h1 className="text-2xl font-bold text-gray-900">✏️ 단어 입력</h1>
       </div>
 
       <CategoryForm

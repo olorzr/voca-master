@@ -34,24 +34,24 @@ export default function DashboardPage() {
   }, [user]);
 
   const quickActions = [
-    { href: '/words/new', icon: PlusCircle, label: '단어 입력', desc: '새 단어를 추가합니다' },
-    { href: '/words', icon: FolderOpen, label: '단어 관리', desc: '저장된 단어를 관리합니다' },
-    { href: '/exam/create', icon: FileText, label: '시험지 생성', desc: '시험지를 만듭니다' },
-    { href: '/exam/history', icon: History, label: '시험 이력', desc: '이전 시험지를 확인합니다' },
+    { href: '/words/new', icon: PlusCircle, label: '단어 입력', desc: '새 단어를 추가해요 ✨' },
+    { href: '/words', icon: FolderOpen, label: '단어 관리', desc: '저장된 단어를 관리해요 📖' },
+    { href: '/exam/create', icon: FileText, label: '시험지 생성', desc: '시험지를 만들어요 ✏️' },
+    { href: '/exam/history', icon: History, label: '시험 이력', desc: '이전 시험지를 확인해요 🔍' },
   ];
 
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">대시보드</h1>
-        <p className="text-gray-500 mt-1"><span style={{ fontFamily: "'Gmarket Sans', sans-serif", fontWeight: 700 }}>아라국어논술</span>에 오신 것을 환영합니다.</p>
+        <h1 className="text-2xl font-bold text-gray-900">🏠 대시보드</h1>
+        <p className="text-gray-500 mt-1"><span style={{ fontFamily: "'Gmarket Sans', sans-serif", fontWeight: 700 }}>아라국어논술</span>에 오신 것을 환영해요 🌷</p>
       </div>
 
       {/* 통계 카드 */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-gray-500">총 단어 수</CardTitle>
+            <CardTitle className="text-sm font-medium text-gray-500">📚 총 단어 수</CardTitle>
             <BookOpen className="h-5 w-5 text-primary" />
           </CardHeader>
           <CardContent>
@@ -60,7 +60,7 @@ export default function DashboardPage() {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-gray-500">카테고리</CardTitle>
+            <CardTitle className="text-sm font-medium text-gray-500">📂 카테고리</CardTitle>
             <Upload className="h-5 w-5 text-primary" />
           </CardHeader>
           <CardContent>
@@ -69,7 +69,7 @@ export default function DashboardPage() {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-gray-500">생성된 시험지</CardTitle>
+            <CardTitle className="text-sm font-medium text-gray-500">📝 생성된 시험지</CardTitle>
             <FileText className="h-5 w-5 text-primary" />
           </CardHeader>
           <CardContent>
@@ -80,11 +80,11 @@ export default function DashboardPage() {
 
       {/* 빠른 실행 */}
       <div>
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">빠른 실행</h2>
+        <h2 className="text-lg font-semibold text-gray-900 mb-4">⚡ 빠른 실행</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {quickActions.map((action) => (
             <Link key={action.href} href={action.href}>
-              <Card className="hover:border-primary hover:shadow-md transition-all cursor-pointer h-full">
+              <Card className="hover:border-pink-300 hover:shadow-md hover:shadow-pink-100/50 transition-all cursor-pointer h-full">
                 <CardContent className="pt-6 flex flex-col items-center text-center gap-3">
                   <action.icon className="h-10 w-10 text-primary" />
                   <div>

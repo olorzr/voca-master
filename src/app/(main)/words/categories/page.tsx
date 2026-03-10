@@ -183,7 +183,7 @@ export default function CategoryManagePage() {
             돌아가기
           </Button>
         </Link>
-        <h1 className="text-2xl font-bold text-gray-900">카테고리 관리</h1>
+        <h1 className="text-2xl font-bold text-gray-900">📂 카테고리 관리</h1>
       </div>
 
       <Tabs defaultValue="school">

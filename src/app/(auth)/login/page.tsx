@@ -34,14 +34,14 @@ function ErrorMessage() {
  */
 export default function LoginPage() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-pink-50 via-white to-teal-50 px-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">
             <BookOpen className="h-8 w-8 text-primary" />
           </div>
           <CardTitle className="text-2xl font-bold" style={{ fontFamily: "'Gmarket Sans', sans-serif" }}>아라국어논술</CardTitle>
-          <CardDescription>단어 관리 및 시험지 생성 시스템</CardDescription>
+          <CardDescription>단어 관리 및 시험지 생성 시스템 🌷</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <Suspense>

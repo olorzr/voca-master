@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth-context';
 import { Button } from '@/components/ui/button';
-import { FileText, Trash2, Sparkles, Search } from 'lucide-react';
+import { FileText, Trash2, Search } from 'lucide-react';
 import { toast } from 'sonner';
 import { ExamHistoryCard, ExamHistoryFilter } from '@/components/exam';
 import { formatDateKR } from '@/lib/format';
@@ -137,21 +137,21 @@ export default function ExamHistoryPage() {
   }, []);
 
   const handleDelete = async (id: string) => {
-    if (!confirm('이 시험지를 삭제할까요? 🗑️')) return;
+    if (!confirm('이 시험지를 삭제할까요?')) return;
     await supabase.from('exams').delete().eq('id', id);
     setExams((prev) => prev.filter((e) => e.id !== id && e.parent_exam_id !== id));
     setSelectedIds((prev) => { const next = new Set(prev); next.delete(id); return next; });
-    toast.success('시험지가 삭제되었어요! 🧹');
+    toast.success('시험지가 삭제되었어요!');
   };
 
   const handleBulkDelete = async () => {
     if (selectedIds.size === 0) return;
-    if (!confirm(`선택한 ${selectedIds.size}개의 시험지를 삭제할까요? 💭\n관련 재시험도 함께 삭제돼요!`)) return;
+    if (!confirm(`선택한 ${selectedIds.size}개의 시험지를 삭제할까요?\n관련 재시험도 함께 삭제돼요!`)) return;
     const ids = Array.from(selectedIds);
     await supabase.from('exams').delete().in('id', ids);
     setExams((prev) => prev.filter((e) => !ids.includes(e.id) && (!e.parent_exam_id || !ids.includes(e.parent_exam_id))));
     setSelectedIds(new Set());
-    toast.success(`${ids.length}개의 시험지가 삭제되었어요! ✨`);
+    toast.success(`${ids.length}개의 시험지가 삭제되었어요!`);
   };
 
   const handleRetest = async (examId: string) => {
@@ -163,7 +163,7 @@ export default function ExamHistoryPage() {
     const { data: originalWords } = await supabase
       .from('exam_words').select('*').eq('exam_id', examId).order('order_index');
     if (!originalWords || originalWords.length === 0) {
-      toast.error('원본 시험지의 단어를 불러올 수 없어요 😢');
+      toast.error('원본 시험지의 단어를 불러올 수 없어요');
       setRetestingId(null);
       return;
     }
@@ -184,7 +184,7 @@ export default function ExamHistoryPage() {
     }).select().single();
 
     if (examErr || !newExam) {
-      toast.error('재시험지 생성 중 오류가 발생했어요 😥');
+      toast.error('재시험지 생성 중 오류가 발생했어요');
       setRetestingId(null);
       return;
     }
@@ -199,7 +199,7 @@ export default function ExamHistoryPage() {
       return;
     }
 
-    toast.success(`재시험 ${nextNumber}차가 생성되었어요! 🎉`);
+    toast.success(`재시험 ${nextNumber}차가 생성되었어요!`);
     setRetestingId(null);
     router.push(`/exam/view?id=${newExam.id}`);
   };
@@ -208,7 +208,7 @@ export default function ExamHistoryPage() {
     return (
       <div className="flex flex-col items-center justify-center py-20 gap-3">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-pink-400" />
-        <p className="text-sm text-pink-400">불러오는 중... 💕</p>
+        <p className="text-sm text-pink-400">불러오는 중...</p>
       </div>
     );
   }
@@ -219,13 +219,12 @@ export default function ExamHistoryPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <h1 className="text-2xl font-bold text-gray-900">시험 이력</h1>
-          <Sparkles className="h-5 w-5 text-pink-400" />
+          <h1 className="text-2xl font-bold text-gray-900">📋 시험 이력</h1>
         </div>
         <Link href="/exam/create">
           <Button className="bg-primary hover:bg-primary-hover text-white">
             <FileText className="h-4 w-4 mr-2" />
-            새 시험지 ✏️
+            새 시험지
           </Button>
         </Link>
       </div>
@@ -250,7 +249,7 @@ export default function ExamHistoryPage() {
           {/* 일괄 작업 */}
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" onClick={toggleSelectAll} className="text-xs border-pink-200 hover:bg-pink-50">
-              {isAllSelected ? '💫 전체 해제' : '💫 전체 선택'}
+              {isAllSelected ? '전체 해제' : '전체 선택'}
             </Button>
             {selectedIds.size > 0 && (
               <Button
@@ -263,7 +262,7 @@ export default function ExamHistoryPage() {
             )}
             {hasActiveFilters && (
               <span className="text-xs text-pink-400 ml-2">
-                🔎 {filteredExams.length}개의 결과
+                {filteredExams.length}개의 결과
               </span>
             )}
           </div>
@@ -288,17 +287,17 @@ export default function ExamHistoryPage() {
       ) : originalExams.length > 0 ? (
         <div className="text-center py-20 text-gray-400">
           <Search className="h-10 w-10 mx-auto mb-3 text-pink-300" />
-          <p className="text-sm text-pink-400">검색 결과가 없어요 🥲</p>
+          <p className="text-sm text-pink-400">검색 결과가 없어요</p>
           <p className="text-xs text-gray-400 mt-1">다른 조건으로 검색해보세요!</p>
         </div>
       ) : (
         <div className="text-center py-20">
           <div className="text-5xl mb-4">📝</div>
           <p className="text-sm text-pink-400 font-medium">아직 시험지가 없어요!</p>
-          <p className="text-xs text-gray-400 mt-1">첫 시험지를 만들어볼까요? 🌸</p>
+          <p className="text-xs text-gray-400 mt-1">첫 시험지를 만들어볼까요?</p>
           <Link href="/exam/create">
             <Button variant="outline" className="mt-4 border-pink-200 text-pink-500 hover:bg-pink-50">
-              시험지 만들기 ✨
+              시험지 만들기
             </Button>
           </Link>
         </div>

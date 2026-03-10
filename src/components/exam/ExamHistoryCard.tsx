@@ -59,10 +59,10 @@ export default function ExamHistoryCard({ exam, retakes = [], onDelete, onRetest
 
         <div className="flex gap-2 mt-4">
           <Badge variant="outline" className="text-xs font-medium border-pink-200 text-pink-600">
-            📋 {exam.total_questions}문항
+            {exam.total_questions}문항
           </Badge>
           <Badge className="bg-pink-100 text-pink-600 hover:bg-pink-200 text-xs font-medium">
-            ✅ 합격 {exam.pass_count}개 ({exam.pass_percentage}%)
+            합격 {exam.pass_count}개 ({exam.pass_percentage}%)
           </Badge>
         </div>
 
@@ -117,8 +117,8 @@ function RetakeItem({ retake, onDelete }: RetakeItemProps) {
       <CornerDownRight className="h-4 w-4 text-pink-300 shrink-0" />
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
-          <span className="text-sm font-semibold text-gray-700 truncate">
-            🔄 재시험 {retake.retake_number}차
+          <span className="text-sm font-semibold text-gray-700">
+            재시험 {retake.retake_number}차
           </span>
           <span className="text-xs text-gray-400">{formatDateKR(retake.created_at)}</span>
         </div>

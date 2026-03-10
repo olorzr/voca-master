@@ -15,14 +15,14 @@ export default function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const navLinks = [
-    { href: '/dashboard', label: '대시보드' },
-    { href: '/words', label: '단어 관리' },
-    { href: '/exam/create', label: '시험지 생성' },
-    { href: '/exam/history', label: '시험 이력' },
+    { href: '/dashboard', label: '🏠 대시보드' },
+    { href: '/words', label: '📚 단어 관리' },
+    { href: '/exam/create', label: '✏️ 시험지 생성' },
+    { href: '/exam/history', label: '📋 시험 이력' },
   ];
 
   return (
-    <header className="border-b bg-white sticky top-0 z-50" data-no-print>
+    <header className="border-b border-pink-100 bg-white/80 backdrop-blur-sm sticky top-0 z-50" data-no-print>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           <Link href="/dashboard" className="flex items-center gap-2">
@@ -36,7 +36,7 @@ export default function Header() {
               <Link
                 key={link.href}
                 href={link.href}
-                className="px-3 py-2 text-sm font-medium text-gray-600 hover:text-primary hover:bg-gray-50 rounded-lg transition-colors"
+                className="px-3 py-2 text-sm font-medium text-gray-600 hover:text-pink-500 hover:bg-pink-50 rounded-lg transition-colors"
               >
                 {link.label}
               </Link>
@@ -67,7 +67,7 @@ export default function Header() {
               <Link
                 key={link.href}
                 href={link.href}
-                className="block px-3 py-2 text-sm font-medium text-gray-600 hover:text-primary hover:bg-gray-50 rounded-lg"
+                className="block px-3 py-2 text-sm font-medium text-gray-600 hover:text-pink-500 hover:bg-pink-50 rounded-lg"
                 onClick={() => setMobileOpen(false)}
               >
                 {link.label}
