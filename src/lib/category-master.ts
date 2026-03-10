@@ -28,17 +28,18 @@ export async function deletePublisher(id: string) {
 
 // --- Major Chapters (대단원) ---
 
-/** 대단원 목록을 조회한다 (출판사 + 학년 필터) */
-export async function getMajorChapters(publisherId: string, grade?: string): Promise<MajorChapter[]> {
+/** 대단원 목록을 조회한다 (출판사 + 학년 + 학기 필터) */
+export async function getMajorChapters(publisherId: string, grade?: string, semester?: string): Promise<MajorChapter[]> {
   let query = supabase.from('major_chapters').select('*').eq('publisher_id', publisherId).order('name');
   if (grade) query = query.eq('grade', grade);
+  if (semester) query = query.eq('semester', semester);
   const { data } = await query;
   return (data as MajorChapter[]) ?? [];
 }
 
 /** 대단원을 추가한다 */
-export async function createMajorChapter(name: string, publisherId: string, grade: string) {
-  return supabase.from('major_chapters').insert({ name, publisher_id: publisherId, grade }).select().single();
+export async function createMajorChapter(name: string, publisherId: string, grade: string, semester: string) {
+  return supabase.from('major_chapters').insert({ name, publisher_id: publisherId, grade, semester }).select().single();
 }
 
 /** 대단원명을 수정한다 */

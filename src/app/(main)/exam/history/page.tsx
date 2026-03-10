@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
@@ -16,11 +16,13 @@ interface ExamRecord {
   pass_percentage: number;
   total_questions: number;
   pass_count: number;
+  parent_exam_id: string | null;
+  retake_number: number;
   created_at: string;
 }
 
 /**
- * 시험 이력 페이지. 생성된 시험지 목록을 조회하고 삭제할 수 있다.
+ * 시험 이력 페이지. 원본 시험 아래에 재시험이 스레드로 표시된다.
  */
 export default function ExamHistoryPage() {
   const { user } = useAuth();
@@ -44,14 +46,35 @@ export default function ExamHistoryPage() {
     loadExams();
   }, [loadExams]);
 
+  /** 원본 시험 목록 (parent_exam_id가 없는 것) */
+  const originalExams = useMemo(
+    () => exams.filter((e) => !e.parent_exam_id),
+    [exams],
+  );
+
+  /** 원본 시험 ID → 재시험 배열 맵 (retake_number 오름차순) */
+  const retakeMap = useMemo(() => {
+    const map = new Map<string, ExamRecord[]>();
+    for (const e of exams) {
+      if (!e.parent_exam_id) continue;
+      const list = map.get(e.parent_exam_id) ?? [];
+      list.push(e);
+      map.set(e.parent_exam_id, list);
+    }
+    for (const list of map.values()) {
+      list.sort((a, b) => a.retake_number - b.retake_number);
+    }
+    return map;
+  }, [exams]);
+
   const handleDelete = async (id: string) => {
     if (!confirm('이 시험지를 삭제하시겠습니까?')) return;
     await supabase.from('exams').delete().eq('id', id);
-    setExams((prev) => prev.filter((e) => e.id !== id));
+    setExams((prev) => prev.filter((e) => e.id !== id && e.parent_exam_id !== id));
     toast.success('시험지가 삭제되었습니다.');
   };
 
-  /** 기존 시험의 단어를 셔플하여 재시험지를 생성한다. */
+  /** 원본 시험의 단어를 셔플하여 재시험지를 생성한다. */
   const handleRetest = async (examId: string) => {
     if (!user) return;
     setRetestingId(examId);
@@ -74,15 +97,21 @@ export default function ExamHistoryPage() {
       return;
     }
 
+    // 기존 재시험 수를 세서 다음 차수 결정
+    const existingRetakes = retakeMap.get(examId) ?? [];
+    const nextNumber = existingRetakes.length + 1;
+
     const shuffled = [...originalWords].sort(() => Math.random() - 0.5);
 
     const { data: newExam, error: examErr } = await supabase
       .from('exams')
       .insert({
-        title: `${originalExam.title} (재시험)`,
+        title: `${originalExam.title} (재시험 ${nextNumber}차)`,
         pass_percentage: originalExam.pass_percentage,
         total_questions: originalExam.total_questions,
         pass_count: originalExam.pass_count,
+        parent_exam_id: examId,
+        retake_number: nextNumber,
         user_id: user.id,
       })
       .select()
@@ -109,7 +138,7 @@ export default function ExamHistoryPage() {
       return;
     }
 
-    toast.success('재시험지가 생성되었습니다.');
+    toast.success(`재시험 ${nextNumber}차가 생성되었습니다.`);
     setRetestingId(null);
     router.push(`/exam/view?id=${newExam.id}`);
   };
@@ -134,12 +163,13 @@ export default function ExamHistoryPage() {
         </Link>
       </div>
 
-      {exams.length > 0 ? (
+      {originalExams.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {exams.map((exam) => (
+          {originalExams.map((exam) => (
             <ExamHistoryCard
               key={exam.id}
               exam={exam}
+              retakes={retakeMap.get(exam.id)}
               onDelete={handleDelete}
               onRetest={handleRetest}
               retesting={retestingId === exam.id}

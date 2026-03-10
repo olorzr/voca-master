@@ -10,7 +10,7 @@ export function formatCategoryLabel(cat: Category): string {
   if (cat.level === EXTERNAL_LEVEL) {
     return [cat.school_name || '외부', cat.chapter].filter(Boolean).join(' - ');
   }
-  return [cat.grade, cat.publisher, cat.chapter, cat.sub_chapter].filter(Boolean).join(' ');
+  return [cat.grade, cat.publisher, cat.semester, cat.chapter, cat.sub_chapter].filter(Boolean).join(' ');
 }
 
 /**

@@ -5,14 +5,14 @@ import { EXTERNAL_LEVEL } from './constants';
 export interface CategoryTreeNode {
   id: string;
   label: string;
-  type: 'level' | 'grade' | 'publisher' | 'chapter' | 'sub_chapter' | 'school' | 'material';
+  type: 'level' | 'grade' | 'publisher' | 'semester' | 'chapter' | 'sub_chapter' | 'school' | 'material';
   children: CategoryTreeNode[];
   category?: Category;
 }
 
 /**
  * 카테고리 배열을 계층 트리 구조로 변환한다.
- * 중등/고등: level > grade > publisher > chapter > sub_chapter
+ * 중등/고등: level > grade > publisher > semester > chapter > sub_chapter
  * 외부지문: level > school > material
  */
 export function buildCategoryTree(categories: Category[]): CategoryTreeNode[] {
@@ -63,36 +63,45 @@ function buildSchoolLevelTree(level: string, cats: Category[]): CategoryTreeNode
         label: grade,
         type: 'grade' as const,
         children: Object.entries(byPub).map(([pub, pubCats]) => {
-          const byChapter = groupBy(pubCats, (c) => c.chapter);
+          const bySemester = groupBy(pubCats, (c) => c.semester || '미지정');
 
           return {
             id: `${level}-${grade}-${pub}`,
             label: pub,
             type: 'publisher' as const,
-            children: Object.entries(byChapter).map(([ch, chCats]) => {
-              const hasSubChapters = chCats.some((c) => c.sub_chapter);
-
-              if (!hasSubChapters && chCats.length === 1) {
-                return {
-                  id: chCats[0].id,
-                  label: ch,
-                  type: 'chapter' as const,
-                  children: [],
-                  category: chCats[0],
-                };
-              }
+            children: Object.entries(bySemester).map(([sem, semCats]) => {
+              const byChapter = groupBy(semCats, (c) => c.chapter);
 
               return {
-                id: `${level}-${grade}-${pub}-${ch}`,
-                label: ch,
-                type: 'chapter' as const,
-                children: chCats.map((cat) => ({
-                  id: cat.id,
-                  label: cat.sub_chapter || '(전체)',
-                  type: 'sub_chapter' as const,
-                  children: [],
-                  category: cat,
-                })),
+                id: `${level}-${grade}-${pub}-${sem}`,
+                label: sem,
+                type: 'semester' as const,
+                children: Object.entries(byChapter).map(([ch, chCats]) => {
+                  const hasSubChapters = chCats.some((c) => c.sub_chapter);
+
+                  if (!hasSubChapters && chCats.length === 1) {
+                    return {
+                      id: chCats[0].id,
+                      label: ch,
+                      type: 'chapter' as const,
+                      children: [],
+                      category: chCats[0],
+                    };
+                  }
+
+                  return {
+                    id: `${level}-${grade}-${pub}-${sem}-${ch}`,
+                    label: ch,
+                    type: 'chapter' as const,
+                    children: chCats.map((cat) => ({
+                      id: cat.id,
+                      label: cat.sub_chapter || '(전체)',
+                      type: 'sub_chapter' as const,
+                      children: [],
+                      category: cat,
+                    })),
+                  };
+                }),
               };
             }),
           };

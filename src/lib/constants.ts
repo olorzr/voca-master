@@ -22,5 +22,8 @@ export const MIDDLE_SCHOOL_GRADES = ['중1', '중2', '중3'] as const;
 /** 고등 학년 옵션 */
 export const HIGH_SCHOOL_GRADES = ['고1', '고2', '고3'] as const;
 
+/** 학기 옵션 */
+export const SEMESTER_OPTIONS = ['1학기', '2학기'] as const;
+
 /** 외부지문 카테고리 레벨명 */
 export const EXTERNAL_LEVEL = '외부지문 및 프린트' as const;

@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
-import { MIDDLE_SCHOOL_GRADES, HIGH_SCHOOL_GRADES } from '@/lib/constants';
+import { MIDDLE_SCHOOL_GRADES, HIGH_SCHOOL_GRADES, SEMESTER_OPTIONS } from '@/lib/constants';
 import { MasterListPanel } from '@/components/words';
 import type { Publisher, MajorChapter, SubChapter, School, SchoolMaterial } from '@/types';
 import * as cm from '@/lib/category-master';
@@ -21,6 +21,7 @@ import * as cm from '@/lib/category-master';
 export default function CategoryManagePage() {
   const [level, setLevel] = useState<'중등' | '고등'>('중등');
   const [grade, setGrade] = useState('');
+  const [semester, setSemester] = useState('');
   const [publishers, setPublishers] = useState<Publisher[]>([]);
   const [selectedPubId, setSelectedPubId] = useState('');
   const [chapters, setChapters] = useState<MajorChapter[]>([]);
@@ -49,14 +50,14 @@ export default function CategoryManagePage() {
 
   // --- 대단원 로드 ---
   useEffect(() => {
-    if (!selectedPubId || !grade) {
+    if (!selectedPubId || !grade || !semester) {
       setChapters([]); setSelectedChapterId(''); setSubChapters([]);
       return;
     }
-    cm.getMajorChapters(selectedPubId, grade).then(setChapters);
+    cm.getMajorChapters(selectedPubId, grade, semester).then(setChapters);
     setSelectedChapterId('');
     setSubChapters([]);
-  }, [selectedPubId, grade]);
+  }, [selectedPubId, grade, semester]);
 
   // --- 소단원 로드 ---
   useEffect(() => {
@@ -97,9 +98,9 @@ export default function CategoryManagePage() {
   };
 
   // --- Chapter CRUD ---
-  const reloadChapters = () => cm.getMajorChapters(selectedPubId, grade).then(setChapters);
+  const reloadChapters = () => cm.getMajorChapters(selectedPubId, grade, semester).then(setChapters);
   const handleAddChapter = async (name: string) => {
-    const { error } = await cm.createMajorChapter(name, selectedPubId, grade);
+    const { error } = await cm.createMajorChapter(name, selectedPubId, grade, semester);
     if (error) { toast.error('이미 존재하는 대단원입니다.'); return; }
     toast.success('대단원이 추가되었습니다.');
     reloadChapters();
@@ -205,11 +206,22 @@ export default function CategoryManagePage() {
             </div>
             <div className="space-y-2">
               <Label>학년</Label>
-              <Select value={grade} onValueChange={(v) => { if (v) setGrade(v); }}>
+              <Select value={grade} onValueChange={(v) => { if (v) { setGrade(v); setSemester(''); } }}>
                 <SelectTrigger className="w-32"><SelectValue placeholder="학년 선택" /></SelectTrigger>
                 <SelectContent>
                   {gradeOptions.map((g) => (
                     <SelectItem key={g} value={g}>{g}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>학기</Label>
+              <Select value={semester} onValueChange={(v) => { if (v) setSemester(v); }} disabled={!grade}>
+                <SelectTrigger className="w-32"><SelectValue placeholder="학기 선택" /></SelectTrigger>
+                <SelectContent>
+                  {SEMESTER_OPTIONS.map((s) => (
+                    <SelectItem key={s} value={s}>{s}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -238,7 +250,7 @@ export default function CategoryManagePage() {
                   onEdit={handleEditChapter}
                   onDelete={handleDeleteChapter}
                   placeholder="예: 1. 문학의 갈래"
-                  disabled={!selectedPubId || !grade}
+                  disabled={!selectedPubId || !grade || !semester}
                 />
                 <MasterListPanel
                   title="소단원"

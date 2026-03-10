@@ -1,9 +1,10 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { useAuth } from '@/lib/auth-context';
 import { Button } from '@/components/ui/button';
-import { BookOpen, LogOut, Menu, X } from 'lucide-react';
+import { LogOut, Menu, X } from 'lucide-react';
 import { useState } from 'react';
 
 /**
@@ -25,8 +26,8 @@ export default function Header() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           <Link href="/dashboard" className="flex items-center gap-2">
-            <BookOpen className="h-7 w-7 text-primary" />
-            <span className="text-xl font-bold text-gray-900" style={{ fontFamily: "'Gmarket Sans', sans-serif" }}>아라국어논술</span>
+            <Image src="/logo.png" alt="아라국어논술" width={36} height={36} />
+            <span className="text-lg font-bold text-gray-900" style={{ fontFamily: "'Gmarket Sans', sans-serif" }}>아라국어논술 단어 관리 시스템</span>
           </Link>
 
           {/* Desktop nav */}

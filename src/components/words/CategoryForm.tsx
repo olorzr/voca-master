@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import type { CategoryLevel, Publisher, MajorChapter, SubChapter, School, SchoolMaterial } from '@/types';
-import { EXTERNAL_LEVEL, MIDDLE_SCHOOL_GRADES, HIGH_SCHOOL_GRADES } from '@/lib/constants';
+import { EXTERNAL_LEVEL, MIDDLE_SCHOOL_GRADES, HIGH_SCHOOL_GRADES, SEMESTER_OPTIONS } from '@/lib/constants';
 import {
   getPublishers, getMajorChapters, getSubChapters,
   getSchools, getSchoolMaterials,
@@ -17,24 +17,26 @@ interface CategoryFormProps {
   level: CategoryLevel;
   grade: string;
   publisher: string;
+  semester: string;
   chapter: string;
   subChapter: string;
   schoolName: string;
   onLevelChange: (value: CategoryLevel) => void;
   onGradeChange: (value: string) => void;
   onPublisherChange: (value: string) => void;
+  onSemesterChange: (value: string) => void;
   onChapterChange: (value: string) => void;
   onSubChapterChange: (value: string) => void;
   onSchoolNameChange: (value: string) => void;
 }
 
 /**
- * 단어 입력 시 카테고리(구분/학년/출판사/단원) 선택 폼 컴포넌트.
+ * 단어 입력 시 카테고리(구분/학년/출판사/학기/단원) 선택 폼 컴포넌트.
  * 마스터 데이터에서 등록된 항목만 선택 가능하다.
  */
 export default function CategoryForm({
-  level, grade, publisher, chapter, subChapter, schoolName,
-  onLevelChange, onGradeChange, onPublisherChange,
+  level, grade, publisher, semester, chapter, subChapter, schoolName,
+  onLevelChange, onGradeChange, onPublisherChange, onSemesterChange,
   onChapterChange, onSubChapterChange, onSchoolNameChange,
 }: CategoryFormProps) {
   const [publishers, setPublishers] = useState<Publisher[]>([]);
@@ -69,9 +71,9 @@ export default function CategoryForm({
 
   // 대단원 로드
   useEffect(() => {
-    if (!publisherId || !grade) { setChapters([]); return; }
-    getMajorChapters(publisherId, grade).then(setChapters);
-  }, [publisherId, grade]);
+    if (!publisherId || !grade || !semester) { setChapters([]); return; }
+    getMajorChapters(publisherId, grade, semester).then(setChapters);
+  }, [publisherId, grade, semester]);
 
   // 대단원 이름 → ID 역추적
   useEffect(() => {
@@ -115,15 +117,16 @@ export default function CategoryForm({
 
   const handleLevelChange = (v: CategoryLevel) => {
     onLevelChange(v);
-    onGradeChange(''); onPublisherChange(''); onChapterChange('');
-    onSubChapterChange(''); onSchoolNameChange('');
+    onGradeChange(''); onPublisherChange(''); onSemesterChange('');
+    onChapterChange(''); onSubChapterChange(''); onSchoolNameChange('');
     setPublisherId(''); setChapterId(''); setSubChapterId('');
     setSchoolId(''); setMaterialId('');
   };
 
   const handleGradeChange = (v: string) => {
     onGradeChange(v);
-    onPublisherChange(''); onChapterChange(''); onSubChapterChange('');
+    onPublisherChange(''); onSemesterChange('');
+    onChapterChange(''); onSubChapterChange('');
     setPublisherId(''); setChapterId(''); setSubChapterId('');
   };
 
@@ -131,6 +134,12 @@ export default function CategoryForm({
     setPublisherId(pubId);
     const pub = publishers.find((p) => p.id === pubId);
     onPublisherChange(pub?.name ?? '');
+    onSemesterChange(''); onChapterChange(''); onSubChapterChange('');
+    setChapterId(''); setSubChapterId('');
+  };
+
+  const handleSemesterChange = (v: string) => {
+    onSemesterChange(v);
     onChapterChange(''); onSubChapterChange('');
     setChapterId(''); setSubChapterId('');
   };
@@ -215,8 +224,19 @@ export default function CategoryForm({
                 </Select>
               </div>
               <div className="space-y-2">
+                <Label>학기</Label>
+                <Select value={semester} onValueChange={(v) => { if (v) handleSemesterChange(v); }} disabled={!publisherId}>
+                  <SelectTrigger><SelectValue placeholder="학기 선택" /></SelectTrigger>
+                  <SelectContent>
+                    {SEMESTER_OPTIONS.map((s) => (
+                      <SelectItem key={s} value={s}>{s}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
                 <Label>대단원</Label>
-                <Select value={chapterId} onValueChange={(v) => { if (v) handleChapterSelect(v); }} disabled={!publisherId}>
+                <Select value={chapterId} onValueChange={(v) => { if (v) handleChapterSelect(v); }} disabled={!semester}>
                   <SelectTrigger><SelectValue placeholder="대단원 선택" /></SelectTrigger>
                   <SelectContent>
                     {chapters.map((c) => (

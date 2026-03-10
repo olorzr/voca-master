@@ -24,6 +24,7 @@ export default function NewWordsPage() {
   const [level, setLevel] = useState<CategoryLevel>('중등');
   const [grade, setGrade] = useState('');
   const [publisher, setPublisher] = useState('');
+  const [semester, setSemester] = useState('');
   const [chapter, setChapter] = useState('');
   const [subChapter, setSubChapter] = useState('');
   const [schoolName, setSchoolName] = useState('');
@@ -38,8 +39,8 @@ export default function NewWordsPage() {
       toast.error('최소 1개의 단어를 입력해주세요.');
       return;
     }
-    if (level !== EXTERNAL_LEVEL && (!grade || !publisher || !chapter)) {
-      toast.error('학년, 출판사, 대단원을 모두 입력해주세요.');
+    if (level !== EXTERNAL_LEVEL && (!grade || !publisher || !semester || !chapter)) {
+      toast.error('학년, 출판사, 학기, 대단원을 모두 입력해주세요.');
       return;
     }
     if (level === EXTERNAL_LEVEL && !chapter) {
@@ -55,6 +56,7 @@ export default function NewWordsPage() {
         level,
         grade: level === EXTERNAL_LEVEL ? '' : grade,
         publisher: level === EXTERNAL_LEVEL ? '' : publisher,
+        semester: level === EXTERNAL_LEVEL ? '' : semester,
         chapter,
         sub_chapter: subChapter,
         school_name: level === EXTERNAL_LEVEL ? schoolName : '',
@@ -89,7 +91,7 @@ export default function NewWordsPage() {
   };
 
   const handleSaveDraft = () => {
-    const draft = { level, grade, publisher, chapter, subChapter, schoolName, wordEntries };
+    const draft = { level, grade, publisher, semester, chapter, subChapter, schoolName, wordEntries };
     localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(draft));
     toast.success('임시 저장되었습니다.');
   };
@@ -104,6 +106,7 @@ export default function NewWordsPage() {
     setLevel(draft.level);
     setGrade(draft.grade ?? '');
     setPublisher(draft.publisher ?? '');
+    setSemester(draft.semester ?? '');
     setChapter(draft.chapter ?? '');
     setSubChapter(draft.subChapter ?? '');
     setSchoolName(draft.schoolName ?? '');
@@ -127,12 +130,14 @@ export default function NewWordsPage() {
         level={level}
         grade={grade}
         publisher={publisher}
+        semester={semester}
         chapter={chapter}
         subChapter={subChapter}
         schoolName={schoolName}
         onLevelChange={setLevel}
         onGradeChange={setGrade}
         onPublisherChange={setPublisher}
+        onSemesterChange={setSemester}
         onChapterChange={setChapter}
         onSubChapterChange={setSubChapter}
         onSchoolNameChange={setSchoolName}

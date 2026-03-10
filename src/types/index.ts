@@ -13,6 +13,7 @@ export interface Category {
   level: '중등' | '고등' | '외부지문 및 프린트';
   grade: string;
   publisher: string;
+  semester: string;
   chapter: string;
   sub_chapter: string;
   school_name?: string;
@@ -28,6 +29,8 @@ export interface Exam {
   pass_count: number;
   category_ids: string[];
   word_ids: string[];
+  parent_exam_id: string | null;
+  retake_number: number;
   user_id: string;
   created_at: string;
 }
@@ -51,12 +54,13 @@ export interface Publisher {
   created_at: string;
 }
 
-/** 대단원 마스터 (출판사 + 학년별) */
+/** 대단원 마스터 (출판사 + 학년 + 학기별) */
 export interface MajorChapter {
   id: string;
   name: string;
   publisher_id: string;
   grade: string;
+  semester: string;
   created_at: string;
 }
 

@@ -2,12 +2,13 @@
 -- Voca Master - Supabase 테이블 스키마
 -- =============================================
 
--- 1. 카테고리 테이블 (중등/고등 > 학년 > 출판사 > 대단원 > 소단원)
+-- 1. 카테고리 테이블 (중등/고등 > 학년 > 출판사 > 학기 > 대단원 > 소단원)
 CREATE TABLE categories (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   level TEXT NOT NULL CHECK (level IN ('중등', '고등', '외부지문 및 프린트')),
   grade TEXT NOT NULL DEFAULT '',
   publisher TEXT NOT NULL DEFAULT '',
+  semester TEXT NOT NULL DEFAULT '',
   chapter TEXT NOT NULL DEFAULT '',
   sub_chapter TEXT NOT NULL DEFAULT '',
   school_name TEXT DEFAULT '',
@@ -35,6 +36,8 @@ CREATE TABLE exams (
   pass_count INT NOT NULL DEFAULT 0,
   category_ids UUID[] DEFAULT '{}',
   word_ids UUID[] DEFAULT '{}',
+  parent_exam_id UUID REFERENCES exams(id) ON DELETE SET NULL,
+  retake_number INT DEFAULT 0,
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -58,14 +61,15 @@ CREATE TABLE publishers (
   UNIQUE(name, level)
 );
 
--- 6. 대단원 마스터 (출판사 + 학년별)
+-- 6. 대단원 마스터 (출판사 + 학년 + 학기별)
 CREATE TABLE major_chapters (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   name TEXT NOT NULL,
   publisher_id UUID NOT NULL REFERENCES publishers(id) ON DELETE CASCADE,
   grade TEXT NOT NULL,
+  semester TEXT NOT NULL DEFAULT '1학기',
   created_at TIMESTAMPTZ DEFAULT NOW(),
-  UNIQUE(name, publisher_id, grade)
+  UNIQUE(name, publisher_id, grade, semester)
 );
 
 -- 7. 소단원 마스터 (대단원별)
@@ -98,6 +102,7 @@ CREATE INDEX idx_words_category ON words(category_id);
 CREATE INDEX idx_exam_words_exam ON exam_words(exam_id);
 CREATE INDEX idx_categories_user ON categories(user_id);
 CREATE INDEX idx_exams_user ON exams(user_id);
+CREATE INDEX idx_exams_parent ON exams(parent_exam_id);
 CREATE INDEX idx_publishers_level ON publishers(level);
 CREATE INDEX idx_major_chapters_publisher ON major_chapters(publisher_id);
 CREATE INDEX idx_major_chapters_grade ON major_chapters(grade);

@@ -7,6 +7,7 @@ const makeCategory = (overrides: Partial<Category> = {}): Category => ({
   level: '중등',
   grade: '중1',
   publisher: '비상',
+  semester: '1학기',
   chapter: 'Lesson 1',
   sub_chapter: '본문1',
   user_id: 'user-1',
@@ -17,7 +18,7 @@ const makeCategory = (overrides: Partial<Category> = {}): Category => ({
 describe('formatCategoryLabel', () => {
   it('중등/고등 카테고리를 올바르게 포맷한다', () => {
     const cat = makeCategory();
-    expect(formatCategoryLabel(cat)).toBe('중1 비상 Lesson 1 본문1');
+    expect(formatCategoryLabel(cat)).toBe('중1 비상 1학기 Lesson 1 본문1');
   });
 
   it('외부지문 카테고리를 올바르게 포맷한다', () => {

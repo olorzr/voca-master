@@ -29,7 +29,10 @@
       "Bash(git commit:*)",
       "Bash(git push:*)",
       "Read(//c/Users/이아라/Desktop/단어장//**)",
-      "Read(//c/Users/이아라/OneDrive/바탕 화면/**)"
+      "Read(//c/Users/이아라/OneDrive/바탕 화면/**)",
+      "Bash(find /c/Users/이아라/Desktop/개발/ara-word/src -name \"*.css\" -type f 2>/dev/null | head -20)",
+      "Bash(ls \"C:/Users/이아라/Desktop/개발/ara-word/src/app/\\(main\\)/words/\")",
+      "Bash(cd \"C:\\\\Users\\\\이아라\\\\Desktop\\\\개발\\\\ara-word\" && rm supabase-migration.sql supabase-migration-semester.sql)"
     ]
   }
 }
