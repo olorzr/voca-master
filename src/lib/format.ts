@@ -1,14 +1,23 @@
 import type { Category } from '@/types';
 import { EXTERNAL_LEVEL } from './constants';
 
+interface FormatCategoryOptions {
+  /** 출판사(교과서)명을 제외할지 여부 */
+  excludePublisher?: boolean;
+}
+
 /**
  * 카테고리를 사람이 읽을 수 있는 라벨로 변환한다.
  * @param cat - 변환할 카테고리 객체
+ * @param options - 포맷팅 옵션
  * @returns 포맷팅된 카테고리 라벨 문자열
  */
-export function formatCategoryLabel(cat: Category): string {
+export function formatCategoryLabel(cat: Category, options?: FormatCategoryOptions): string {
   if (cat.level === EXTERNAL_LEVEL) {
     return [cat.school_name || '외부', cat.chapter].filter(Boolean).join(' - ');
+  }
+  if (options?.excludePublisher) {
+    return [cat.grade, cat.semester, cat.chapter, cat.sub_chapter].filter(Boolean).join(' ');
   }
   return [cat.grade, cat.publisher, cat.semester, cat.chapter, cat.sub_chapter].filter(Boolean).join(' ');
 }

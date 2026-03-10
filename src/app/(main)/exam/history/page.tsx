@@ -6,11 +6,12 @@ import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth-context';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { FileText, Search, Trash2, X } from 'lucide-react';
+import { FileText, Trash2, Sparkles, Search } from 'lucide-react';
 import { toast } from 'sonner';
-import { ExamHistoryCard } from '@/components/exam';
+import { ExamHistoryCard, ExamHistoryFilter } from '@/components/exam';
 import { formatDateKR } from '@/lib/format';
+import { buildCategoryTree } from '@/lib/category-tree';
+import type { Category } from '@/types';
 
 interface ExamRecord {
   id: string;
@@ -20,6 +21,7 @@ interface ExamRecord {
   pass_count: number;
   parent_exam_id: string | null;
   retake_number: number;
+  category_ids: string[];
   created_at: string;
 }
 
@@ -30,33 +32,37 @@ export default function ExamHistoryPage() {
   const { user } = useAuth();
   const router = useRouter();
   const [exams, setExams] = useState<ExamRecord[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [retestingId, setRetestingId] = useState<string | null>(null);
+
+  // 필터 상태
   const [searchQuery, setSearchQuery] = useState('');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
+  const [filterCategoryIds, setFilterCategoryIds] = useState<string[]>([]);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
-  const loadExams = useCallback(async () => {
+  const loadData = useCallback(async () => {
     if (!user) return;
-    const { data } = await supabase
-      .from('exams')
-      .select('*')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false });
-    setExams(data ?? []);
+    const [examRes, catRes] = await Promise.all([
+      supabase.from('exams').select('*').eq('user_id', user.id).order('created_at', { ascending: false }),
+      supabase.from('categories').select('*').eq('user_id', user.id).order('level').order('grade'),
+    ]);
+    setExams(examRes.data ?? []);
+    setCategories(catRes.data ?? []);
     setLoading(false);
   }, [user]);
 
-  useEffect(() => {
-    loadExams();
-  }, [loadExams]);
+  useEffect(() => { loadData(); }, [loadData]);
 
-  /** 원본 시험 목록 (parent_exam_id가 없는 것) */
+  const categoryTree = useMemo(() => buildCategoryTree(categories), [categories]);
+
   const originalExams = useMemo(
     () => exams.filter((e) => !e.parent_exam_id),
     [exams],
   );
 
-  /** 원본 시험 ID → 재시험 배열 맵 (retake_number 오름차순) */
   const retakeMap = useMemo(() => {
     const map = new Map<string, ExamRecord[]>();
     for (const e of exams) {
@@ -71,133 +77,138 @@ export default function ExamHistoryPage() {
     return map;
   }, [exams]);
 
-  /** 검색어로 필터링된 원본 시험 목록 */
-  const filteredExams = useMemo(() => {
-    if (!searchQuery.trim()) return originalExams;
-    const q = searchQuery.trim().toLowerCase();
-    return originalExams.filter((e) => {
-      const titleMatch = e.title.toLowerCase().includes(q);
-      const dateMatch = formatDateKR(e.created_at).includes(q);
-      return titleMatch || dateMatch;
-    });
-  }, [originalExams, searchQuery]);
+  const hasActiveFilters = !!(searchQuery || dateFrom || dateTo || filterCategoryIds.length > 0);
 
-  /** 전체 선택/해제 토글 */
+  /** 모든 필터를 적용한 시험 목록 */
+  const filteredExams = useMemo(() => {
+    return originalExams.filter((e) => {
+      // 제목 검색
+      if (searchQuery.trim()) {
+        const q = searchQuery.trim().toLowerCase();
+        if (!e.title.toLowerCase().includes(q)) return false;
+      }
+      // 날짜 범위
+      if (dateFrom) {
+        const examDate = new Date(e.created_at).toISOString().slice(0, 10);
+        if (examDate < dateFrom) return false;
+      }
+      if (dateTo) {
+        const examDate = new Date(e.created_at).toISOString().slice(0, 10);
+        if (examDate > dateTo) return false;
+      }
+      // 카테고리 필터
+      if (filterCategoryIds.length > 0) {
+        const examCatIds = e.category_ids ?? [];
+        const hasOverlap = filterCategoryIds.some((id) => examCatIds.includes(id));
+        if (!hasOverlap) return false;
+      }
+      return true;
+    });
+  }, [originalExams, searchQuery, dateFrom, dateTo, filterCategoryIds]);
+
+  const handleCategoryToggle = useCallback((id: string) => {
+    setFilterCategoryIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
+    );
+    setSelectedIds(new Set());
+  }, []);
+
+  const clearFilters = useCallback(() => {
+    setSearchQuery('');
+    setDateFrom('');
+    setDateTo('');
+    setFilterCategoryIds([]);
+    setSelectedIds(new Set());
+  }, []);
+
   const toggleSelectAll = useCallback(() => {
     setSelectedIds((prev) => {
-      if (prev.size === filteredExams.length && filteredExams.length > 0) {
-        return new Set();
-      }
+      if (prev.size === filteredExams.length && filteredExams.length > 0) return new Set();
       return new Set(filteredExams.map((e) => e.id));
     });
   }, [filteredExams]);
 
-  /** 개별 시험 선택 토글 */
   const toggleSelect = useCallback((id: string) => {
     setSelectedIds((prev) => {
       const next = new Set(prev);
-      if (next.has(id)) {
-        next.delete(id);
-      } else {
-        next.add(id);
-      }
+      if (next.has(id)) { next.delete(id); } else { next.add(id); }
       return next;
     });
   }, []);
 
   const handleDelete = async (id: string) => {
-    if (!confirm('이 시험지를 삭제하시겠습니까?')) return;
+    if (!confirm('이 시험지를 삭제할까요? 🗑️')) return;
     await supabase.from('exams').delete().eq('id', id);
     setExams((prev) => prev.filter((e) => e.id !== id && e.parent_exam_id !== id));
     setSelectedIds((prev) => { const next = new Set(prev); next.delete(id); return next; });
-    toast.success('시험지가 삭제되었습니다.');
+    toast.success('시험지가 삭제되었어요! 🧹');
   };
 
-  /** 선택된 시험들을 일괄 삭제한다. */
   const handleBulkDelete = async () => {
     if (selectedIds.size === 0) return;
-    if (!confirm(`선택한 ${selectedIds.size}개의 시험지를 삭제하시겠습니까?\n관련 재시험도 함께 삭제됩니다.`)) return;
-
+    if (!confirm(`선택한 ${selectedIds.size}개의 시험지를 삭제할까요? 💭\n관련 재시험도 함께 삭제돼요!`)) return;
     const ids = Array.from(selectedIds);
     await supabase.from('exams').delete().in('id', ids);
     setExams((prev) => prev.filter((e) => !ids.includes(e.id) && (!e.parent_exam_id || !ids.includes(e.parent_exam_id))));
     setSelectedIds(new Set());
-    toast.success(`${ids.length}개의 시험지가 삭제되었습니다.`);
+    toast.success(`${ids.length}개의 시험지가 삭제되었어요! ✨`);
   };
 
-  /** 원본 시험의 단어를 셔플하여 재시험지를 생성한다. */
   const handleRetest = async (examId: string) => {
     if (!user) return;
     setRetestingId(examId);
-
     const originalExam = exams.find((e) => e.id === examId);
-    if (!originalExam) {
-      setRetestingId(null);
-      return;
-    }
+    if (!originalExam) { setRetestingId(null); return; }
 
     const { data: originalWords } = await supabase
-      .from('exam_words')
-      .select('*')
-      .eq('exam_id', examId)
-      .order('order_index');
-
+      .from('exam_words').select('*').eq('exam_id', examId).order('order_index');
     if (!originalWords || originalWords.length === 0) {
-      toast.error('원본 시험지의 단어를 불러올 수 없습니다.');
+      toast.error('원본 시험지의 단어를 불러올 수 없어요 😢');
       setRetestingId(null);
       return;
     }
 
-    // 기존 재시험 수를 세서 다음 차수 결정
     const existingRetakes = retakeMap.get(examId) ?? [];
     const nextNumber = existingRetakes.length + 1;
-
     const shuffled = [...originalWords].sort(() => Math.random() - 0.5);
 
-    const { data: newExam, error: examErr } = await supabase
-      .from('exams')
-      .insert({
-        title: `${originalExam.title} (재시험 ${nextNumber}차)`,
-        pass_percentage: originalExam.pass_percentage,
-        total_questions: originalExam.total_questions,
-        pass_count: originalExam.pass_count,
-        parent_exam_id: examId,
-        retake_number: nextNumber,
-        user_id: user.id,
-      })
-      .select()
-      .single();
+    const { data: newExam, error: examErr } = await supabase.from('exams').insert({
+      title: `${originalExam.title} (재시험 ${nextNumber}차)`,
+      pass_percentage: originalExam.pass_percentage,
+      total_questions: originalExam.total_questions,
+      pass_count: originalExam.pass_count,
+      category_ids: originalExam.category_ids,
+      parent_exam_id: examId,
+      retake_number: nextNumber,
+      user_id: user.id,
+    }).select().single();
 
     if (examErr || !newExam) {
-      toast.error('재시험지 생성 중 오류가 발생했습니다.');
+      toast.error('재시험지 생성 중 오류가 발생했어요 😥');
       setRetestingId(null);
       return;
     }
 
     const newWords = shuffled.map((w, i) => ({
-      exam_id: newExam.id,
-      word_id: w.word_id,
-      word: w.word,
-      meaning: w.meaning,
-      order_index: i,
+      exam_id: newExam.id, word_id: w.word_id, word: w.word, meaning: w.meaning, order_index: i,
     }));
-
     const { error: ewErr } = await supabase.from('exam_words').insert(newWords);
     if (ewErr) {
-      toast.error('재시험지 단어 저장 중 오류가 발생했습니다.');
+      toast.error('재시험지 단어 저장 중 오류가 발생했어요 😥');
       setRetestingId(null);
       return;
     }
 
-    toast.success(`재시험 ${nextNumber}차가 생성되었습니다.`);
+    toast.success(`재시험 ${nextNumber}차가 생성되었어요! 🎉`);
     setRetestingId(null);
     router.push(`/exam/view?id=${newExam.id}`);
   };
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-20">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+      <div className="flex flex-col items-center justify-center py-20 gap-3">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-pink-400" />
+        <p className="text-sm text-pink-400">불러오는 중... 💕</p>
       </div>
     );
   }
@@ -207,59 +218,56 @@ export default function ExamHistoryPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">시험 이력</h1>
+        <div className="flex items-center gap-2">
+          <h1 className="text-2xl font-bold text-gray-900">시험 이력</h1>
+          <Sparkles className="h-5 w-5 text-pink-400" />
+        </div>
         <Link href="/exam/create">
           <Button className="bg-primary hover:bg-primary-hover text-white">
             <FileText className="h-4 w-4 mr-2" />
-            새 시험지
+            새 시험지 ✏️
           </Button>
         </Link>
       </div>
 
-      {/* 검색 & 일괄 작업 바 */}
+      {/* 필터 영역 */}
       {originalExams.length > 0 && (
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-          <div className="relative flex-1 w-full sm:max-w-sm">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <Input
-              placeholder="제목, 날짜로 검색..."
-              value={searchQuery}
-              onChange={(e) => { setSearchQuery(e.target.value); setSelectedIds(new Set()); }}
-              className="pl-9 pr-8"
-              aria-label="시험 검색"
-            />
-            {searchQuery && (
-              <button
-                onClick={() => { setSearchQuery(''); setSelectedIds(new Set()); }}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                aria-label="검색어 지우기"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            )}
-          </div>
+        <>
+          <ExamHistoryFilter
+            searchQuery={searchQuery}
+            onSearchChange={(q) => { setSearchQuery(q); setSelectedIds(new Set()); }}
+            dateFrom={dateFrom}
+            dateTo={dateTo}
+            onDateFromChange={(d) => { setDateFrom(d); setSelectedIds(new Set()); }}
+            onDateToChange={(d) => { setDateTo(d); setSelectedIds(new Set()); }}
+            filterCategoryIds={filterCategoryIds}
+            onCategoryToggle={handleCategoryToggle}
+            onClearFilters={clearFilters}
+            categoryTree={categoryTree}
+            hasActiveFilters={hasActiveFilters}
+          />
+
+          {/* 일괄 작업 */}
           <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={toggleSelectAll}
-              className="text-xs"
-            >
-              {isAllSelected ? '전체 해제' : '전체 선택'}
+            <Button variant="outline" size="sm" onClick={toggleSelectAll} className="text-xs border-pink-200 hover:bg-pink-50">
+              {isAllSelected ? '💫 전체 해제' : '💫 전체 선택'}
             </Button>
             {selectedIds.size > 0 && (
               <Button
-                variant="outline"
-                size="sm"
-                onClick={handleBulkDelete}
-                className="text-xs text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700"
+                variant="outline" size="sm" onClick={handleBulkDelete}
+                className="text-xs text-red-500 border-red-200 hover:bg-red-50 hover:text-red-600"
               >
                 <Trash2 className="h-3.5 w-3.5 mr-1" />
                 {selectedIds.size}개 삭제
               </Button>
             )}
+            {hasActiveFilters && (
+              <span className="text-xs text-pink-400 ml-2">
+                🔎 {filteredExams.length}개의 결과
+              </span>
+            )}
           </div>
-        </div>
+        </>
       )}
 
       {filteredExams.length > 0 ? (
@@ -279,15 +287,19 @@ export default function ExamHistoryPage() {
         </div>
       ) : originalExams.length > 0 ? (
         <div className="text-center py-20 text-gray-400">
-          <Search className="h-12 w-12 mx-auto mb-3" />
-          <p className="text-sm">검색 결과가 없습니다.</p>
+          <Search className="h-10 w-10 mx-auto mb-3 text-pink-300" />
+          <p className="text-sm text-pink-400">검색 결과가 없어요 🥲</p>
+          <p className="text-xs text-gray-400 mt-1">다른 조건으로 검색해보세요!</p>
         </div>
       ) : (
-        <div className="text-center py-20 text-gray-400">
-          <FileText className="h-12 w-12 mx-auto mb-3" />
-          <p className="text-sm">아직 생성된 시험지가 없습니다.</p>
+        <div className="text-center py-20">
+          <div className="text-5xl mb-4">📝</div>
+          <p className="text-sm text-pink-400 font-medium">아직 시험지가 없어요!</p>
+          <p className="text-xs text-gray-400 mt-1">첫 시험지를 만들어볼까요? 🌸</p>
           <Link href="/exam/create">
-            <Button variant="outline" className="mt-4">시험지 만들기</Button>
+            <Button variant="outline" className="mt-4 border-pink-200 text-pink-500 hover:bg-pink-50">
+              시험지 만들기 ✨
+            </Button>
           </Link>
         </div>
       )}

@@ -61,7 +61,7 @@ function WordsPrintContent() {
       {/* 인쇄 영역 */}
       <div className="print-area">
         <WordBookView
-          sourceText={formatCategoryLabel(category)}
+          sourceText={formatCategoryLabel(category, { excludePublisher: true })}
           words={words}
         />
       </div>

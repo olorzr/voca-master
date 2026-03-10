@@ -21,7 +21,7 @@ export default function ExamPaperView({ exam, words, categories, showAnswer }: E
   const useSingleCol = words.length <= SINGLE_COL_THRESHOLD;
   const half = useSingleCol ? words.length : Math.ceil(words.length / 2);
   const today = new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' });
-  const sourceLabels = categories.map(formatCategoryLabel);
+  const sourceLabels = categories.map((c) => formatCategoryLabel(c));
 
   return (
     <div className="a4-page bg-white p-8 mx-auto flex flex-col">

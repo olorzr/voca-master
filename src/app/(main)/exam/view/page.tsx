@@ -109,7 +109,7 @@ function ExamViewContent() {
       <div className="print-area">
         {viewMode === 'wordbook' ? (
           <WordBookView
-            sourceText={categories.map(c => formatCategoryLabel(c)).join(', ')}
+            sourceText={categories.map(c => formatCategoryLabel(c, { excludePublisher: true })).join(', ')}
             words={examWords}
           />
         ) : (
