@@ -6,9 +6,11 @@ import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth-context';
 import { Button } from '@/components/ui/button';
-import { FileText } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { FileText, Search, Trash2, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { ExamHistoryCard } from '@/components/exam';
+import { formatDateKR } from '@/lib/format';
 
 interface ExamRecord {
   id: string;
@@ -30,6 +32,8 @@ export default function ExamHistoryPage() {
   const [exams, setExams] = useState<ExamRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [retestingId, setRetestingId] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   const loadExams = useCallback(async () => {
     if (!user) return;
@@ -67,11 +71,58 @@ export default function ExamHistoryPage() {
     return map;
   }, [exams]);
 
+  /** 검색어로 필터링된 원본 시험 목록 */
+  const filteredExams = useMemo(() => {
+    if (!searchQuery.trim()) return originalExams;
+    const q = searchQuery.trim().toLowerCase();
+    return originalExams.filter((e) => {
+      const titleMatch = e.title.toLowerCase().includes(q);
+      const dateMatch = formatDateKR(e.created_at).includes(q);
+      return titleMatch || dateMatch;
+    });
+  }, [originalExams, searchQuery]);
+
+  /** 전체 선택/해제 토글 */
+  const toggleSelectAll = useCallback(() => {
+    setSelectedIds((prev) => {
+      if (prev.size === filteredExams.length && filteredExams.length > 0) {
+        return new Set();
+      }
+      return new Set(filteredExams.map((e) => e.id));
+    });
+  }, [filteredExams]);
+
+  /** 개별 시험 선택 토글 */
+  const toggleSelect = useCallback((id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  }, []);
+
   const handleDelete = async (id: string) => {
     if (!confirm('이 시험지를 삭제하시겠습니까?')) return;
     await supabase.from('exams').delete().eq('id', id);
     setExams((prev) => prev.filter((e) => e.id !== id && e.parent_exam_id !== id));
+    setSelectedIds((prev) => { const next = new Set(prev); next.delete(id); return next; });
     toast.success('시험지가 삭제되었습니다.');
+  };
+
+  /** 선택된 시험들을 일괄 삭제한다. */
+  const handleBulkDelete = async () => {
+    if (selectedIds.size === 0) return;
+    if (!confirm(`선택한 ${selectedIds.size}개의 시험지를 삭제하시겠습니까?\n관련 재시험도 함께 삭제됩니다.`)) return;
+
+    const ids = Array.from(selectedIds);
+    await supabase.from('exams').delete().in('id', ids);
+    setExams((prev) => prev.filter((e) => !ids.includes(e.id) && (!e.parent_exam_id || !ids.includes(e.parent_exam_id))));
+    setSelectedIds(new Set());
+    toast.success(`${ids.length}개의 시험지가 삭제되었습니다.`);
   };
 
   /** 원본 시험의 단어를 셔플하여 재시험지를 생성한다. */
@@ -151,6 +202,8 @@ export default function ExamHistoryPage() {
     );
   }
 
+  const isAllSelected = filteredExams.length > 0 && selectedIds.size === filteredExams.length;
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -163,9 +216,55 @@ export default function ExamHistoryPage() {
         </Link>
       </div>
 
-      {originalExams.length > 0 ? (
+      {/* 검색 & 일괄 작업 바 */}
+      {originalExams.length > 0 && (
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+          <div className="relative flex-1 w-full sm:max-w-sm">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <Input
+              placeholder="제목, 날짜로 검색..."
+              value={searchQuery}
+              onChange={(e) => { setSearchQuery(e.target.value); setSelectedIds(new Set()); }}
+              className="pl-9 pr-8"
+              aria-label="시험 검색"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => { setSearchQuery(''); setSelectedIds(new Set()); }}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                aria-label="검색어 지우기"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={toggleSelectAll}
+              className="text-xs"
+            >
+              {isAllSelected ? '전체 해제' : '전체 선택'}
+            </Button>
+            {selectedIds.size > 0 && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleBulkDelete}
+                className="text-xs text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700"
+              >
+                <Trash2 className="h-3.5 w-3.5 mr-1" />
+                {selectedIds.size}개 삭제
+              </Button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {filteredExams.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {originalExams.map((exam) => (
+          {filteredExams.map((exam) => (
             <ExamHistoryCard
               key={exam.id}
               exam={exam}
@@ -173,8 +272,15 @@ export default function ExamHistoryPage() {
               onDelete={handleDelete}
               onRetest={handleRetest}
               retesting={retestingId === exam.id}
+              selected={selectedIds.has(exam.id)}
+              onToggleSelect={toggleSelect}
             />
           ))}
+        </div>
+      ) : originalExams.length > 0 ? (
+        <div className="text-center py-20 text-gray-400">
+          <Search className="h-12 w-12 mx-auto mb-3" />
+          <p className="text-sm">검색 결과가 없습니다.</p>
         </div>
       ) : (
         <div className="text-center py-20 text-gray-400">

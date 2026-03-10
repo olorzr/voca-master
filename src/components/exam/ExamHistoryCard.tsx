@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { Eye, Trash2, FileText, Calendar, RefreshCw, CornerDownRight } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
 import { formatDateKR } from '@/lib/format';
 
 interface ExamRecord {
@@ -22,17 +23,28 @@ interface ExamHistoryCardProps {
   onDelete: (id: string) => void;
   onRetest: (id: string) => void;
   retesting?: boolean;
+  selected?: boolean;
+  onToggleSelect?: (id: string) => void;
 }
 
 /**
  * 시험지 이력을 카드로 표시하는 컴포넌트. 재시험은 원본 아래 스레드로 표시.
  */
-export default function ExamHistoryCard({ exam, retakes = [], onDelete, onRetest, retesting }: ExamHistoryCardProps) {
+export default function ExamHistoryCard({ exam, retakes = [], onDelete, onRetest, retesting, selected, onToggleSelect }: ExamHistoryCardProps) {
   return (
     <div className="space-y-0">
       {/* 원본 시험 카드 */}
-      <div className="group relative bg-white border border-gray-100 rounded-xl p-5 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
+      <div className={`group relative bg-white border rounded-xl p-5 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 ${selected ? 'border-primary ring-1 ring-primary/30' : 'border-gray-100'}`}>
         <div className="flex items-start gap-3">
+          {onToggleSelect && (
+            <div className="shrink-0 pt-1" onClick={(e) => e.stopPropagation()}>
+              <Checkbox
+                checked={selected}
+                onCheckedChange={() => onToggleSelect(exam.id)}
+                aria-label={`${exam.title} 선택`}
+              />
+            </div>
+          )}
           <div className="shrink-0 w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
             <FileText className="h-5 w-5 text-primary" />
           </div>
