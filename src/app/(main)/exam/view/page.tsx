@@ -4,6 +4,7 @@ import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import type { ExamWord, Category } from '@/types';
+import { formatCategoryLabel } from '@/lib/format';
 import { ExamPaperView, WordBookView } from '@/components/exam';
 import { Button } from '@/components/ui/button';
 import { Printer, FileText, ArrowLeft } from 'lucide-react';
@@ -107,7 +108,10 @@ function ExamViewContent() {
       {/* 인쇄 영역 */}
       <div className="print-area">
         {viewMode === 'wordbook' ? (
-          <WordBookView exam={exam} words={examWords} />
+          <WordBookView
+            sourceText={categories.map(c => formatCategoryLabel(c)).join(', ')}
+            words={examWords}
+          />
         ) : (
           <ExamPaperView exam={exam} words={examWords} categories={categories} showAnswer={showAnswer} />
         )}

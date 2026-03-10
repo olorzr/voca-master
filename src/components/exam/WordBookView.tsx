@@ -1,18 +1,22 @@
-import type { ExamWord } from '@/types';
 import Image from 'next/image';
 
 /** 단일 열에 넣을 최대 문항 수. 이 이하이면 1열로 표시 */
 const SINGLE_COL_THRESHOLD = 20;
 
+interface WordBookWord {
+  id: string;
+  word: string;
+  meaning: string;
+}
+
 interface WordBookViewProps {
-  exam: {
-    title: string;
-  };
-  words: ExamWord[];
+  /** 출제범위 텍스트 (카테고리 라벨) */
+  sourceText?: string;
+  words: WordBookWord[];
 }
 
 /** 단어장 뷰 (핑크 테마) */
-export default function WordBookView({ exam, words }: WordBookViewProps) {
+export default function WordBookView({ sourceText, words }: WordBookViewProps) {
   const useSingleCol = words.length <= SINGLE_COL_THRESHOLD;
   const half = useSingleCol ? words.length : Math.ceil(words.length / 2);
 
@@ -22,16 +26,19 @@ export default function WordBookView({ exam, words }: WordBookViewProps) {
       <div className="flex items-start justify-between mb-4">
         <div>
           <h2 className="text-[18px] font-extrabold text-gray-900 leading-tight">
-            {exam.title}
+            단어장
           </h2>
           <p className="text-[10px] text-gray-400 mt-0.5 tracking-widest">아라국어논술</p>
         </div>
         <Image src="/logo.png" alt="아라국어논술" width={52} height={52} className="object-contain" />
       </div>
 
-      {/* 단어 수 바 */}
-      <div className="border-t-[1.5px] border-b-[1.5px] border-[#F5C6D8] py-2.5 mb-4 text-center text-[11px] text-gray-500 tracking-wider">
-        WORD BOOK · <strong className="text-gray-800">{words.length}</strong>개
+      {/* 출제범위 바 */}
+      <div className="border-t-[1.5px] border-b-[1.5px] border-[#F5C6D8] py-2.5 mb-4 text-[11px] text-gray-500">
+        <div className="flex justify-between items-center">
+          <span>출제범위 <strong className="text-gray-800 ml-1">{sourceText || '-'}</strong></span>
+          <span>총 <strong className="text-gray-800">{words.length}</strong>개</span>
+        </div>
       </div>
 
       {/* 단어 테이블 */}

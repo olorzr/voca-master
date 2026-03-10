@@ -12,7 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { WordCardGrid, CategoryTree, MoveWordsDialog } from '@/components/words';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
-import { PlusCircle, Search, Settings, CheckSquare, X, ArrowRightLeft, Trash2 } from 'lucide-react';
+import { PlusCircle, Search, Settings, CheckSquare, X, ArrowRightLeft, Trash2, BookOpen } from 'lucide-react';
 import { toast } from 'sonner';
 import { formatCategoryLabel } from '@/lib/format';
 import { buildCategoryTree } from '@/lib/category-tree';
@@ -205,15 +205,27 @@ export default function WordsPage() {
                   <Badge variant="outline">{words.length}개</Badge>
                 </div>
                 {!selectMode ? (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setSelectMode(true)}
-                    disabled={words.length === 0}
-                  >
-                    <CheckSquare className="h-4 w-4 mr-1" />
-                    단어 선택
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    <Link href={`/words/print?categoryId=${selectedCategory.id}`}>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={words.length === 0}
+                      >
+                        <BookOpen className="h-4 w-4 mr-1" />
+                        단어장
+                      </Button>
+                    </Link>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setSelectMode(true)}
+                      disabled={words.length === 0}
+                    >
+                      <CheckSquare className="h-4 w-4 mr-1" />
+                      단어 선택
+                    </Button>
+                  </div>
                 ) : (
                   <Button variant="outline" size="sm" onClick={exitSelectMode}>
                     <X className="h-4 w-4 mr-1" />
