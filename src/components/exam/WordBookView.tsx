@@ -10,7 +10,7 @@ interface WordBookWord {
 }
 
 interface WordBookViewProps {
-  /** 출제범위 텍스트 (카테고리 라벨) */
+  /** 소단원 제목 텍스트 (카테고리 라벨) */
   sourceText?: string;
   words: WordBookWord[];
 }
@@ -33,11 +33,11 @@ export default function WordBookView({ sourceText, words }: WordBookViewProps) {
         <Image src="/logo.png" alt="아라국어논술" width={52} height={52} className="object-contain" />
       </div>
 
-      {/* 출제범위 바 */}
-      <div className="border-t-[1.5px] border-b-[1.5px] border-[#F5C6D8] py-2.5 mb-4 text-[11px] text-gray-500">
+      {/* 소단원 제목 바 */}
+      <div className="border-t-[1.5px] border-b-[1.5px] border-[#F5C6D8] py-2.5 mb-4 text-[11px]">
         <div className="flex justify-between items-center">
-          <span>출제범위 <strong className="text-gray-800 ml-1">{sourceText || '-'}</strong></span>
-          <span>총 <strong className="text-gray-800">{words.length}</strong>개</span>
+          <strong className="text-gray-800">{sourceText || '-'}</strong>
+          <span className="text-gray-500">총 <strong className="text-gray-800">{words.length}</strong>개</span>
         </div>
       </div>
 

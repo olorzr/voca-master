@@ -22,8 +22,6 @@ export default function ExamPaperView({ exam, words, categories, showAnswer }: E
   const half = useSingleCol ? words.length : Math.ceil(words.length / 2);
   const today = new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' });
   const sourceLabels = categories.map(formatCategoryLabel);
-  const sourceText = sourceLabels.join(', ');
-  const totalScore = 100;
 
   return (
     <div className="a4-page bg-white p-8 mx-auto flex flex-col">
@@ -46,13 +44,17 @@ export default function ExamPaperView({ exam, words, categories, showAnswer }: E
             <span>날짜 <span className="ml-2 text-gray-800">{today}</span></span>
             <span className="ml-auto exam-score-box">
               <span className="inline-block border-b border-gray-400 w-10 text-center" />
-              <span className="text-gray-800 font-bold"> / {totalScore}</span>
+              <span className="text-gray-800 font-bold"> / {words.length}개</span>
             </span>
           </div>
         )}
         <div className="flex justify-between text-[11px] text-gray-500">
-          <span>총 <strong className="text-gray-800">{words.length}</strong> 문항</span>
-          <span>
+          <div className="flex flex-col gap-0.5">
+            {sourceLabels.map((label, i) => (
+              <span key={i} className="text-gray-800 font-medium">{label}</span>
+            ))}
+          </div>
+          <span className="self-end">
             합격 <strong className="text-gray-800">{exam.pass_count}개</strong> 이상 ({exam.pass_percentage}%)
           </span>
         </div>
@@ -85,11 +87,8 @@ export default function ExamPaperView({ exam, words, categories, showAnswer }: E
         ))}
       </div>
 
-      {/* 푸터: 출처 + 학원명 */}
+      {/* 푸터: 학원명 */}
       <div className="exam-footer mt-auto pt-4">
-        {sourceText && (
-          <p className="exam-footer__source">{sourceText}</p>
-        )}
         <div className="flex items-center justify-center gap-1.5">
           <Image src="/logo.png" alt="아라국어논술" width={20} height={20} className="object-contain" />
           <span>아라국어논술</span>
