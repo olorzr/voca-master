@@ -209,7 +209,7 @@ export default function CategoryForm({
                   <SelectTrigger><SelectValue placeholder="출판사 선택" /></SelectTrigger>
                   <SelectContent>
                     {publishers.map((p) => (
-                      <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                      <SelectItem key={p.id} value={p.id} label={p.name}>{p.name}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -220,7 +220,7 @@ export default function CategoryForm({
                   <SelectTrigger><SelectValue placeholder="대단원 선택" /></SelectTrigger>
                   <SelectContent>
                     {chapters.map((c) => (
-                      <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                      <SelectItem key={c.id} value={c.id} label={c.name}>{c.name}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -231,7 +231,7 @@ export default function CategoryForm({
                   <SelectTrigger><SelectValue placeholder="소단원 선택" /></SelectTrigger>
                   <SelectContent>
                     {subChaptersList.map((s) => (
-                      <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                      <SelectItem key={s.id} value={s.id} label={s.name}>{s.name}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -245,7 +245,7 @@ export default function CategoryForm({
                   <SelectTrigger><SelectValue placeholder="학교 선택" /></SelectTrigger>
                   <SelectContent>
                     {schools.map((s) => (
-                      <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                      <SelectItem key={s.id} value={s.id} label={s.name}>{s.name}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -256,7 +256,7 @@ export default function CategoryForm({
                   <SelectTrigger><SelectValue placeholder="프린트/작품명 선택" /></SelectTrigger>
                   <SelectContent>
                     {materials.map((m) => (
-                      <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>
+                      <SelectItem key={m.id} value={m.id} label={m.name}>{m.name}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
