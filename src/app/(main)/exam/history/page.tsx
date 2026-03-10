@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth-context';
 import { Button } from '@/components/ui/button';
-import { FileText, Trash2, Search } from 'lucide-react';
+import { FileText, Trash2, Search, CheckSquare, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { ExamHistoryCard, ExamHistoryFilter } from '@/components/exam';
 import { formatDateKR } from '@/lib/format';
@@ -41,6 +41,9 @@ export default function ExamHistoryPage() {
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
   const [filterCategoryIds, setFilterCategoryIds] = useState<string[]>([]);
+
+  // 선택 모드 상태
+  const [selectMode, setSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   const loadData = useCallback(async () => {
@@ -82,12 +85,10 @@ export default function ExamHistoryPage() {
   /** 모든 필터를 적용한 시험 목록 */
   const filteredExams = useMemo(() => {
     return originalExams.filter((e) => {
-      // 제목 검색
       if (searchQuery.trim()) {
         const q = searchQuery.trim().toLowerCase();
         if (!e.title.toLowerCase().includes(q)) return false;
       }
-      // 날짜 범위
       if (dateFrom) {
         const examDate = new Date(e.created_at).toISOString().slice(0, 10);
         if (examDate < dateFrom) return false;
@@ -96,7 +97,6 @@ export default function ExamHistoryPage() {
         const examDate = new Date(e.created_at).toISOString().slice(0, 10);
         if (examDate > dateTo) return false;
       }
-      // 카테고리 필터
       if (filterCategoryIds.length > 0) {
         const examCatIds = e.category_ids ?? [];
         const hasOverlap = filterCategoryIds.some((id) => examCatIds.includes(id));
@@ -110,7 +110,6 @@ export default function ExamHistoryPage() {
     setFilterCategoryIds((prev) =>
       prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
     );
-    setSelectedIds(new Set());
   }, []);
 
   const clearFilters = useCallback(() => {
@@ -118,8 +117,13 @@ export default function ExamHistoryPage() {
     setDateFrom('');
     setDateTo('');
     setFilterCategoryIds([]);
-    setSelectedIds(new Set());
   }, []);
+
+  /** 선택 모드 종료 */
+  const exitSelectMode = () => {
+    setSelectMode(false);
+    setSelectedIds(new Set());
+  };
 
   const toggleSelectAll = useCallback(() => {
     setSelectedIds((prev) => {
@@ -150,8 +154,8 @@ export default function ExamHistoryPage() {
     const ids = Array.from(selectedIds);
     await supabase.from('exams').delete().in('id', ids);
     setExams((prev) => prev.filter((e) => !ids.includes(e.id) && (!e.parent_exam_id || !ids.includes(e.parent_exam_id))));
-    setSelectedIds(new Set());
     toast.success(`${ids.length}개의 시험지가 삭제되었어요!`);
+    exitSelectMode();
   };
 
   const handleRetest = async (examId: string) => {
@@ -194,7 +198,7 @@ export default function ExamHistoryPage() {
     }));
     const { error: ewErr } = await supabase.from('exam_words').insert(newWords);
     if (ewErr) {
-      toast.error('재시험지 단어 저장 중 오류가 발생했어요 😥');
+      toast.error('재시험지 단어 저장 중 오류가 발생했어요');
       setRetestingId(null);
       return;
     }
@@ -207,8 +211,8 @@ export default function ExamHistoryPage() {
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center py-20 gap-3">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-pink-400" />
-        <p className="text-sm text-pink-400">불러오는 중...</p>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+        <p className="text-sm text-gray-400">불러오는 중...</p>
       </div>
     );
   }
@@ -218,9 +222,7 @@ export default function ExamHistoryPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <h1 className="text-2xl font-bold text-gray-900">📋 시험 이력</h1>
-        </div>
+        <h1 className="text-2xl font-bold text-gray-900">시험 이력</h1>
         <Link href="/exam/create">
           <Button className="bg-primary hover:bg-primary-hover text-white">
             <FileText className="h-4 w-4 mr-2" />
@@ -246,22 +248,46 @@ export default function ExamHistoryPage() {
             hasActiveFilters={hasActiveFilters}
           />
 
-          {/* 일괄 작업 */}
+          {/* 선택 모드 토글 */}
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={toggleSelectAll} className="text-xs border-pink-200 hover:bg-pink-50">
-              {isAllSelected ? '전체 해제' : '전체 선택'}
-            </Button>
-            {selectedIds.size > 0 && (
+            {!selectMode ? (
               <Button
-                variant="outline" size="sm" onClick={handleBulkDelete}
-                className="text-xs text-red-500 border-red-200 hover:bg-red-50 hover:text-red-600"
+                variant="outline"
+                size="sm"
+                onClick={() => setSelectMode(true)}
+                disabled={filteredExams.length === 0}
               >
-                <Trash2 className="h-3.5 w-3.5 mr-1" />
-                {selectedIds.size}개 삭제
+                <CheckSquare className="h-4 w-4 mr-1" />
+                선택
               </Button>
+            ) : (
+              <>
+                <Button variant="outline" size="sm" onClick={exitSelectMode}>
+                  <X className="h-4 w-4 mr-1" />
+                  선택 취소
+                </Button>
+                <div className="flex items-center gap-2 bg-gray-50 rounded-lg px-4 py-2">
+                  <Button variant="ghost" size="sm" onClick={toggleSelectAll} className="text-xs">
+                    {isAllSelected ? '전체 해제' : '전체 선택'}
+                  </Button>
+                  <span className="text-sm text-gray-500">
+                    {selectedIds.size}개 선택됨
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleBulkDelete}
+                    disabled={selectedIds.size === 0}
+                    className="text-xs text-red-500 border-red-200 hover:bg-red-50 hover:text-red-600 ml-auto"
+                  >
+                    <Trash2 className="h-3.5 w-3.5 mr-1" />
+                    {selectedIds.size}개 삭제
+                  </Button>
+                </div>
+              </>
             )}
             {hasActiveFilters && (
-              <span className="text-xs text-pink-400 ml-2">
+              <span className="text-xs text-gray-400 ml-2">
                 {filteredExams.length}개의 결과
               </span>
             )}
@@ -279,6 +305,7 @@ export default function ExamHistoryPage() {
               onDelete={handleDelete}
               onRetest={handleRetest}
               retesting={retestingId === exam.id}
+              selectMode={selectMode}
               selected={selectedIds.has(exam.id)}
               onToggleSelect={toggleSelect}
             />
@@ -286,17 +313,17 @@ export default function ExamHistoryPage() {
         </div>
       ) : originalExams.length > 0 ? (
         <div className="text-center py-20 text-gray-400">
-          <Search className="h-10 w-10 mx-auto mb-3 text-pink-300" />
-          <p className="text-sm text-pink-400">검색 결과가 없어요</p>
+          <Search className="h-10 w-10 mx-auto mb-3 text-gray-300" />
+          <p className="text-sm text-gray-400">검색 결과가 없어요</p>
           <p className="text-xs text-gray-400 mt-1">다른 조건으로 검색해보세요!</p>
         </div>
       ) : (
         <div className="text-center py-20">
-          <div className="text-5xl mb-4">📝</div>
-          <p className="text-sm text-pink-400 font-medium">아직 시험지가 없어요!</p>
+          <div className="text-5xl mb-4">-</div>
+          <p className="text-sm text-gray-500 font-medium">아직 시험지가 없어요!</p>
           <p className="text-xs text-gray-400 mt-1">첫 시험지를 만들어볼까요?</p>
           <Link href="/exam/create">
-            <Button variant="outline" className="mt-4 border-pink-200 text-pink-500 hover:bg-pink-50">
+            <Button variant="outline" className="mt-4">
               시험지 만들기
             </Button>
           </Link>

@@ -123,6 +123,19 @@ export default function WordsPage() {
     exitSelectMode();
   };
 
+  /** 카테고리 삭제 (관련 단어도 함께 삭제) */
+  const handleDeleteCategory = async () => {
+    if (!selectedCategory) return;
+    const label = formatCategoryLabel(selectedCategory);
+    if (!confirm(`"${label}" 카테고리를 삭제하시겠습니까?\n포함된 단어 ${words.length}개도 함께 삭제됩니다.`)) return;
+    await supabase.from('words').delete().eq('category_id', selectedCategory.id);
+    await supabase.from('categories').delete().eq('id', selectedCategory.id);
+    setCategories((prev) => prev.filter((c) => c.id !== selectedCategory.id));
+    setSelectedCategory(null);
+    setWords([]);
+    toast.success('카테고리가 삭제되었습니다.');
+  };
+
   /** 선택한 단어를 다른 카테고리로 이동 */
   const handleMoveConfirm = async (targetCategory: Category) => {
     const ids = Array.from(selectedWordIds);
@@ -224,6 +237,15 @@ export default function WordsPage() {
                     >
                       <CheckSquare className="h-4 w-4 mr-1" />
                       단어 선택
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-red-500 hover:text-red-600 hover:bg-red-50"
+                      onClick={handleDeleteCategory}
+                    >
+                      <Trash2 className="h-4 w-4 mr-1" />
+                      카테고리 삭제
                     </Button>
                   </div>
                 ) : (

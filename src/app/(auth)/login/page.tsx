@@ -34,7 +34,7 @@ function ErrorMessage() {
  */
 export default function LoginPage() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-pink-50 via-white to-teal-50 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-white px-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">

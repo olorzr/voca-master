@@ -84,7 +84,7 @@ export default function DashboardPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {quickActions.map((action) => (
             <Link key={action.href} href={action.href}>
-              <Card className="hover:border-pink-300 hover:shadow-md hover:shadow-pink-100/50 transition-all cursor-pointer h-full">
+              <Card className="hover:border-primary/50 hover:shadow-md hover:shadow-primary/10 transition-all cursor-pointer h-full">
                 <CardContent className="pt-6 flex flex-col items-center text-center gap-3">
                   <action.icon className="h-10 w-10 text-primary" />
                   <div>

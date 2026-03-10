@@ -39,18 +39,18 @@ export default function ExamHistoryFilter({
       <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
         {/* 제목 검색 */}
         <div className="relative flex-1 w-full sm:max-w-xs">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-pink-300" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
           <Input
             placeholder="시험지 제목으로 검색..."
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
-            className="pl-9 pr-8 border-pink-200 focus:border-pink-400 focus:ring-pink-200"
+            className="pl-9 pr-8"
             aria-label="시험 제목 검색"
           />
           {searchQuery && (
             <button
               onClick={() => onSearchChange('')}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-pink-500"
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
               aria-label="검색어 지우기"
             >
               <X className="h-4 w-4" />
@@ -60,12 +60,12 @@ export default function ExamHistoryFilter({
 
         {/* 날짜 범위 필터 */}
         <div className="flex items-center gap-2">
-          <Calendar className="h-4 w-4 text-pink-400 shrink-0" />
+          <Calendar className="h-4 w-4 text-gray-400 shrink-0" />
           <input
             type="date"
             value={dateFrom}
             onChange={(e) => onDateFromChange(e.target.value)}
-            className="text-xs border border-pink-200 rounded-md px-2 py-1.5 text-gray-600 focus:outline-none focus:border-pink-400"
+            className="text-xs border border-gray-200 rounded-md px-2 py-1.5 text-gray-600 focus:outline-none focus:border-primary"
             aria-label="시작 날짜"
           />
           <span className="text-xs text-gray-400">~</span>
@@ -73,7 +73,7 @@ export default function ExamHistoryFilter({
             type="date"
             value={dateTo}
             onChange={(e) => onDateToChange(e.target.value)}
-            className="text-xs border border-pink-200 rounded-md px-2 py-1.5 text-gray-600 focus:outline-none focus:border-pink-400"
+            className="text-xs border border-gray-200 rounded-md px-2 py-1.5 text-gray-600 focus:outline-none focus:border-primary"
             aria-label="종료 날짜"
           />
         </div>
@@ -83,12 +83,12 @@ export default function ExamHistoryFilter({
           variant="outline"
           size="sm"
           onClick={() => setShowCategoryTree(!showCategoryTree)}
-          className={`text-xs gap-1.5 ${filterCategoryIds.length > 0 ? 'border-pink-400 text-pink-600 bg-pink-50' : 'border-pink-200 text-gray-600'}`}
+          className={`text-xs gap-1.5 ${filterCategoryIds.length > 0 ? 'border-primary text-primary bg-primary/5' : 'text-gray-600'}`}
         >
           <FolderTree className="h-3.5 w-3.5" />
           범위 선택
           {filterCategoryIds.length > 0 && (
-            <span className="bg-pink-500 text-white text-[10px] rounded-full px-1.5 py-0.5 leading-none">
+            <span className="bg-primary text-white text-[10px] rounded-full px-1.5 py-0.5 leading-none">
               {filterCategoryIds.length}
             </span>
           )}
@@ -104,7 +104,7 @@ export default function ExamHistoryFilter({
             variant="ghost"
             size="sm"
             onClick={onClearFilters}
-            className="text-xs text-pink-500 hover:text-pink-700 hover:bg-pink-50"
+            className="text-xs text-gray-500 hover:text-gray-700 hover:bg-gray-50"
           >
             초기화
           </Button>
@@ -113,10 +113,10 @@ export default function ExamHistoryFilter({
 
       {/* 카테고리 트리 패널 */}
       {showCategoryTree && (
-        <div className="border border-pink-200 rounded-xl bg-pink-50/30 p-4 max-h-64 overflow-y-auto">
+        <div className="border border-gray-200 rounded-xl bg-gray-50/30 p-4 max-h-64 overflow-y-auto">
           {categoryTree.length > 0 ? (
             <>
-              <p className="text-xs text-pink-400 mb-2">출제 범위를 선택해서 필터링하세요</p>
+              <p className="text-xs text-gray-400 mb-2">출제 범위를 선택해서 필터링하세요</p>
               <CategoryTree
                 nodes={categoryTree}
                 selectedIds={filterCategoryIds}

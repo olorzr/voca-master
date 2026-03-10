@@ -29,7 +29,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
   if (!user) return null;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-50/60 via-white to-teal-50/40">
+    <div className="min-h-screen bg-white">
       <Header />
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {children}
