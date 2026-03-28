@@ -351,7 +351,7 @@
   /* 푸터를 모든 인쇄 페이지 하단에 고정 */
   .exam-print-footer {
     position: fixed;
-    bottom: -20mm;
+    bottom: -8mm;
     left: 0;
     right: 0;
     border-top: 1px solid #ccc;
