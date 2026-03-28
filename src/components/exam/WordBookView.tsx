@@ -1,9 +1,9 @@
 import Image from 'next/image';
 
 /** 첫 페이지 열당 단어 수 (헤더/정보바 공간) */
-const FIRST_PAGE_PER_COL = 20;
+const FIRST_PAGE_PER_COL = 15;
 /** 이후 페이지 열당 단어 수 */
-const NEXT_PAGE_PER_COL = 26;
+const NEXT_PAGE_PER_COL = 21;
 /** 단일 열 최대 문항 수 기준 */
 const SINGLE_COL_THRESHOLD = 20;
 
