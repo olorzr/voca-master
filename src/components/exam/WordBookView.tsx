@@ -75,7 +75,8 @@ export default function WordBookView({ sourceText, words }: WordBookViewProps) {
       {/* 푸터 — 인쇄 시 모든 페이지 하단에 반복 */}
       <div className="exam-print-footer">
         <div className="flex items-center justify-center gap-1.5">
-          <Image src="/logo.png" alt="아라국어논술" width={20} height={20} className="object-contain" />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo.png" alt="아라국어논술" width={20} height={20} className="object-contain" />
           <span>아라국어논술</span>
         </div>
       </div>
