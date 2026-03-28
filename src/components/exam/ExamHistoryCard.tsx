@@ -1,7 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { Eye, Trash2, FileText, Calendar, RefreshCw, CornerDownRight } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Trash2, FileText, Calendar, CornerDownRight } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { formatDateKR } from '@/lib/format';
@@ -32,17 +33,21 @@ interface ExamHistoryCardProps {
  * 시험지 이력을 카드로 표시하는 컴포넌트. 재시험은 원본 아래 스레드로 표시.
  */
 export default function ExamHistoryCard({ exam, retakes = [], onDelete, onRetest, retesting, selectMode, selected, onToggleSelect }: ExamHistoryCardProps) {
+  const router = useRouter();
+
   const handleCardClick = () => {
     if (selectMode && onToggleSelect) {
       onToggleSelect(exam.id);
+      return;
     }
+    router.push(`/exam/view?id=${exam.id}`);
   };
 
   return (
     <div className="space-y-0">
-      {/* 원본 시험 카드 */}
+      {/* 원본 시험 카드 — 클릭 시 시험지 보기로 이동 */}
       <div
-        className={`group relative bg-white border rounded-xl p-5 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 ${selected ? 'border-primary ring-1 ring-primary/30' : 'border-gray-200'} ${selectMode ? 'cursor-pointer' : ''}`}
+        className={`group relative bg-white border rounded-xl p-5 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer ${selected ? 'border-primary ring-1 ring-primary/30' : 'border-gray-200'}`}
         onClick={handleCardClick}
       >
         <div className="flex items-start gap-3">
@@ -59,7 +64,7 @@ export default function ExamHistoryCard({ exam, retakes = [], onDelete, onRetest
             <FileText className="h-5 w-5 text-primary" />
           </div>
           <div className="flex-1 min-w-0">
-            <h3 className="font-bold text-gray-900 truncate pr-16">{exam.title}</h3>
+            <h3 className="font-bold text-gray-900 truncate pr-24">{exam.title}</h3>
             <div className="flex items-center gap-1.5 mt-1 text-xs text-gray-400">
               <Calendar className="h-3 w-3 text-gray-300" />
               <span>{formatDateKR(exam.created_at)}</span>
@@ -78,24 +83,16 @@ export default function ExamHistoryCard({ exam, retakes = [], onDelete, onRetest
 
         {!selectMode && (
           <div className="absolute top-4 right-4 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-            <Link href={`/exam/view?id=${exam.id}`}>
-              <button
-                className="p-1.5 rounded-md hover:bg-primary/5 hover:text-primary text-gray-400 transition-colors"
-                aria-label="시험지 보기"
-              >
-                <Eye className="h-4 w-4" />
-              </button>
-            </Link>
             <button
-              onClick={() => onRetest(exam.id)}
+              onClick={(e) => { e.stopPropagation(); onRetest(exam.id); }}
               disabled={retesting}
-              className="p-1.5 rounded-md hover:bg-primary/5 hover:text-primary text-gray-400 transition-colors disabled:opacity-50"
+              className="px-2.5 py-1 rounded-md text-xs font-semibold hover:bg-primary/10 text-primary border border-primary/30 transition-colors disabled:opacity-50"
               aria-label="재시험지 생성"
             >
-              <RefreshCw className={`h-4 w-4 ${retesting ? 'animate-spin' : ''}`} />
+              {retesting ? '생성중...' : '재시험'}
             </button>
             <button
-              onClick={() => onDelete(exam.id)}
+              onClick={(e) => { e.stopPropagation(); onDelete(exam.id); }}
               className="p-1.5 rounded-md hover:bg-red-50 hover:text-red-500 text-gray-400 transition-colors"
               aria-label="시험지 삭제"
             >
@@ -124,8 +121,13 @@ interface RetakeItemProps {
 
 /** 재시험 스레드 아이템 */
 function RetakeItem({ retake, onDelete }: RetakeItemProps) {
+  const router = useRouter();
+
   return (
-    <div className="group relative flex items-center gap-3 bg-gray-50/60 border border-gray-200 rounded-lg px-4 py-3 hover:bg-white hover:shadow-sm transition-all duration-200">
+    <div
+      className="group relative flex items-center gap-3 bg-gray-50/60 border border-gray-200 rounded-lg px-4 py-3 hover:bg-white hover:shadow-sm transition-all duration-200 cursor-pointer"
+      onClick={() => router.push(`/exam/view?id=${retake.id}`)}
+    >
       <CornerDownRight className="h-4 w-4 text-gray-300 shrink-0" />
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
@@ -141,16 +143,8 @@ function RetakeItem({ retake, onDelete }: RetakeItemProps) {
         </div>
       </div>
       <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-        <Link href={`/exam/view?id=${retake.id}`}>
-          <button
-            className="p-1 rounded-md hover:bg-primary/10 hover:text-primary text-gray-400 transition-colors"
-            aria-label="재시험지 보기"
-          >
-            <Eye className="h-3.5 w-3.5" />
-          </button>
-        </Link>
         <button
-          onClick={() => onDelete(retake.id)}
+          onClick={(e) => { e.stopPropagation(); onDelete(retake.id); }}
           className="p-1 rounded-md hover:bg-red-50 hover:text-red-500 text-gray-400 transition-colors"
           aria-label="재시험지 삭제"
         >
