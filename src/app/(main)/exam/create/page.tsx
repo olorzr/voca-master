@@ -16,6 +16,7 @@ import { FileText, Eye } from 'lucide-react';
 import { toast } from 'sonner';
 import { DEFAULT_PASS_PERCENTAGE, PERCENTAGE_BASE } from '@/lib/constants';
 import { buildCategoryTree } from '@/lib/category-tree';
+import { EXTERNAL_LEVEL } from '@/lib/constants';
 
 /**
  * 시험지 생성 페이지 (트리 구조 카테고리 선택, 합격선 설정, 셔플 옵션)
@@ -62,10 +63,42 @@ export default function ExamCreatePage() {
     loadWords();
   }, [selectedCatIds]);
 
+  /** 선택된 카테고리로 자동 제목을 생성한다 */
+  const generateTitle = useCallback((catIds: string[]) => {
+    const selected = categories.filter((c) => catIds.includes(c.id));
+    if (selected.length === 0) return '';
+
+    const isExternal = selected[0].level === EXTERNAL_LEVEL;
+    if (isExternal) {
+      const schools = [...new Set(selected.map((c) => c.school_name).filter(Boolean))];
+      const chapters = [...new Set(selected.map((c) => c.chapter).filter(Boolean))];
+      const parts = [...schools, ...chapters].slice(0, 3);
+      return parts.length > 0 ? `${parts.join(' ')} 단어시험` : '';
+    }
+
+    const grades = [...new Set(selected.map((c) => c.grade))];
+    const publishers = [...new Set(selected.map((c) => c.publisher))];
+    const chapters = [...new Set(selected.map((c) => c.chapter).filter(Boolean))];
+
+    const parts: string[] = [];
+    if (grades.length === 1) parts.push(grades[0]);
+    if (publishers.length === 1) parts.push(publishers[0]);
+    if (chapters.length <= 2) parts.push(...chapters);
+    else parts.push(`${chapters[0]} 외 ${chapters.length - 1}개`);
+
+    return parts.length > 0 ? `${parts.join(' ')} 단어시험` : '';
+  }, [categories]);
+
+  const [titleManuallyEdited, setTitleManuallyEdited] = useState(false);
+
   const toggleCategory = (catId: string) => {
-    setSelectedCatIds((prev) =>
-      prev.includes(catId) ? prev.filter((id) => id !== catId) : [...prev, catId]
-    );
+    setSelectedCatIds((prev) => {
+      const next = prev.includes(catId) ? prev.filter((id) => id !== catId) : [...prev, catId];
+      if (!titleManuallyEdited) {
+        setTitle(generateTitle(next));
+      }
+      return next;
+    });
   };
 
   const totalQuestions = words.length;
@@ -147,7 +180,7 @@ export default function ExamCreatePage() {
                 <Input
                   placeholder="예: 중2 비상 Lesson 1 단어시험"
                   value={title}
-                  onChange={(e) => setTitle(e.target.value)}
+                  onChange={(e) => { setTitle(e.target.value); setTitleManuallyEdited(true); }}
                 />
               </div>
               <div className="grid grid-cols-2 gap-4">
