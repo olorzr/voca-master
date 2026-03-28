@@ -50,7 +50,7 @@ export default function ExamHistoryPage() {
     if (!user) return;
     const [examRes, catRes] = await Promise.all([
       supabase.from('exams').select('*').eq('user_id', user.id).order('created_at', { ascending: false }),
-      supabase.from('categories').select('*').eq('user_id', user.id).order('level').order('grade'),
+      supabase.from('categories').select('*').order('level').order('grade'),
     ]);
     setExams(examRes.data ?? []);
     setCategories(catRes.data ?? []);

@@ -115,29 +115,17 @@ ALTER TABLE words ENABLE ROW LEVEL SECURITY;
 ALTER TABLE exams ENABLE ROW LEVEL SECURITY;
 ALTER TABLE exam_words ENABLE ROW LEVEL SECURITY;
 
--- 카테고리: 본인 데이터만 접근
-CREATE POLICY "Users can manage own categories"
+-- 카테고리: 모든 인증된 사용자 접근 가능 (학원 공유)
+CREATE POLICY "Authenticated users can manage categories"
   ON categories FOR ALL
-  USING (auth.uid() = user_id)
-  WITH CHECK (auth.uid() = user_id);
+  USING (auth.role() = 'authenticated')
+  WITH CHECK (auth.role() = 'authenticated');
 
--- 단어: 본인 카테고리의 단어만 접근
-CREATE POLICY "Users can manage words in own categories"
+-- 단어: 모든 인증된 사용자 접근 가능 (학원 공유)
+CREATE POLICY "Authenticated users can manage words"
   ON words FOR ALL
-  USING (
-    EXISTS (
-      SELECT 1 FROM categories
-      WHERE categories.id = words.category_id
-      AND categories.user_id = auth.uid()
-    )
-  )
-  WITH CHECK (
-    EXISTS (
-      SELECT 1 FROM categories
-      WHERE categories.id = words.category_id
-      AND categories.user_id = auth.uid()
-    )
-  );
+  USING (auth.role() = 'authenticated')
+  WITH CHECK (auth.role() = 'authenticated');
 
 -- 시험지: 본인 시험지만 접근
 CREATE POLICY "Users can manage own exams"

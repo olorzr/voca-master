@@ -40,7 +40,6 @@ export default function WordsPage() {
     const { data } = await supabase
       .from('categories')
       .select('*')
-      .eq('user_id', user.id)
       .order('level')
       .order('grade')
       .order('publisher')
