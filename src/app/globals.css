@@ -135,17 +135,44 @@
 /* A4 인쇄 전용 스타일 (단어장/시험지/답안지) */
 /* ========================================= */
 
-.a4-page {
+/* 인쇄 래퍼 — 화면에서는 A4 너비, 인쇄 시 브라우저가 자동 페이지 분할 */
+.exam-print-wrap {
   width: 210mm;
-  min-height: 297mm;
   margin: 0 auto;
   background: white;
 }
 
-/* 화면에서 여러 A4 페이지 사이 간격 */
-.a4-page + .a4-page {
-  margin-top: 24px;
+/* 시험지 문제 영역 — CSS columns로 자동 2단 */
+.exam-q-grid--dual {
+  columns: 2;
+  column-gap: 24px;
+  column-rule: 1px solid #e5e7eb;
 }
+.exam-q-grid--single {
+  columns: 1;
+}
+.exam-q-item {
+  break-inside: avoid;
+}
+
+/* 단어장 영역 — CSS columns로 자동 2단 */
+.wb-grid--dual {
+  columns: 2;
+  column-gap: 20px;
+}
+.wb-grid--single {
+  columns: 1;
+}
+.wb-card {
+  display: flex;
+  align-items: center;
+  padding: 7px 10px;
+  font-size: 12px;
+  gap: 6px;
+  border-bottom: 1px solid #FCE8EF;
+  break-inside: avoid;
+}
+.wb-card:nth-child(even) { background: #FFF8FA; }
 
 /* UNIT 배지 */
 .unit-badge {
@@ -326,34 +353,19 @@
   @page { size: A4; margin: 15mm; }
   body { background: white !important; }
   .no-print, [data-no-print] { display: none !important; }
-  .a4-page {
-    width: 100%;
-    min-height: auto;
-    padding: 0 !important;
-    margin: 0 !important;
-    box-shadow: none !important;
-    border: none !important;
-    page-break-after: always;
-    break-after: page;
-  }
-  .a4-page:last-child {
-    page-break-after: auto;
-    break-after: auto;
-  }
-  .a4-page + .a4-page {
-    margin-top: 0 !important;
-  }
   header, nav { display: none !important; }
 
-  /* 배경색/컬러 인쇄 보장 */
-  .a4-page {
+  .exam-print-wrap {
+    width: 100%;
+    padding: 0 !important;
+    margin: 0 !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
 }
 
 @media screen {
-  .a4-page {
+  .exam-print-wrap {
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
     border-radius: 4px;
   }
