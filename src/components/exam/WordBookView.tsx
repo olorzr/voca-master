@@ -16,10 +16,11 @@ interface WordBookViewProps {
 
 /**
  * 단어장 뷰 (핑크 테마)
- * CSS columns + break-inside: avoid로 브라우저가 A4에 맞게 자동 페이지 분할
+ * 핑크 박스 테이블 스타일 + break-inside: avoid로 자동 페이지 분할
  */
 export default function WordBookView({ sourceText, words }: WordBookViewProps) {
   const useSingleCol = words.length <= SINGLE_COL_THRESHOLD;
+  const half = useSingleCol ? words.length : Math.ceil(words.length / 2);
 
   return (
     <div className="exam-print-wrap bg-white p-8 mx-auto">
@@ -40,18 +41,33 @@ export default function WordBookView({ sourceText, words }: WordBookViewProps) {
         </div>
       </div>
 
-      {/* 단어 테이블 — CSS columns로 자동 분할 */}
-      <div className={`wb-grid ${useSingleCol ? 'wb-grid--single' : 'wb-grid--dual'}`}>
-        {words.map((w, idx) => (
-          <div key={w.id} className="wb-card">
-            <span className="wb-row__num">{String(idx + 1).padStart(2, '0')}</span>
-            <span className="wb-row__word">{w.word}</span>
-            <span className="wb-row__meaning">{w.meaning}</span>
-            <span className="wb-row__check">
-              <span className="wb-checkbox" />
-              <span className="wb-checkbox" />
-              <span className="wb-checkbox" />
-            </span>
+      {/* 단어 테이블 — 핑크 박스 스타일 */}
+      <div className={`grid ${useSingleCol ? 'grid-cols-1' : 'grid-cols-2'} gap-x-5`}>
+        {[words.slice(0, half), words.slice(half)].filter(col => col.length > 0).map((col, colIdx) => (
+          <div key={colIdx}>
+            <div className="wb-thead">
+              <span className="w-7 text-center">#</span>
+              <span className="wb-thead__word">단어</span>
+              <span className="wb-thead__meaning">뜻</span>
+              <span className="wb-thead__check">암기</span>
+            </div>
+            <div className="wb-body">
+              {col.map((w, idx) => {
+                const num = colIdx === 0 ? idx + 1 : half + idx + 1;
+                return (
+                  <div key={w.id} className="wb-row">
+                    <span className="wb-row__num">{String(num).padStart(2, '0')}</span>
+                    <span className="wb-row__word">{w.word}</span>
+                    <span className="wb-row__meaning">{w.meaning}</span>
+                    <span className="wb-row__check">
+                      <span className="wb-checkbox" />
+                      <span className="wb-checkbox" />
+                      <span className="wb-checkbox" />
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         ))}
       </div>

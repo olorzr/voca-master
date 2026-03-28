@@ -155,24 +155,6 @@
   break-inside: avoid;
 }
 
-/* 단어장 영역 — CSS columns로 자동 2단 */
-.wb-grid--dual {
-  columns: 2;
-  column-gap: 20px;
-}
-.wb-grid--single {
-  columns: 1;
-}
-.wb-card {
-  display: flex;
-  align-items: center;
-  padding: 7px 10px;
-  font-size: 12px;
-  gap: 6px;
-  border-bottom: 1px solid #FCE8EF;
-  break-inside: avoid;
-}
-.wb-card:nth-child(even) { background: #FFF8FA; }
 
 /* UNIT 배지 */
 .unit-badge {
@@ -287,6 +269,7 @@
   display: flex;
   align-items: center;
   padding: 7px 10px;
+  break-inside: avoid;
   font-size: 12px;
   gap: 6px;
   border-bottom: 1px solid #FCE8EF;
