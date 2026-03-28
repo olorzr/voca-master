@@ -142,6 +142,11 @@
   background: white;
 }
 
+/* 화면에서 여러 A4 페이지 사이 간격 */
+.a4-page + .a4-page {
+  margin-top: 24px;
+}
+
 /* UNIT 배지 */
 .unit-badge {
   display: flex;
@@ -323,24 +328,27 @@
   .no-print, [data-no-print] { display: none !important; }
   .a4-page {
     width: 100%;
-    min-height: auto;
+    height: 100vh;
     padding: 0 !important;
     margin: 0 !important;
     box-shadow: none !important;
     border: none !important;
+    break-after: page;
+    overflow: hidden;
+  }
+  .a4-page:last-child {
+    break-after: auto;
+  }
+  .a4-page + .a4-page {
+    margin-top: 0 !important;
   }
   header, nav { display: none !important; }
 
-  /* 흑백 인쇄 호환 */
-  .unit-badge--mint, .unit-badge--pink { background: #444 !important; }
-  .section-bar--mint, .section-bar--pink { background: #333 !important; }
-  .q-row:nth-child(even) { background: #f3f3f3 !important; }
-  .q-num--mint { color: #333 !important; }
-  .wb-thead { background: #eee !important; border-color: #ccc !important; color: #333 !important; }
-  .wb-body { border-color: #ccc !important; }
-  .wb-row:nth-child(even) { background: #f9f9f9 !important; }
-  .wb-row__num { color: #333 !important; }
-  .wb-row { border-color: #e5e5e5 !important; }
+  /* 배경색/컬러 인쇄 보장 */
+  .a4-page {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
 }
 
 @media screen {

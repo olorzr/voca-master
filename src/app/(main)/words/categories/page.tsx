@@ -86,7 +86,8 @@ export default function CategoryManagePage() {
     loadPublishers();
   };
   const handleEditPub = async (id: string, name: string) => {
-    await cm.updatePublisher(id, name);
+    const { error } = await cm.updatePublisher(id, name);
+    if (error) { toast.error(`출판사 수정 실패: ${error.message}`); return; }
     toast.success('출판사명이 수정되었습니다.');
     loadPublishers();
   };
@@ -106,7 +107,8 @@ export default function CategoryManagePage() {
     reloadChapters();
   };
   const handleEditChapter = async (id: string, name: string) => {
-    await cm.updateMajorChapter(id, name);
+    const { error } = await cm.updateMajorChapter(id, name);
+    if (error) { toast.error(`대단원 수정 실패: ${error.message}`); return; }
     toast.success('대단원명이 수정되었습니다.');
     reloadChapters();
   };
@@ -126,7 +128,8 @@ export default function CategoryManagePage() {
     reloadSubs();
   };
   const handleEditSub = async (id: string, name: string) => {
-    await cm.updateSubChapter(id, name);
+    const { error } = await cm.updateSubChapter(id, name);
+    if (error) { toast.error(`소단원 수정 실패: ${error.message}`); return; }
     toast.success('소단원명이 수정되었습니다.');
     reloadSubs();
   };
@@ -144,7 +147,8 @@ export default function CategoryManagePage() {
     loadSchools();
   };
   const handleEditSchool = async (id: string, name: string) => {
-    await cm.updateSchool(id, name);
+    const { error } = await cm.updateSchool(id, name);
+    if (error) { toast.error(`학교 수정 실패: ${error.message}`); return; }
     toast.success('학교명이 수정되었습니다.');
     loadSchools();
   };
@@ -164,7 +168,8 @@ export default function CategoryManagePage() {
     reloadMats();
   };
   const handleEditMat = async (id: string, name: string) => {
-    await cm.updateSchoolMaterial(id, name);
+    const { error } = await cm.updateSchoolMaterial(id, name);
+    if (error) { toast.error(`항목 수정 실패: ${error.message}`); return; }
     toast.success('항목이 수정되었습니다.');
     reloadMats();
   };

@@ -18,16 +18,27 @@ export async function createPublisher(name: string, level: string) {
 
 /** 출판사명을 수정하고, 관련 categories의 publisher도 동기화한다 */
 export async function updatePublisher(id: string, name: string) {
-  const { data: old } = await supabase.from('publishers').select('name, level').eq('id', id).single();
-  const result = await supabase.from('publishers').update({ name }).eq('id', id);
-  if (old && old.name !== name) {
-    await supabase
+  const { data: old, error: selectErr } = await supabase
+    .from('publishers').select('name, level').eq('id', id).single();
+  if (selectErr || !old) {
+    return { error: selectErr ?? { message: '출판사를 찾을 수 없습니다.' } };
+  }
+
+  const { error: updateErr } = await supabase
+    .from('publishers').update({ name }).eq('id', id);
+  if (updateErr) return { error: updateErr };
+
+  // DB 트리거가 있어도 앱 레벨에서도 동기화 시도 (안전장치)
+  if (old.name !== name) {
+    const { error: syncErr } = await supabase
       .from('categories')
       .update({ publisher: name })
       .eq('publisher', old.name)
       .eq('level', old.level);
+    if (syncErr) return { error: syncErr };
   }
-  return result;
+
+  return { error: null };
 }
 
 /** 출판사를 삭제한다 (하위 대단원/소단원도 CASCADE 삭제) */
@@ -53,15 +64,22 @@ export async function createMajorChapter(name: string, publisherId: string, grad
 
 /** 대단원명을 수정하고, 관련 categories의 chapter도 동기화한다 */
 export async function updateMajorChapter(id: string, name: string) {
-  const { data: old } = await supabase
+  const { data: old, error: selectErr } = await supabase
     .from('major_chapters')
     .select('name, grade, semester, publisher_id, publishers(name, level)')
     .eq('id', id)
     .single();
-  const result = await supabase.from('major_chapters').update({ name }).eq('id', id);
-  if (old && old.name !== name) {
+  if (selectErr || !old) {
+    return { error: selectErr ?? { message: '대단원을 찾을 수 없습니다.' } };
+  }
+
+  const { error: updateErr } = await supabase
+    .from('major_chapters').update({ name }).eq('id', id);
+  if (updateErr) return { error: updateErr };
+
+  if (old.name !== name) {
     const pub = old.publishers as unknown as { name: string; level: string };
-    await supabase
+    const { error: syncErr } = await supabase
       .from('categories')
       .update({ chapter: name })
       .eq('chapter', old.name)
@@ -69,8 +87,10 @@ export async function updateMajorChapter(id: string, name: string) {
       .eq('level', pub.level)
       .eq('grade', old.grade)
       .eq('semester', old.semester);
+    if (syncErr) return { error: syncErr };
   }
-  return result;
+
+  return { error: null };
 }
 
 /** 대단원을 삭제한다 (하위 소단원도 CASCADE 삭제) */
@@ -95,18 +115,25 @@ export async function createSubChapter(name: string, majorChapterId: string) {
 
 /** 소단원명을 수정하고, 관련 categories의 sub_chapter도 동기화한다 */
 export async function updateSubChapter(id: string, name: string) {
-  const { data: old } = await supabase
+  const { data: old, error: selectErr } = await supabase
     .from('sub_chapters')
     .select('name, major_chapter_id, major_chapters(name, grade, semester, publisher_id, publishers(name, level))')
     .eq('id', id)
     .single();
-  const result = await supabase.from('sub_chapters').update({ name }).eq('id', id);
-  if (old && old.name !== name) {
+  if (selectErr || !old) {
+    return { error: selectErr ?? { message: '소단원을 찾을 수 없습니다.' } };
+  }
+
+  const { error: updateErr } = await supabase
+    .from('sub_chapters').update({ name }).eq('id', id);
+  if (updateErr) return { error: updateErr };
+
+  if (old.name !== name) {
     const mc = old.major_chapters as unknown as {
       name: string; grade: string; semester: string;
       publishers: { name: string; level: string };
     };
-    await supabase
+    const { error: syncErr } = await supabase
       .from('categories')
       .update({ sub_chapter: name })
       .eq('sub_chapter', old.name)
@@ -115,8 +142,10 @@ export async function updateSubChapter(id: string, name: string) {
       .eq('level', mc.publishers.level)
       .eq('grade', mc.grade)
       .eq('semester', mc.semester);
+    if (syncErr) return { error: syncErr };
   }
-  return result;
+
+  return { error: null };
 }
 
 /** 소단원을 삭제한다 */
@@ -139,16 +168,26 @@ export async function createSchool(name: string) {
 
 /** 학교명을 수정하고, 관련 categories의 school_name도 동기화한다 */
 export async function updateSchool(id: string, name: string) {
-  const { data: old } = await supabase.from('schools').select('name').eq('id', id).single();
-  const result = await supabase.from('schools').update({ name }).eq('id', id);
-  if (old && old.name !== name) {
-    await supabase
+  const { data: old, error: selectErr } = await supabase
+    .from('schools').select('name').eq('id', id).single();
+  if (selectErr || !old) {
+    return { error: selectErr ?? { message: '학교를 찾을 수 없습니다.' } };
+  }
+
+  const { error: updateErr } = await supabase
+    .from('schools').update({ name }).eq('id', id);
+  if (updateErr) return { error: updateErr };
+
+  if (old.name !== name) {
+    const { error: syncErr } = await supabase
       .from('categories')
       .update({ school_name: name })
       .eq('school_name', old.name)
       .eq('level', '외부지문 및 프린트');
+    if (syncErr) return { error: syncErr };
   }
-  return result;
+
+  return { error: null };
 }
 
 /** 학교를 삭제한다 (하위 프린트/작품명도 CASCADE 삭제) */
@@ -173,22 +212,31 @@ export async function createSchoolMaterial(name: string, schoolId: string) {
 
 /** 프린트/작품명을 수정하고, 관련 categories의 chapter도 동기화한다 */
 export async function updateSchoolMaterial(id: string, name: string) {
-  const { data: old } = await supabase
+  const { data: old, error: selectErr } = await supabase
     .from('school_materials')
     .select('name, school_id, schools(name)')
     .eq('id', id)
     .single();
-  const result = await supabase.from('school_materials').update({ name }).eq('id', id);
-  if (old && old.name !== name) {
+  if (selectErr || !old) {
+    return { error: selectErr ?? { message: '항목을 찾을 수 없습니다.' } };
+  }
+
+  const { error: updateErr } = await supabase
+    .from('school_materials').update({ name }).eq('id', id);
+  if (updateErr) return { error: updateErr };
+
+  if (old.name !== name) {
     const school = old.schools as unknown as { name: string };
-    await supabase
+    const { error: syncErr } = await supabase
       .from('categories')
       .update({ chapter: name })
       .eq('chapter', old.name)
       .eq('school_name', school.name)
       .eq('level', '외부지문 및 프린트');
+    if (syncErr) return { error: syncErr };
   }
-  return result;
+
+  return { error: null };
 }
 
 /** 프린트/작품명을 삭제한다 */
