@@ -18,12 +18,14 @@ export interface CategoryTreeNode {
 export function buildCategoryTree(categories: Category[]): CategoryTreeNode[] {
   const byLevel = groupBy(categories, (c) => c.level);
 
-  return Object.entries(byLevel).map(([level, cats]) => {
+  const tree = Object.entries(byLevel).map(([level, cats]) => {
     if (level === EXTERNAL_LEVEL) {
       return buildExternalTree(level, cats);
     }
     return buildSchoolLevelTree(level, cats);
   });
+
+  return sortChildren(tree);
 }
 
 function buildExternalTree(level: string, cats: Category[]): CategoryTreeNode {
@@ -109,6 +111,37 @@ function buildSchoolLevelTree(level: string, cats: Category[]): CategoryTreeNode
       };
     }),
   };
+}
+
+/** 자연스러운 문자열 비교 (숫자 부분을 숫자로 비교) */
+function naturalCompare(a: string, b: string): number {
+  const regex = /(\d+)|(\D+)/g;
+  const aParts = a.match(regex) ?? [];
+  const bParts = b.match(regex) ?? [];
+
+  for (let i = 0; i < Math.max(aParts.length, bParts.length); i++) {
+    if (i >= aParts.length) return -1;
+    if (i >= bParts.length) return 1;
+
+    const aIsNum = /^\d+$/.test(aParts[i]);
+    const bIsNum = /^\d+$/.test(bParts[i]);
+
+    if (aIsNum && bIsNum) {
+      const diff = Number(aParts[i]) - Number(bParts[i]);
+      if (diff !== 0) return diff;
+    } else {
+      const cmp = aParts[i].localeCompare(bParts[i]);
+      if (cmp !== 0) return cmp;
+    }
+  }
+  return 0;
+}
+
+/** children 배열을 label 기준 자연순 정렬한다 */
+function sortChildren(nodes: CategoryTreeNode[]): CategoryTreeNode[] {
+  return nodes
+    .map((node) => ({ ...node, children: sortChildren(node.children) }))
+    .sort((a, b) => naturalCompare(a.label, b.label));
 }
 
 function groupBy<T>(items: T[], keyFn: (item: T) => string): Record<string, T[]> {
