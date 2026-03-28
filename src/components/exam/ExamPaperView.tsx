@@ -5,7 +5,7 @@ import Image from 'next/image';
 /** 첫 페이지 열당 문항 수 (헤더/정보바 등 공간 차지) */
 const FIRST_PAGE_PER_COL = 17;
 /** 이후 페이지 열당 문항 수 (간소화된 헤더) */
-const NEXT_PAGE_PER_COL = 23;
+const NEXT_PAGE_PER_COL = 20;
 /** 단일 열 최대 문항 수 기준 */
 const SINGLE_COL_THRESHOLD = 20;
 
