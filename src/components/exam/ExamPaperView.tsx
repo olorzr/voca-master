@@ -81,8 +81,8 @@ export default function ExamPaperView({ exam, words, categories, showAnswer }: E
         ))}
       </div>
 
-      {/* 푸터 */}
-      <div className="exam-footer pt-4">
+      {/* 푸터 — 인쇄 시 모든 페이지 하단에 반복 */}
+      <div className="exam-print-footer">
         <div className="flex items-center justify-center gap-1.5">
           <Image src="/logo.png" alt="아라국어논술" width={20} height={20} className="object-contain" />
           <span>아라국어논술</span>

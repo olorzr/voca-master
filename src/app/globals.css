@@ -323,14 +323,15 @@
   border-radius: 3px;
 }
 
-/* 공통 푸터 */
-.exam-footer {
+/* 공통 푸터 — 화면에서는 일반 위치, 인쇄 시 모든 페이지 하단 고정 */
+.exam-print-footer {
   border-top: 1px solid #e5e7eb;
   padding-top: 8px;
   text-align: center;
   font-size: 9px;
   color: #aaa;
   letter-spacing: 2px;
+  margin-top: 16px;
 }
 .exam-footer__source {
   font-size: 8px;
@@ -358,9 +359,22 @@
   .exam-print-wrap {
     width: 100%;
     padding: 0 !important;
+    padding-bottom: 30px !important;
     margin: 0 !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
+  }
+
+  /* 푸터를 모든 인쇄 페이지 하단에 고정 */
+  .exam-print-footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    border-top: 1px solid #ccc;
+    padding-top: 6px;
+    margin-top: 0;
+    background: white;
   }
 }
 
