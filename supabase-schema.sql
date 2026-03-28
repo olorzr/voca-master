@@ -196,3 +196,116 @@ CREATE TRIGGER words_updated_at
   BEFORE UPDATE ON words
   FOR EACH ROW
   EXECUTE FUNCTION update_updated_at();
+
+-- =============================================
+-- 마스터 테이블 이름 변경 시 categories 자동 동기화 트리거
+-- =============================================
+
+-- 출판사명 변경 → categories.publisher 동기화
+CREATE OR REPLACE FUNCTION sync_publisher_name()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF OLD.name != NEW.name THEN
+    UPDATE categories
+    SET publisher = NEW.name
+    WHERE publisher = OLD.name AND level = OLD.level;
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER sync_publisher_name_trigger
+  AFTER UPDATE ON publishers
+  FOR EACH ROW
+  EXECUTE FUNCTION sync_publisher_name();
+
+-- 대단원명 변경 → categories.chapter 동기화
+CREATE OR REPLACE FUNCTION sync_major_chapter_name()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF OLD.name != NEW.name THEN
+    UPDATE categories
+    SET chapter = NEW.name
+    FROM publishers p
+    WHERE categories.chapter = OLD.name
+      AND categories.publisher = p.name
+      AND categories.level = p.level
+      AND categories.grade = OLD.grade
+      AND categories.semester = OLD.semester
+      AND p.id = OLD.publisher_id;
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER sync_major_chapter_name_trigger
+  AFTER UPDATE ON major_chapters
+  FOR EACH ROW
+  EXECUTE FUNCTION sync_major_chapter_name();
+
+-- 소단원명 변경 → categories.sub_chapter 동기화
+CREATE OR REPLACE FUNCTION sync_sub_chapter_name()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF OLD.name != NEW.name THEN
+    UPDATE categories
+    SET sub_chapter = NEW.name
+    FROM major_chapters mc
+    JOIN publishers p ON p.id = mc.publisher_id
+    WHERE categories.sub_chapter = OLD.name
+      AND categories.chapter = mc.name
+      AND categories.publisher = p.name
+      AND categories.level = p.level
+      AND categories.grade = mc.grade
+      AND categories.semester = mc.semester
+      AND mc.id = OLD.major_chapter_id;
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER sync_sub_chapter_name_trigger
+  AFTER UPDATE ON sub_chapters
+  FOR EACH ROW
+  EXECUTE FUNCTION sync_sub_chapter_name();
+
+-- 학교명 변경 → categories.school_name 동기화
+CREATE OR REPLACE FUNCTION sync_school_name()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF OLD.name != NEW.name THEN
+    UPDATE categories
+    SET school_name = NEW.name
+    WHERE school_name = OLD.name
+      AND level = '외부지문 및 프린트';
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER sync_school_name_trigger
+  AFTER UPDATE ON schools
+  FOR EACH ROW
+  EXECUTE FUNCTION sync_school_name();
+
+-- 프린트/작품명 변경 → categories.chapter 동기화 (외부지문)
+CREATE OR REPLACE FUNCTION sync_school_material_name()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF OLD.name != NEW.name THEN
+    UPDATE categories
+    SET chapter = NEW.name
+    FROM schools s
+    WHERE categories.chapter = OLD.name
+      AND categories.school_name = s.name
+      AND categories.level = '외부지문 및 프린트'
+      AND s.id = OLD.school_id;
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER sync_school_material_name_trigger
+  AFTER UPDATE ON school_materials
+  FOR EACH ROW
+  EXECUTE FUNCTION sync_school_material_name();

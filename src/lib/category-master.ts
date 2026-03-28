@@ -16,9 +16,18 @@ export async function createPublisher(name: string, level: string) {
   return supabase.from('publishers').insert({ name, level }).select().single();
 }
 
-/** 출판사명을 수정한다 */
+/** 출판사명을 수정하고, 관련 categories의 publisher도 동기화한다 */
 export async function updatePublisher(id: string, name: string) {
-  return supabase.from('publishers').update({ name }).eq('id', id);
+  const { data: old } = await supabase.from('publishers').select('name, level').eq('id', id).single();
+  const result = await supabase.from('publishers').update({ name }).eq('id', id);
+  if (old && old.name !== name) {
+    await supabase
+      .from('categories')
+      .update({ publisher: name })
+      .eq('publisher', old.name)
+      .eq('level', old.level);
+  }
+  return result;
 }
 
 /** 출판사를 삭제한다 (하위 대단원/소단원도 CASCADE 삭제) */
@@ -42,9 +51,26 @@ export async function createMajorChapter(name: string, publisherId: string, grad
   return supabase.from('major_chapters').insert({ name, publisher_id: publisherId, grade, semester }).select().single();
 }
 
-/** 대단원명을 수정한다 */
+/** 대단원명을 수정하고, 관련 categories의 chapter도 동기화한다 */
 export async function updateMajorChapter(id: string, name: string) {
-  return supabase.from('major_chapters').update({ name }).eq('id', id);
+  const { data: old } = await supabase
+    .from('major_chapters')
+    .select('name, grade, semester, publisher_id, publishers(name, level)')
+    .eq('id', id)
+    .single();
+  const result = await supabase.from('major_chapters').update({ name }).eq('id', id);
+  if (old && old.name !== name) {
+    const pub = old.publishers as unknown as { name: string; level: string };
+    await supabase
+      .from('categories')
+      .update({ chapter: name })
+      .eq('chapter', old.name)
+      .eq('publisher', pub.name)
+      .eq('level', pub.level)
+      .eq('grade', old.grade)
+      .eq('semester', old.semester);
+  }
+  return result;
 }
 
 /** 대단원을 삭제한다 (하위 소단원도 CASCADE 삭제) */
@@ -67,9 +93,30 @@ export async function createSubChapter(name: string, majorChapterId: string) {
   return supabase.from('sub_chapters').insert({ name, major_chapter_id: majorChapterId }).select().single();
 }
 
-/** 소단원명을 수정한다 */
+/** 소단원명을 수정하고, 관련 categories의 sub_chapter도 동기화한다 */
 export async function updateSubChapter(id: string, name: string) {
-  return supabase.from('sub_chapters').update({ name }).eq('id', id);
+  const { data: old } = await supabase
+    .from('sub_chapters')
+    .select('name, major_chapter_id, major_chapters(name, grade, semester, publisher_id, publishers(name, level))')
+    .eq('id', id)
+    .single();
+  const result = await supabase.from('sub_chapters').update({ name }).eq('id', id);
+  if (old && old.name !== name) {
+    const mc = old.major_chapters as unknown as {
+      name: string; grade: string; semester: string;
+      publishers: { name: string; level: string };
+    };
+    await supabase
+      .from('categories')
+      .update({ sub_chapter: name })
+      .eq('sub_chapter', old.name)
+      .eq('chapter', mc.name)
+      .eq('publisher', mc.publishers.name)
+      .eq('level', mc.publishers.level)
+      .eq('grade', mc.grade)
+      .eq('semester', mc.semester);
+  }
+  return result;
 }
 
 /** 소단원을 삭제한다 */
@@ -90,9 +137,18 @@ export async function createSchool(name: string) {
   return supabase.from('schools').insert({ name }).select().single();
 }
 
-/** 학교명을 수정한다 */
+/** 학교명을 수정하고, 관련 categories의 school_name도 동기화한다 */
 export async function updateSchool(id: string, name: string) {
-  return supabase.from('schools').update({ name }).eq('id', id);
+  const { data: old } = await supabase.from('schools').select('name').eq('id', id).single();
+  const result = await supabase.from('schools').update({ name }).eq('id', id);
+  if (old && old.name !== name) {
+    await supabase
+      .from('categories')
+      .update({ school_name: name })
+      .eq('school_name', old.name)
+      .eq('level', '외부지문 및 프린트');
+  }
+  return result;
 }
 
 /** 학교를 삭제한다 (하위 프린트/작품명도 CASCADE 삭제) */
@@ -115,9 +171,24 @@ export async function createSchoolMaterial(name: string, schoolId: string) {
   return supabase.from('school_materials').insert({ name, school_id: schoolId }).select().single();
 }
 
-/** 프린트/작품명을 수정한다 */
+/** 프린트/작품명을 수정하고, 관련 categories의 chapter도 동기화한다 */
 export async function updateSchoolMaterial(id: string, name: string) {
-  return supabase.from('school_materials').update({ name }).eq('id', id);
+  const { data: old } = await supabase
+    .from('school_materials')
+    .select('name, school_id, schools(name)')
+    .eq('id', id)
+    .single();
+  const result = await supabase.from('school_materials').update({ name }).eq('id', id);
+  if (old && old.name !== name) {
+    const school = old.schools as unknown as { name: string };
+    await supabase
+      .from('categories')
+      .update({ chapter: name })
+      .eq('chapter', old.name)
+      .eq('school_name', school.name)
+      .eq('level', '외부지문 및 프린트');
+  }
+  return result;
 }
 
 /** 프린트/작품명을 삭제한다 */
