@@ -16,9 +16,9 @@ export default function Header() {
 
   const navLinks = [
     { href: '/dashboard', label: '🏠 대시보드' },
+    { href: '/exam/builder', label: '📝 개념 관리' },
     { href: '/words', label: '📚 단어 관리' },
     { href: '/exam/create', label: '✏️ 시험지 생성' },
-    { href: '/exam/builder', label: '📝 개념지 빌더' },
     { href: '/exam/history', label: '📋 시험 이력' },
   ];
 
