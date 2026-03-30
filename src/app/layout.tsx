@@ -4,8 +4,8 @@ import { AuthProvider } from "@/lib/auth-context";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "아라국어논술 - 단어 관리 시스템",
-  description: "아라국어논술 단어 관리 및 시험지 생성 시스템",
+  title: "아라국어논술 - 시험 관리 시스템",
+  description: "아라국어논술 시험 관리 시스템",
 };
 
 export default function RootLayout({

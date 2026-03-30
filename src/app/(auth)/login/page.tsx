@@ -41,7 +41,7 @@ export default function LoginPage() {
             <BookOpen className="h-8 w-8 text-primary" />
           </div>
           <CardTitle className="text-2xl font-bold" style={{ fontFamily: "'Gmarket Sans', sans-serif" }}>아라국어논술</CardTitle>
-          <CardDescription>단어 관리 및 시험지 생성 시스템 🌷</CardDescription>
+          <CardDescription>시험 관리 시스템 🌷</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <Suspense>
