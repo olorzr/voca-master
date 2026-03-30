@@ -104,7 +104,7 @@ export default function ExamPreview({
       const config = SHEET_CONFIGS[key];
       const mode = key === 'concept' ? 'concept' as const : config.mode;
       const bodyHTML = transformHTML(editorHTML, mode);
-      page.innerHTML = buildSheetHTML(category, config, markCount, bodyHTML);
+      page.innerHTML = buildSheetHTML(category, config, markCount, bodyHTML, editorHTML);
       wrapper.appendChild(page);
     });
 
@@ -220,7 +220,7 @@ function buildFilename(cat: BuilderCategory, type: string): string {
   return `${cat.grade}_${pub}_${unit}_${type}.pdf`;
 }
 
-function buildSheetHTML(cat: BuilderCategory, config: SheetConfig, markCount: number, bodyHTML: string): string {
+function buildSheetHTML(cat: BuilderCategory, config: SheetConfig, markCount: number, bodyHTML: string, editorHTML?: string): string {
   const year = new Date().getFullYear();
   const today = new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' });
   const subtitle = cat.subunit ? `${cat.unit} — ${cat.subunit}` : cat.unit;
@@ -245,7 +245,7 @@ function buildSheetHTML(cat: BuilderCategory, config: SheetConfig, markCount: nu
         <span>${cat.semester}</span>
       </div>
     </div>
-    <div>${bodyHTML}</div>
+    <div class="${editorHTML && editorHTML.replace(/<[^>]*>/g, '').trim().length > 300 ? 'sheet-body--dual' : ''}">${bodyHTML}</div>
     <div style="display:flex;align-items:center;justify-content:center;gap:6px;border-top:1px solid #e5e7eb;padding:8px 0;margin-top:20pt;font-size:9px;color:#aaa;letter-spacing:2px">
       <img src="/logo.png" width="16" height="16" />
       <span>아라국어논술</span>

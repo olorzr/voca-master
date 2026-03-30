@@ -444,6 +444,16 @@
 .eb-a4-page th { background: #F3F4F6; font-weight: 600; }
 .eb-a4-page tr:nth-child(even) td { background: #FAFBFC; }
 
+/* 개념지 본문 2단 레이아웃 */
+.sheet-body--dual {
+  columns: 2;
+  column-gap: 20px;
+  column-rule: 1px solid #e5e7eb;
+}
+.sheet-body--dual > * {
+  break-inside: avoid;
+}
+
 /* 개념지 하이라이트 */
 .eb-concept-highlight {
   background: #B8EDE8;

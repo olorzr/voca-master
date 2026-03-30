@@ -5,6 +5,9 @@ import { transformHTML } from '@/lib/exam-transform';
 import type { TransformMode } from '@/lib/exam-transform';
 import type { BuilderCategory } from './ExamCategoryBar';
 
+/** 1단 최대 글자 수 — 초과 시 2단 레이아웃 */
+const SINGLE_COL_CHAR_THRESHOLD = 300;
+
 /** 시트 설정 */
 export interface SheetConfig {
   badge: string;
@@ -54,6 +57,12 @@ export default function ExamSheetRenderer({
     [editorHTML, config.mode],
   );
 
+  /** HTML 태그 제거 후 글자 수로 2단 여부 판단 */
+  const useDualCol = useMemo(() => {
+    const textLength = editorHTML.replace(/<[^>]*>/g, '').trim().length;
+    return textLength > SINGLE_COL_CHAR_THRESHOLD;
+  }, [editorHTML]);
+
   return (
     <div className={`eb-a4-page ${interactive ? 'eb-concept-interactive' : ''}`}>
       {/* 헤더 — 기존 ExamPaperView와 동일 구조 */}
@@ -90,8 +99,8 @@ export default function ExamSheetRenderer({
         </div>
       </div>
 
-      {/* 본문 — 변환된 HTML */}
-      <div className="sheet-body" dangerouslySetInnerHTML={{ __html: bodyHTML }} />
+      {/* 본문 — 변환된 HTML (글자 수 300자 초과 시 2단) */}
+      <div className={`sheet-body ${useDualCol ? 'sheet-body--dual' : ''}`} dangerouslySetInnerHTML={{ __html: bodyHTML }} />
 
       {/* 푸터 */}
       <div className="exam-print-footer mt-6">
