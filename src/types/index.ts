@@ -86,3 +86,20 @@ export interface SchoolMaterial {
   school_id: string;
   created_at: string;
 }
+
+/** 개념지 저장 데이터 */
+export interface ConceptSheet {
+  id: string;
+  title: string;
+  level: '중등' | '고등';
+  grade: string;
+  publisher: string;
+  semester: string;
+  unit: string;
+  subunit: string;
+  editor_html: string;
+  marks: { text: string; pos: number; len: number }[];
+  user_id: string;
+  created_at: string;
+  updated_at: string;
+}

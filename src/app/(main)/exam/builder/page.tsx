@@ -1,161 +1,187 @@
 'use client';
 
-import { useState, useRef, useCallback } from 'react';
+import { useEffect, useState, useCallback } from 'react';
+import Link from 'next/link';
+import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/lib/auth-context';
+import { formatDateKR } from '@/lib/format';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { PlusCircle, Search, FileText, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
-import type { Editor } from '@tiptap/react';
-import {
-  ExamCategoryBar,
-  ExamEditor,
-  ExamMarkingSidebar,
-  ExamPreview,
-} from '@/components/exam-builder';
-import type { BuilderCategory, MarkItem } from '@/components/exam-builder';
-
-const DEFAULT_CATEGORY: BuilderCategory = {
-  level: '중등',
-  grade: '',
-  publisher: '',
-  semester: '',
-  unit: '',
-  subunit: '',
-};
+import type { ConceptSheet } from '@/types';
 
 /**
- * 개념지 & 암기 테스트 빌더 페이지.
- * 에디터 화면 ↔ 미리보기 화면을 전환하는 2-스크린 구조.
+ * 개념지 목록 페이지.
+ * 저장된 개념지를 카드 형태로 보여주고, 새로 만들기 / 편집 / 삭제 기능을 제공한다.
  */
-export default function ExamBuilderPage() {
-  const [screen, setScreen] = useState<'editor' | 'preview'>('editor');
-  const [category, setCategory] = useState<BuilderCategory>(DEFAULT_CATEGORY);
-  const [editorHTML, setEditorHTML] = useState('');
-  const [marks, setMarks] = useState<MarkItem[]>([]);
-  const [previewTab, setPreviewTab] = useState('concept');
-  const editorRef = useRef<Editor | null>(null);
+export default function ConceptListPage() {
+  const { user } = useAuth();
+  const [sheets, setSheets] = useState<ConceptSheet[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
 
-  /* ── 마킹 삭제 ── */
-  const deleteMark = useCallback((pos: number, len: number) => {
-    const editor = editorRef.current;
-    if (!editor) return;
-    editor.chain().focus().setTextSelection({ from: pos, to: pos + len }).unsetMark('concept').run();
-  }, []);
+  const loadSheets = useCallback(async () => {
+    if (!user) return;
+    const { data, error } = await supabase
+      .from('concept_sheets')
+      .select('*')
+      .order('updated_at', { ascending: false });
 
-  const clearAllMarks = useCallback(() => {
-    const editor = editorRef.current;
-    if (!editor) return;
-    editor.chain().focus().selectAll().unsetMark('concept').run();
-    toast.success('모든 마킹이 해제되었습니다');
-  }, []);
-
-  /* ── 개념지 미리보기 인터랙션 ── */
-  const removeMarkByText = useCallback((text: string) => {
-    const editor = editorRef.current;
-    if (!editor) return;
-    let found = false;
-    editor.state.doc.descendants((node, pos) => {
-      if (found) return false;
-      if (node.isText && node.marks.some((m) => m.type.name === 'concept')) {
-        if (node.text === text) {
-          editor.chain().setTextSelection({ from: pos, to: pos + node.nodeSize }).unsetMark('concept').run();
-          found = true;
-          return false;
-        }
-      }
-    });
-    // 병합된 텍스트 노드 체크
-    if (!found) {
-      const merged = getMergedMarks(editor);
-      const match = merged.find((m) => m.text === text);
-      if (match) {
-        editor.chain().setTextSelection({ from: match.pos, to: match.pos + match.len }).unsetMark('concept').run();
-      }
+    if (error) {
+      toast.error('개념지 목록을 불러오지 못했습니다.');
+      setLoading(false);
+      return;
     }
-    setEditorHTML(editor.getHTML());
-  }, []);
+    setSheets(data ?? []);
+    setLoading(false);
+  }, [user]);
 
-  const addMarkByText = useCallback((text: string) => {
-    const editor = editorRef.current;
-    if (!editor) return;
-    let found = false;
-    editor.state.doc.descendants((node, pos) => {
-      if (found) return false;
-      if (node.isText) {
-        const idx = (node.text ?? '').indexOf(text);
-        if (idx !== -1) {
-          const from = pos + idx;
-          editor.chain().setTextSelection({ from, to: from + text.length }).setMark('concept').run();
-          found = true;
-          return false;
-        }
-      }
-    });
-    setEditorHTML(editor.getHTML());
-  }, []);
+  useEffect(() => {
+    loadSheets();
+  }, [loadSheets]);
 
-  /* ── 렌더링 ── */
-  if (screen === 'preview') {
+  const handleDelete = async (id: string, title: string) => {
+    if (!confirm(`"${title}" 개념지를 삭제하시겠습니까?`)) return;
+    const { error } = await supabase.from('concept_sheets').delete().eq('id', id);
+    if (error) {
+      toast.error('삭제에 실패했습니다.');
+      return;
+    }
+    setSheets((prev) => prev.filter((s) => s.id !== id));
+    toast.success('개념지가 삭제되었습니다.');
+  };
+
+  const filtered = searchQuery
+    ? sheets.filter((s) => {
+        const q = searchQuery.toLowerCase();
+        return (
+          s.title.toLowerCase().includes(q) ||
+          s.publisher.toLowerCase().includes(q) ||
+          s.unit.toLowerCase().includes(q) ||
+          s.grade.toLowerCase().includes(q)
+        );
+      })
+    : sheets;
+
+  if (loading) {
     return (
-      <div className="-mx-4 sm:-mx-6 lg:-mx-8 -my-8" style={{ height: 'calc(100vh - 64px)' }}>
-        <ExamPreview
-          editorHTML={editorHTML}
-          category={category}
-          markCount={marks.length}
-          activeTab={previewTab}
-          onTabChange={setPreviewTab}
-          onBack={() => setScreen('editor')}
-          onConceptClick={removeMarkByText}
-          onConceptDrag={addMarkByText}
-        />
+      <div className="flex items-center justify-center py-20">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
       </div>
     );
   }
 
   return (
-    <div className="-mx-4 sm:-mx-6 lg:-mx-8 -mt-8">
-      {/* 카테고리 바 */}
-      <ExamCategoryBar
-        category={category}
-        onChange={setCategory}
-      />
-
-      {/* 에디터 + 사이드바 */}
-      <div className="flex gap-5 p-5" style={{ height: 'calc(100vh - 64px - 80px)' }}>
-        <div className="flex-[7] min-w-0">
-          <ExamEditor
-            onHTMLChange={setEditorHTML}
-            onMarksChange={setMarks}
-            editorRef={editorRef}
-          />
-        </div>
-        <div className="flex-[3] min-w-[280px]">
-          <ExamMarkingSidebar
-            marks={marks}
-            onDelete={deleteMark}
-            onClearAll={clearAllMarks}
-            onPreview={() => { setPreviewTab('concept'); setScreen('preview'); }}
-          />
-        </div>
+    <div className="space-y-6">
+      {/* 헤더 */}
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold text-gray-900">📝 개념 관리</h1>
+        <Link href="/exam/builder/new">
+          <Button className="bg-primary hover:bg-primary-hover text-white">
+            <PlusCircle className="h-4 w-4 mr-2" />
+            새 개념지 만들기
+          </Button>
+        </Link>
       </div>
+
+      {/* 검색 */}
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+        <Input
+          placeholder="제목, 출판사, 단원으로 검색..."
+          className="pl-10"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+        />
+      </div>
+
+      {/* 목록 */}
+      {filtered.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-20 text-gray-300">
+          <FileText className="h-12 w-12 mb-3" />
+          <p className="text-sm">
+            {sheets.length === 0 ? '아직 만든 개념지가 없습니다.' : '검색 결과가 없습니다.'}
+          </p>
+          {sheets.length === 0 && (
+            <Link href="/exam/builder/new" className="mt-4">
+              <Button variant="outline" size="sm">
+                첫 개념지 만들기
+              </Button>
+            </Link>
+          )}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {filtered.map((sheet) => (
+            <ConceptSheetCard
+              key={sheet.id}
+              sheet={sheet}
+              onDelete={handleDelete}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
 
-/** 에디터에서 병합된 마킹 목록 추출 */
-function getMergedMarks(editor: Editor): MarkItem[] {
-  const raw: MarkItem[] = [];
-  editor.state.doc.descendants((node, pos) => {
-    if (node.isText && node.marks.some((m) => m.type.name === 'concept')) {
-      raw.push({ text: node.text ?? '', pos, len: node.nodeSize });
-    }
-  });
-  const merged: MarkItem[] = [];
-  for (const m of raw) {
-    const last = merged[merged.length - 1];
-    if (last && last.pos + last.len === m.pos) {
-      last.text += m.text;
-      last.len += m.len;
-    } else {
-      merged.push({ ...m });
-    }
-  }
-  return merged;
+/* ── 개념지 카드 ── */
+
+interface ConceptSheetCardProps {
+  sheet: ConceptSheet;
+  onDelete: (id: string, title: string) => void;
+}
+
+/** 개념지 카드 컴포넌트. 제목, 카테고리, 마킹 수, 수정일을 표시한다. */
+function ConceptSheetCard({ sheet, onDelete }: ConceptSheetCardProps) {
+  const categoryLabel = [sheet.grade, sheet.publisher, sheet.semester, sheet.unit, sheet.subunit]
+    .filter(Boolean)
+    .join(' ');
+
+  const markCount = Array.isArray(sheet.marks) ? sheet.marks.length : 0;
+
+  return (
+    <Link href={`/exam/builder/${sheet.id}`}>
+      <Card className="hover:border-primary/50 hover:shadow-md transition-all cursor-pointer group h-full">
+        <CardContent className="p-5 flex flex-col h-full">
+          {/* 상단: 레벨 뱃지 + 삭제 */}
+          <div className="flex items-center justify-between mb-3">
+            <Badge variant="outline" className="text-xs">
+              {sheet.level}
+            </Badge>
+            <button
+              className="w-7 h-7 flex items-center justify-center rounded text-gray-300 hover:bg-red-50 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onDelete(sheet.id, sheet.title);
+              }}
+              aria-label={`${sheet.title} 삭제`}
+            >
+              <Trash2 className="h-4 w-4" />
+            </button>
+          </div>
+
+          {/* 제목 */}
+          <h3 className="font-bold text-gray-900 text-base mb-1 line-clamp-2">
+            {sheet.title}
+          </h3>
+
+          {/* 카테고리 */}
+          {categoryLabel && (
+            <p className="text-xs text-gray-500 mb-3 truncate">{categoryLabel}</p>
+          )}
+
+          {/* 하단: 마킹 수 + 수정일 */}
+          <div className="mt-auto flex items-center justify-between text-xs text-gray-400 pt-3 border-t border-gray-100">
+            <span>마킹 {markCount}개</span>
+            <span>{formatDateKR(sheet.updated_at)}</span>
+          </div>
+        </CardContent>
+      </Card>
+    </Link>
+  );
 }

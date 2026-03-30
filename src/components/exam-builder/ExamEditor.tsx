@@ -39,13 +39,15 @@ interface ExamEditorProps {
   onHTMLChange: (html: string) => void;
   onMarksChange: (marks: MarkItem[]) => void;
   editorRef: React.MutableRefObject<Editor | null>;
+  /** 초기 에디터 콘텐츠 (저장된 개념지 불러오기 시 사용) */
+  initialContent?: string;
 }
 
 /**
  * TipTap 리치 에디터 + 마킹 모드 토글.
  * 마킹 ON 상태에서 드래그 → 하이라이트, 기존 마킹 클릭 → 해제.
  */
-export default function ExamEditor({ onHTMLChange, onMarksChange, editorRef }: ExamEditorProps) {
+export default function ExamEditor({ onHTMLChange, onMarksChange, editorRef, initialContent }: ExamEditorProps) {
   const [markingMode, setMarkingMode] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
 
@@ -59,7 +61,7 @@ export default function ExamEditor({ onHTMLChange, onMarksChange, editorRef }: E
       TableHeader,
       ConceptMark,
     ],
-    content: SAMPLE_CONTENT,
+    content: initialContent !== undefined ? initialContent : SAMPLE_CONTENT,
     onUpdate: ({ editor: e }) => {
       onHTMLChange(e.getHTML());
       syncMarks(e);
