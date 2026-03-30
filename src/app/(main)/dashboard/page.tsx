@@ -5,28 +5,30 @@ import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth-context';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { BookOpen, FileText, PlusCircle, History, Upload, FolderOpen } from 'lucide-react';
+import { BookOpen, FileText, PlusCircle, History, Upload, FolderOpen, Lightbulb } from 'lucide-react';
 
 /**
  * 대시보드 페이지. 통계 요약과 빠른 실행 메뉴를 표시한다.
  */
 export default function DashboardPage() {
   const { user } = useAuth();
-  const [stats, setStats] = useState({ words: 0, categories: 0, exams: 0 });
+  const [stats, setStats] = useState({ words: 0, categories: 0, exams: 0, concepts: 0 });
 
   useEffect(() => {
     if (!user) return;
 
     async function loadStats() {
-      const [wordsRes, catsRes, examsRes] = await Promise.all([
+      const [wordsRes, catsRes, examsRes, conceptsRes] = await Promise.all([
         supabase.from('words').select('id', { count: 'exact', head: true }),
         supabase.from('categories').select('id', { count: 'exact', head: true }),
         supabase.from('exams').select('id', { count: 'exact', head: true }),
+        supabase.from('concept_sheets').select('id', { count: 'exact', head: true }),
       ]);
       setStats({
         words: wordsRes.count ?? 0,
         categories: catsRes.count ?? 0,
         exams: examsRes.count ?? 0,
+        concepts: conceptsRes.count ?? 0,
       });
     }
 
@@ -34,6 +36,7 @@ export default function DashboardPage() {
   }, [user]);
 
   const quickActions = [
+    { href: '/exam/builder', icon: Lightbulb, label: '개념 관리', desc: '개념지를 만들고 관리해요 💡' },
     { href: '/words/new', icon: PlusCircle, label: '단어 입력', desc: '새 단어를 추가해요 ✨' },
     { href: '/words', icon: FolderOpen, label: '단어 관리', desc: '저장된 단어를 관리해요 📖' },
     { href: '/exam/create', icon: FileText, label: '시험지 생성', desc: '시험지를 만들어요 ✏️' },
@@ -44,11 +47,11 @@ export default function DashboardPage() {
     <div className="space-y-8">
       <div>
         <h1 className="text-2xl font-bold text-gray-900">🏠 대시보드</h1>
-        <p className="text-gray-500 mt-1"><span style={{ fontFamily: "'Gmarket Sans', sans-serif", fontWeight: 700 }}>아라국어논술</span>에 오신 것을 환영해요 🌷</p>
+        <p className="text-gray-500 mt-1"><span style={{ fontFamily: "'Gmarket Sans', sans-serif", fontWeight: 700 }}>아라국어논술 시험 관리 시스템</span>에 오신 것을 환영해요 🌷</p>
       </div>
 
       {/* 통계 카드 */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium text-gray-500">📚 총 단어 수</CardTitle>
@@ -69,11 +72,20 @@ export default function DashboardPage() {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-gray-500">📝 생성된 시험지</CardTitle>
+            <CardTitle className="text-sm font-medium text-gray-500">📝 시험지</CardTitle>
             <FileText className="h-5 w-5 text-primary" />
           </CardHeader>
           <CardContent>
             <p className="text-3xl font-bold">{stats.exams}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-gray-500">💡 개념지</CardTitle>
+            <Lightbulb className="h-5 w-5 text-primary" />
+          </CardHeader>
+          <CardContent>
+            <p className="text-3xl font-bold">{stats.concepts}</p>
           </CardContent>
         </Card>
       </div>
@@ -81,7 +93,7 @@ export default function DashboardPage() {
       {/* 빠른 실행 */}
       <div>
         <h2 className="text-lg font-semibold text-gray-900 mb-4">⚡ 빠른 실행</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
           {quickActions.map((action) => (
             <Link key={action.href} href={action.href}>
               <Card className="hover:border-primary/50 hover:shadow-md hover:shadow-primary/10 transition-all cursor-pointer h-full">
