@@ -28,7 +28,7 @@ export default function Header() {
         <div className="flex items-center justify-between h-16">
           <Link href="/dashboard" className="flex items-center gap-2">
             <Image src="/logo.png" alt="아라국어논술" width={36} height={36} />
-            <span className="text-lg font-bold text-gray-900" style={{ fontFamily: "'Gmarket Sans', sans-serif" }}>아라국어논술 단어 관리 시스템</span>
+            <span className="text-lg font-bold text-gray-900" style={{ fontFamily: "'Gmarket Sans', sans-serif" }}>아라국어논술 시험 관리 시스템</span>
           </Link>
 
           {/* Desktop nav */}
