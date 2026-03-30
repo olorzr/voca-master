@@ -18,6 +18,7 @@ export default function Header() {
     { href: '/dashboard', label: '🏠 대시보드' },
     { href: '/words', label: '📚 단어 관리' },
     { href: '/exam/create', label: '✏️ 시험지 생성' },
+    { href: '/exam/builder', label: '📝 개념지 빌더' },
     { href: '/exam/history', label: '📋 시험 이력' },
   ];
 
