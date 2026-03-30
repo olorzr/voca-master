@@ -11,15 +11,11 @@ import {
 } from '@/components/exam-builder';
 import type { BuilderCategory, MarkItem } from '@/components/exam-builder';
 
-/** localStorage 키 */
-const RECENT_KEY = 'exam-builder-categories';
-const MAX_RECENT = 10;
-
 const DEFAULT_CATEGORY: BuilderCategory = {
   level: '중등',
-  grade: '중2',
-  publisher: '비상(박)',
-  semester: '1학기',
+  grade: '',
+  publisher: '',
+  semester: '',
   unit: '',
   subunit: '',
 };
@@ -35,29 +31,6 @@ export default function ExamBuilderPage() {
   const [marks, setMarks] = useState<MarkItem[]>([]);
   const [previewTab, setPreviewTab] = useState('concept');
   const editorRef = useRef<Editor | null>(null);
-
-  /* ── 카테고리 저장/불러오기 ── */
-  const saveCategory = useCallback(() => {
-    const raw = localStorage.getItem(RECENT_KEY);
-    let recent: BuilderCategory[] = raw ? JSON.parse(raw) : [];
-    recent = recent.filter((r) => JSON.stringify(r) !== JSON.stringify(category));
-    recent.unshift(category);
-    if (recent.length > MAX_RECENT) recent = recent.slice(0, MAX_RECENT);
-    localStorage.setItem(RECENT_KEY, JSON.stringify(recent));
-    toast.success('카테고리가 저장되었습니다');
-  }, [category]);
-
-  const loadRecent = useCallback(() => {
-    const raw = localStorage.getItem(RECENT_KEY);
-    const recent: BuilderCategory[] = raw ? JSON.parse(raw) : [];
-    if (recent.length === 0) {
-      toast.info('저장된 카테고리가 없습니다');
-      return;
-    }
-    // 가장 최근 카테고리 로드 (추후 드롭다운 확장 가능)
-    setCategory(recent[0]);
-    toast.success('카테고리를 불러왔습니다');
-  }, []);
 
   /* ── 마킹 삭제 ── */
   const deleteMark = useCallback((pos: number, len: number) => {
@@ -142,8 +115,6 @@ export default function ExamBuilderPage() {
       <ExamCategoryBar
         category={category}
         onChange={setCategory}
-        onSave={saveCategory}
-        onLoadRecent={loadRecent}
       />
 
       {/* 에디터 + 사이드바 */}
