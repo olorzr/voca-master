@@ -100,7 +100,7 @@ export default function ExamPreview({
     const allConfigs = ['concept', 'stage1', 'stage2', 'stage3', 'answer'] as const;
     allConfigs.forEach((key, i) => {
       const page = document.createElement('div');
-      page.className = `eb-a4-page${i > 0 ? ' eb-section-break' : ''}`;
+      page.className = `eb-sheet-pdf-page${i > 0 ? ' eb-section-break' : ''}`;
       const config = SHEET_CONFIGS[key];
       const mode = key === 'concept' ? 'concept' as const : config.mode;
       const bodyHTML = transformHTML(editorHTML, mode);

@@ -35,8 +35,9 @@ interface ExamSheetRendererProps {
 }
 
 /**
- * A4 시트 1장 렌더러.
- * 기존 시험지(ExamPaperView)와 동일한 헤더 구조: 로고 + 제목 + 이름란 + 점수란.
+ * A4 시트 렌더러.
+ * table + tfoot 패턴으로 푸터가 매 인쇄 페이지에 자동 반복되고,
+ * 내용이 A4를 넘으면 자연스럽게 다음 페이지로 넘어간다.
  */
 export default function ExamSheetRenderer({
   editorHTML,
@@ -64,50 +65,66 @@ export default function ExamSheetRenderer({
   }, [editorHTML]);
 
   return (
-    <div className={`eb-a4-page ${interactive ? 'eb-concept-interactive' : ''}`}>
-      {/* 헤더 — 기존 ExamPaperView와 동일 구조 */}
-      <div className="flex items-start justify-between mb-3">
-        <div>
-          <h2 className="text-[14pt] font-extrabold text-gray-900 leading-tight">
-            {title}
-            <span className={`inline-block ml-2 px-2 py-0.5 rounded text-[9pt] font-bold ${config.badgeClass}`}>
-              {config.badge}
-            </span>
-          </h2>
-          <p className="text-[8pt] text-gray-400 mt-0.5 tracking-widest">아라국어논술</p>
-        </div>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/logo.png" alt="아라국어논술" width={48} height={48} className="object-contain" />
-      </div>
+    <table className={`exam-print-table eb-sheet-table bg-white mx-auto ${interactive ? 'eb-concept-interactive' : ''}`}>
+      {/* 푸터 — 매 인쇄 페이지 하단에 자동 반복 */}
+      <tfoot>
+        <tr>
+          <td>
+            <div className="exam-print-footer">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/logo.png" alt="아라국어논술" width={16} height={16} />
+              <span>아라국어논술</span>
+            </div>
+          </td>
+        </tr>
+      </tfoot>
 
-      {/* 정보 바 — 기존 시험지 스타일 통일 */}
-      <div className="border-t-[1.5px] border-b-[1.5px] border-[#B8EDE8] py-2 mb-3">
-        <div className="flex items-center gap-6 text-[10pt] text-gray-600">
-          <span className="font-semibold">
-            이름 <span className="inline-block border-b border-gray-400 w-28 ml-2" />
-          </span>
-          <span>날짜 <span className="ml-1 text-gray-800">{today}</span></span>
-          {config.showScore && (
-            <span className="ml-auto font-semibold text-[#C83C6E]">
-              <span className="inline-block border-b border-gray-400 w-10 text-center" /> / {markCount}개
-            </span>
-          )}
-        </div>
-        <div className="flex justify-between text-[9pt] text-gray-500 mt-1">
-          <span className="text-gray-800 font-medium">{subtitle || '-'}</span>
-          <span>{category.semester}</span>
-        </div>
-      </div>
+      {/* 본문 */}
+      <tbody>
+        <tr>
+          <td className="eb-sheet-body-cell">
+            {/* 헤더 */}
+            <div className="flex items-start justify-between mb-3">
+              <div>
+                <h2 className="text-[14pt] font-extrabold text-gray-900 leading-tight">
+                  {title}
+                  <span className={`inline-block ml-2 px-2 py-0.5 rounded text-[9pt] font-bold ${config.badgeClass}`}>
+                    {config.badge}
+                  </span>
+                </h2>
+                <p className="text-[8pt] text-gray-400 mt-0.5 tracking-widest">아라국어논술</p>
+              </div>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/logo.png" alt="아라국어논술" width={48} height={48} className="object-contain" />
+            </div>
 
-      {/* 본문 — 변환된 HTML (글자 수 300자 초과 시 2단) */}
-      <div className={`sheet-body ${useDualCol ? 'sheet-body--dual' : ''}`} dangerouslySetInnerHTML={{ __html: bodyHTML }} />
+            {/* 정보 바 */}
+            <div className="border-t-[1.5px] border-b-[1.5px] border-[#B8EDE8] py-2 mb-3">
+              <div className="flex items-center gap-6 text-[10pt] text-gray-600">
+                <span className="font-semibold">
+                  이름 <span className="inline-block border-b border-gray-400 w-28 ml-2" />
+                </span>
+                <span>날짜 <span className="ml-1 text-gray-800">{today}</span></span>
+                {config.showScore && (
+                  <span className="ml-auto font-semibold text-[#C83C6E]">
+                    <span className="inline-block border-b border-gray-400 w-10 text-center" /> / {markCount}개
+                  </span>
+                )}
+              </div>
+              <div className="flex justify-between text-[9pt] text-gray-500 mt-1">
+                <span className="text-gray-800 font-medium">{subtitle || '-'}</span>
+                <span>{category.semester}</span>
+              </div>
+            </div>
 
-      {/* 푸터 */}
-      <div className="exam-print-footer mt-6">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/logo.png" alt="아라국어논술" width={16} height={16} />
-        <span>아라국어논술</span>
-      </div>
-    </div>
+            {/* 본문 — 변환된 HTML (글자 수 300자 초과 시 2단) */}
+            <div
+              className={`sheet-body ${useDualCol ? 'sheet-body--dual' : ''}`}
+              dangerouslySetInnerHTML={{ __html: bodyHTML }}
+            />
+          </td>
+        </tr>
+      </tbody>
+    </table>
   );
 }

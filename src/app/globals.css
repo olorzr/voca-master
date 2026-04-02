@@ -427,41 +427,39 @@
   cursor: pointer;
 }
 
-/* A4 미리보기 페이지 */
-.eb-a4-page {
-  width: 210mm;
-  min-height: 297mm;
-  background: white;
-  box-shadow: 0 4px 24px rgba(0,0,0,0.12);
-  padding: 15mm;
+/* 개념지 시트 테이블 — table + tfoot으로 A4 자동 페이지 넘김 */
+.eb-sheet-table {
   font-size: 10pt;
   line-height: 1.7;
-  position: relative;
 }
-.eb-a4-page h3 { font-size: 12pt; font-weight: 700; margin: 10pt 0 5pt; }
-.eb-a4-page h4 { font-size: 10pt; font-weight: 600; margin: 8pt 0 4pt; }
-.eb-a4-page p { margin: 3pt 0; }
-.eb-a4-page ul, .eb-a4-page ol { padding-left: 18pt; margin: 4pt 0; }
-.eb-a4-page table {
+.eb-sheet-body-cell {
+  padding: 15mm;
+}
+.eb-sheet-table h3 { font-size: 12pt; font-weight: 700; margin: 10pt 0 5pt; }
+.eb-sheet-table h4 { font-size: 10pt; font-weight: 600; margin: 8pt 0 4pt; }
+.eb-sheet-table p { margin: 3pt 0; }
+.eb-sheet-table ul, .eb-sheet-table ol { padding-left: 18pt; margin: 4pt 0; }
+.eb-sheet-table .sheet-body table {
   border-collapse: collapse;
   width: 100%;
   margin: 8pt 0;
 }
-.eb-a4-page th, .eb-a4-page td {
+.eb-sheet-table .sheet-body th,
+.eb-sheet-table .sheet-body td {
   border: 1px solid #D1D5DB;
   padding: 5pt 8pt;
   text-align: left;
   vertical-align: top;
   font-size: 10pt;
 }
-.eb-a4-page th { background: #F3F4F6; font-weight: 600; }
-.eb-a4-page tr:nth-child(even) td { background: #FAFBFC; }
+.eb-sheet-table .sheet-body th { background: #F3F4F6; font-weight: 600; }
+.eb-sheet-table .sheet-body tr:nth-child(even) td { background: #FAFBFC; }
 /* 셀별 인라인 스타일 우선순위 보장 (미리보기/인쇄) */
-.eb-a4-page td[data-border-color],
-.eb-a4-page th[data-border-color] { border-color: attr(data-border-color); }
-.eb-a4-page td[data-bg-color],
-.eb-a4-page th[data-bg-color] { background: none; }
-.eb-a4-page tr:nth-child(even) td[data-bg-color] { background: none; }
+.eb-sheet-table .sheet-body td[data-border-color],
+.eb-sheet-table .sheet-body th[data-border-color] { border-color: attr(data-border-color); }
+.eb-sheet-table .sheet-body td[data-bg-color],
+.eb-sheet-table .sheet-body th[data-bg-color] { background: none; }
+.eb-sheet-table .sheet-body tr:nth-child(even) td[data-bg-color] { background: none; }
 
 /* 개념지 본문 2단 레이아웃 */
 .sheet-body--dual {
@@ -554,17 +552,32 @@
   text-underline-offset: 2px;
 }
 
+/* 전체 PDF 다운로드 시 개별 페이지 스타일 */
+.eb-sheet-pdf-page {
+  width: 210mm;
+  padding: 15mm;
+  font-size: 10pt;
+  line-height: 1.7;
+}
+.eb-sheet-pdf-page h3 { font-size: 12pt; font-weight: 700; margin: 10pt 0 5pt; }
+.eb-sheet-pdf-page h4 { font-size: 10pt; font-weight: 600; margin: 8pt 0 4pt; }
+.eb-sheet-pdf-page p { margin: 3pt 0; }
+.eb-sheet-pdf-page table { border-collapse: collapse; width: 100%; margin: 8pt 0; }
+.eb-sheet-pdf-page th, .eb-sheet-pdf-page td {
+  border: 1px solid #D1D5DB; padding: 5pt 8pt; text-align: left; vertical-align: top; font-size: 10pt;
+}
+.eb-sheet-pdf-page th { background: #F3F4F6; font-weight: 600; }
+.eb-sheet-pdf-page td[data-border-color],
+.eb-sheet-pdf-page th[data-border-color] { border-color: attr(data-border-color); }
+.eb-sheet-pdf-page td[data-bg-color],
+.eb-sheet-pdf-page th[data-bg-color] { background: none; }
+
 /* 개념지 미리보기 드래그 선택 */
-.eb-a4-page.eb-concept-interactive ::selection {
+.eb-concept-interactive ::selection {
   background: #B8EDE8;
 }
 
 /* 빌더 인쇄 — A4 최적화 */
 @media print {
-  .eb-a4-page {
-    box-shadow: none;
-    margin: 0;
-    padding: 15mm;
-  }
   .eb-section-break { page-break-before: always; }
 }
