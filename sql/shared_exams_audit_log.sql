@@ -50,7 +50,7 @@ DROP POLICY IF EXISTS "Admin can read audit_log" ON audit_log;
 CREATE POLICY "Admin can read audit_log"
   ON audit_log FOR SELECT
   USING (
-    (SELECT email FROM auth.users WHERE id = auth.uid()) = 'ara0723@araeducation.co.kr'
+    auth.jwt() ->> 'email' = 'ara0723@araeducation.co.kr'
   );
 
 -- 감사 로그 쓰기: 트리거에서 SECURITY DEFINER로 삽입하므로 일반 INSERT 정책 불필요
