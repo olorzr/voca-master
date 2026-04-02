@@ -243,6 +243,75 @@
   border-bottom: 1.5px dashed #bbb;
 }
 
+/* 객관식 시험지 — 2단 레이아웃 */
+.mc-q-grid {
+  columns: 2;
+  column-gap: 20px;
+  column-rule: 1px solid #e5e7eb;
+}
+.mc-q-item {
+  break-inside: avoid;
+  padding: 5px 4px;
+  border-radius: 4px;
+}
+.mc-q-item:nth-child(even) { background: #F0FAF9; }
+.mc-q-header {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin-bottom: 2px;
+}
+.mc-q-meaning {
+  font-size: 11px;
+  font-weight: 600;
+  color: #333;
+  line-height: 1.4;
+}
+.mc-q-choices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 10px;
+  padding-left: 28px;
+}
+.mc-q-choice {
+  font-size: 10px;
+  color: #555;
+  white-space: nowrap;
+}
+
+/* 객관식 답안지 — 5열 그리드 */
+.mc-answer-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 6px 12px;
+  max-width: 400px;
+  margin: 16px auto 0;
+}
+.mc-answer-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+.mc-answer-item:nth-child(10n+1),
+.mc-answer-item:nth-child(10n+2),
+.mc-answer-item:nth-child(10n+3),
+.mc-answer-item:nth-child(10n+4),
+.mc-answer-item:nth-child(10n+5) { background: #F0FAF9; }
+.mc-answer-num {
+  font-size: 11px;
+  font-weight: 800;
+  color: #5BBFB7;
+  width: 20px;
+  text-align: center;
+}
+.mc-answer-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: #222;
+}
+
 /* 단어장 2단 레이아웃 (flexbox 수동 분할) */
 .wb-grid--dual {
   display: flex;

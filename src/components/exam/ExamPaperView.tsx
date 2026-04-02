@@ -24,7 +24,7 @@ export default function ExamPaperView({ exam, words, categories, showAnswer }: E
   const useSingleCol = words.length <= SINGLE_COL_THRESHOLD;
   const today = new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' });
   const sourceLabels = categories.map((c) => formatCategoryLabel(c));
-  const title = showAnswer ? `${exam.title} - 답안지` : exam.title;
+  const title = showAnswer ? `${exam.title} - 주관식 답안지` : `${exam.title} - 주관식 시험지`;
 
   return (
     <table className="exam-print-table bg-white mx-auto">

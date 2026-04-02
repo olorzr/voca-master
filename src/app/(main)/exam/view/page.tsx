@@ -5,7 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import type { ExamWord, Category } from '@/types';
 import { formatCategoryLabel } from '@/lib/format';
-import { ExamPaperView, WordBookView } from '@/components/exam';
+import { ExamPaperView, MultipleChoiceView, MultipleChoiceAnswerView, WordBookView } from '@/components/exam';
 import { Button } from '@/components/ui/button';
 import { Printer, FileText, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
@@ -27,7 +27,7 @@ function ExamViewContent() {
   const [examWords, setExamWords] = useState<ExamWord[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [showAnswer, setShowAnswer] = useState(false);
-  const [viewMode, setViewMode] = useState<'exam' | 'wordbook' | 'answer'>('exam');
+  const [viewMode, setViewMode] = useState<'exam' | 'answer' | 'mc-exam' | 'mc-answer' | 'wordbook'>('exam');
 
   useEffect(() => {
     if (!examId) return;
@@ -80,7 +80,7 @@ function ExamViewContent() {
             className={viewMode === 'exam' ? 'bg-primary hover:bg-primary-hover text-white' : ''}
           >
             <FileText className="h-4 w-4 mr-1" />
-            시험지
+            주관식 시험지
           </Button>
           <Button
             variant={viewMode === 'answer' ? 'default' : 'outline'}
@@ -88,7 +88,23 @@ function ExamViewContent() {
             onClick={() => { setViewMode('answer'); setShowAnswer(true); }}
             className={viewMode === 'answer' ? 'bg-primary hover:bg-primary-hover text-white' : ''}
           >
-            답안지
+            주관식 답안지
+          </Button>
+          <Button
+            variant={viewMode === 'mc-exam' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => { setViewMode('mc-exam'); setShowAnswer(false); }}
+            className={viewMode === 'mc-exam' ? 'bg-primary hover:bg-primary-hover text-white' : ''}
+          >
+            객관식 시험지
+          </Button>
+          <Button
+            variant={viewMode === 'mc-answer' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => { setViewMode('mc-answer'); setShowAnswer(false); }}
+            className={viewMode === 'mc-answer' ? 'bg-primary hover:bg-primary-hover text-white' : ''}
+          >
+            객관식 답안지
           </Button>
           <Button
             variant={viewMode === 'wordbook' ? 'default' : 'outline'}
@@ -107,13 +123,20 @@ function ExamViewContent() {
 
       {/* 인쇄 영역 */}
       <div className="print-area">
-        {viewMode === 'wordbook' ? (
+        {viewMode === 'wordbook' && (
           <WordBookView
             sourceText={categories.map(c => formatCategoryLabel(c, { excludePublisher: true })).join(', ')}
             words={examWords}
           />
-        ) : (
+        )}
+        {(viewMode === 'exam' || viewMode === 'answer') && (
           <ExamPaperView exam={exam} words={examWords} categories={categories} showAnswer={showAnswer} />
+        )}
+        {viewMode === 'mc-exam' && (
+          <MultipleChoiceView exam={exam} words={examWords} categories={categories} />
+        )}
+        {viewMode === 'mc-answer' && (
+          <MultipleChoiceAnswerView exam={exam} words={examWords} categories={categories} />
         )}
       </div>
     </div>
