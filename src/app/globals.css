@@ -243,6 +243,19 @@
   border-bottom: 1.5px dashed #bbb;
 }
 
+/* 단어장 CSS columns 레이아웃 */
+.wb-grid--dual {
+  columns: 2;
+  column-gap: 24px;
+  column-rule: 1px solid #F0C6D6;
+}
+.wb-grid--single {
+  columns: 1;
+}
+.wb-item {
+  break-inside: avoid;
+}
+
 /* 단어장 테이블 */
 .wb-thead {
   display: flex;
@@ -250,7 +263,6 @@
   padding: 7px 10px;
   background: #FDE8F0;
   border: 1.5px solid #F0C6D6;
-  border-bottom: none;
   border-radius: 8px 8px 0 0;
   font-size: 10px;
   font-weight: 700;
@@ -260,12 +272,6 @@
 .wb-thead__word { flex: 3; }
 .wb-thead__meaning { flex: 7; }
 .wb-thead__check { width: 48px; text-align: center; flex-shrink: 0; }
-.wb-body {
-  border: 1.5px solid #F0C6D6;
-  border-top: 1.5px solid #F0C6D6;
-  border-radius: 0 0 8px 8px;
-  overflow: hidden;
-}
 .wb-row {
   display: flex;
   align-items: center;
@@ -273,9 +279,10 @@
   break-inside: avoid;
   font-size: 12px;
   gap: 6px;
-  border-bottom: 1px solid #FCE8EF;
+  border: 1px solid #FCE8EF;
+  border-top: none;
 }
-.wb-row:last-child { border-bottom: none; }
+.wb-row--last { border-radius: 0 0 8px 8px; }
 .wb-row:nth-child(even) { background: #FFF8FA; }
 .wb-row__num {
   width: 24px;
