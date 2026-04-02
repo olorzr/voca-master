@@ -404,6 +404,12 @@
 }
 .eb-editor-wrap .ProseMirror th { background: #F3F4F6; font-weight: 600; }
 .eb-editor-wrap .ProseMirror tr:nth-child(even) td { background: #F9FAFB; }
+/* 셀별 인라인 스타일이 기본 배경/테두리를 덮도록 우선순위 보장 */
+.eb-editor-wrap .ProseMirror td[data-border-color],
+.eb-editor-wrap .ProseMirror th[data-border-color] { border-color: attr(data-border-color); }
+.eb-editor-wrap .ProseMirror td[data-bg-color],
+.eb-editor-wrap .ProseMirror th[data-bg-color] { background: none; }
+.eb-editor-wrap .ProseMirror tr:nth-child(even) td[data-bg-color] { background: none; }
 
 /* 에디터 내 마킹 표시 */
 .eb-editor-wrap .ProseMirror mark[data-concept] {
@@ -443,6 +449,12 @@
 }
 .eb-a4-page th { background: #F3F4F6; font-weight: 600; }
 .eb-a4-page tr:nth-child(even) td { background: #FAFBFC; }
+/* 셀별 인라인 스타일 우선순위 보장 (미리보기/인쇄) */
+.eb-a4-page td[data-border-color],
+.eb-a4-page th[data-border-color] { border-color: attr(data-border-color); }
+.eb-a4-page td[data-bg-color],
+.eb-a4-page th[data-bg-color] { background: none; }
+.eb-a4-page tr:nth-child(even) td[data-bg-color] { background: none; }
 
 /* 개념지 본문 2단 레이아웃 */
 .sheet-body--dual {
