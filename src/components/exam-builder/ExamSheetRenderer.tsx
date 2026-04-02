@@ -48,10 +48,13 @@ export default function ExamSheetRenderer({
 }: ExamSheetRendererProps) {
   const year = new Date().getFullYear();
   const today = new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' });
-  const title = `${year} ${category.grade} 국어 ${category.publisher}`;
-  const subtitle = category.subunit
+  const unitText = category.subunit
     ? `${category.unit} — ${category.subunit}`
     : category.unit;
+  const title = [
+    `${year} ${category.grade} 국어 ${category.publisher}`,
+    unitText,
+  ].filter(Boolean).join(' ');
 
   const bodyHTML = useMemo(
     () => transformHTML(editorHTML, config.mode),
@@ -111,10 +114,12 @@ export default function ExamSheetRenderer({
                   </span>
                 )}
               </div>
-              <div className="flex justify-between text-[9pt] text-gray-500 mt-1">
-                <span className="text-gray-800 font-medium">{subtitle || '-'}</span>
-                <span>{category.semester}</span>
-              </div>
+              {(unitText || category.semester) && (
+                <div className="flex justify-between text-[9pt] text-gray-500 mt-1">
+                  <span className="text-gray-800 font-medium">{unitText}</span>
+                  <span>{category.semester}</span>
+                </div>
+              )}
             </div>
 
             {/* 본문 — 변환된 HTML (글자 수 300자 초과 시 2단) */}

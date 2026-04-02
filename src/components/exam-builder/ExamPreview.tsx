@@ -223,11 +223,17 @@ function buildFilename(cat: BuilderCategory, type: string): string {
 function buildSheetHTML(cat: BuilderCategory, config: SheetConfig, markCount: number, bodyHTML: string, editorHTML?: string): string {
   const year = new Date().getFullYear();
   const today = new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' });
-  const subtitle = cat.subunit ? `${cat.unit} — ${cat.subunit}` : cat.unit;
+  const unitText = cat.subunit ? `${cat.unit} — ${cat.subunit}` : cat.unit;
+  const titleText = [`${year} ${cat.grade} 국어 ${cat.publisher}`, unitText].filter(Boolean).join(' ');
+  const subtitleRow = (unitText || cat.semester) ? `
+      <div style="display:flex;justify-content:space-between;font-size:9pt;color:#6B7280;margin-top:4pt">
+        <span style="color:#1F2937;font-weight:500">${unitText}</span>
+        <span>${cat.semester}</span>
+      </div>` : '';
   return `
     <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:10pt">
       <div>
-        <h2 style="font-size:14pt;font-weight:800">${year} ${cat.grade} 국어 ${cat.publisher}
+        <h2 style="font-size:14pt;font-weight:800">${titleText}
           <span class="${config.badgeClass}" style="display:inline-block;margin-left:6pt;padding:2pt 6pt;border-radius:4pt;font-size:9pt;font-weight:700">${config.badge}</span>
         </h2>
         <p style="font-size:8pt;color:#9CA3AF;letter-spacing:2px">아라국어논술</p>
@@ -239,11 +245,7 @@ function buildSheetHTML(cat: BuilderCategory, config: SheetConfig, markCount: nu
         <span style="font-weight:600">이름 <span style="display:inline-block;border-bottom:1px solid #9CA3AF;width:80pt;margin-left:4pt"></span></span>
         <span>날짜 <span style="color:#1F2937;margin-left:2pt">${today}</span></span>
         ${config.showScore ? `<span style="margin-left:auto;font-weight:600;color:#C83C6E"><span style="display:inline-block;border-bottom:1px solid #9CA3AF;width:30pt;text-align:center"></span> / ${markCount}개</span>` : ''}
-      </div>
-      <div style="display:flex;justify-content:space-between;font-size:9pt;color:#6B7280;margin-top:4pt">
-        <span style="color:#1F2937;font-weight:500">${subtitle || '-'}</span>
-        <span>${cat.semester}</span>
-      </div>
+      </div>${subtitleRow}
     </div>
     <div class="${editorHTML && editorHTML.replace(/<[^>]*>/g, '').trim().length > 300 ? 'sheet-body--dual' : ''}">${bodyHTML}</div>
     <div style="display:flex;align-items:center;justify-content:center;gap:6px;border-top:1px solid #e5e7eb;padding:8px 0;margin-top:20pt;font-size:9px;color:#aaa;letter-spacing:2px">
