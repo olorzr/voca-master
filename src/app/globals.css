@@ -369,7 +369,7 @@
     display: table-header-group;
   }
   .exam-print-header-spacer {
-    height: 10mm;
+    height: 13mm;
   }
 
   /* tfoot이 매 페이지 하단에 자동 반복 — 콘텐츠 겹침 없음 */
