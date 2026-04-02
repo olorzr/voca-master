@@ -88,8 +88,8 @@ export default function WordBookView({ sourceText, words }: WordBookViewProps) {
               <WordHeader />
             ) : (
               <div className="wb-grid wb-grid--dual">
-                <WordHeader />
-                <WordHeader />
+                <div className="wb-col"><WordHeader /></div>
+                <div className="wb-col"><WordHeader /></div>
               </div>
             )}
           </td>
