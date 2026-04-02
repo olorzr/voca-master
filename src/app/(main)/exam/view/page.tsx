@@ -7,9 +7,8 @@ import type { ExamWord, Category } from '@/types';
 import { formatCategoryLabel } from '@/lib/format';
 import { ExamPaperView, WordBookView } from '@/components/exam';
 import { Button } from '@/components/ui/button';
-import { Printer, FileText, ArrowLeft, Download } from 'lucide-react';
+import { Printer, FileText, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
-import { toast } from 'sonner';
 
 interface ExamData {
   id: string;
@@ -102,31 +101,6 @@ function ExamViewContent() {
           <Button variant="outline" size="sm" onClick={() => window.print()}>
             <Printer className="h-4 w-4 mr-1" />
             인쇄
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={async () => {
-              const el = document.querySelector('.print-area');
-              if (!el) return;
-              toast.info('PDF 생성 중...');
-              const html2pdf = (await import('html2pdf.js')).default;
-              const suffix = viewMode === 'wordbook' ? '단어장' : viewMode === 'answer' ? '답안지' : '시험지';
-              const filename = `${exam.title}_${suffix}.pdf`;
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              await (html2pdf() as any).set({
-                margin: [15, 15, 15, 15],
-                filename,
-                image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { scale: 2, useCORS: true, logging: false },
-                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-                pagebreak: { mode: ['css', 'legacy'], avoid: ['tr', '.wb-row', '.wb-item', '.q-row'] },
-              }).from(el).save();
-              toast.success('PDF 다운로드 완료!');
-            }}
-          >
-            <Download className="h-4 w-4 mr-1" />
-            PDF
           </Button>
         </div>
       </div>
