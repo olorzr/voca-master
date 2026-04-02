@@ -127,29 +127,17 @@ CREATE POLICY "Authenticated users can manage words"
   USING (auth.role() = 'authenticated')
   WITH CHECK (auth.role() = 'authenticated');
 
--- 시험지: 본인 시험지만 접근
-CREATE POLICY "Users can manage own exams"
+-- 시험지: 모든 인증된 사용자 공유 (감사 로그로 변경 이력 추적)
+CREATE POLICY "Authenticated users can manage exams"
   ON exams FOR ALL
-  USING (auth.uid() = user_id)
-  WITH CHECK (auth.uid() = user_id);
+  USING (auth.role() = 'authenticated')
+  WITH CHECK (auth.role() = 'authenticated');
 
--- 시험지 단어: 본인 시험지의 단어만 접근
-CREATE POLICY "Users can manage own exam words"
+-- 시험지 단어: 모든 인증된 사용자 공유
+CREATE POLICY "Authenticated users can manage exam_words"
   ON exam_words FOR ALL
-  USING (
-    EXISTS (
-      SELECT 1 FROM exams
-      WHERE exams.id = exam_words.exam_id
-      AND exams.user_id = auth.uid()
-    )
-  )
-  WITH CHECK (
-    EXISTS (
-      SELECT 1 FROM exams
-      WHERE exams.id = exam_words.exam_id
-      AND exams.user_id = auth.uid()
-    )
-  );
+  USING (auth.role() = 'authenticated')
+  WITH CHECK (auth.role() = 'authenticated');
 
 -- 마스터 테이블: 모든 인증된 사용자 접근 가능 (공유 데이터)
 ALTER TABLE publishers ENABLE ROW LEVEL SECURITY;

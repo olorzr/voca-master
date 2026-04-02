@@ -32,6 +32,21 @@ export interface Exam {
   parent_exam_id: string | null;
   retake_number: number;
   user_id: string;
+  updated_by: string | null;
+  created_at: string;
+  updated_at: string | null;
+}
+
+/** 감사 로그 */
+export interface AuditLog {
+  id: string;
+  table_name: string;
+  record_id: string;
+  action: 'INSERT' | 'UPDATE' | 'DELETE';
+  actor_id: string | null;
+  actor_email: string | null;
+  old_data: Record<string, unknown> | null;
+  new_data: Record<string, unknown> | null;
   created_at: string;
 }
 

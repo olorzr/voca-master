@@ -49,7 +49,7 @@ export default function ExamHistoryPage() {
   const loadData = useCallback(async () => {
     if (!user) return;
     const [examRes, catRes] = await Promise.all([
-      supabase.from('exams').select('*').eq('user_id', user.id).order('created_at', { ascending: false }),
+      supabase.from('exams').select('*').order('created_at', { ascending: false }),
       supabase.from('categories').select('*').order('level').order('grade'),
     ]);
     setExams(examRes.data ?? []);
