@@ -27,3 +27,6 @@ export const SEMESTER_OPTIONS = ['1학기', '2학기'] as const;
 
 /** 외부지문 카테고리 레벨명 */
 export const EXTERNAL_LEVEL = '외부지문 및 프린트' as const;
+
+/** 관리자 이메일 */
+export const ADMIN_EMAIL = 'ara0723@araeducation.co.kr';

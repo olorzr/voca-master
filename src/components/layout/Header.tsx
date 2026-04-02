@@ -4,8 +4,9 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useAuth } from '@/lib/auth-context';
 import { Button } from '@/components/ui/button';
-import { LogOut, Menu, X } from 'lucide-react';
+import { LogOut, Menu, X, Shield } from 'lucide-react';
 import { useState } from 'react';
+import { ADMIN_EMAIL } from '@/lib/constants';
 
 /**
  * 앱 상단 네비게이션 헤더. 데스크톱/모바일 반응형 메뉴를 제공한다.
@@ -14,12 +15,15 @@ export default function Header() {
   const { user, signOut } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
 
+  const isAdmin = user?.email === ADMIN_EMAIL;
+
   const navLinks = [
     { href: '/dashboard', label: '🏠 대시보드' },
     { href: '/exam/builder', label: '📝 개념 관리' },
     { href: '/words', label: '📚 단어 관리' },
     { href: '/exam/create', label: '✏️ 시험지 생성' },
     { href: '/exam/history', label: '📋 시험 이력' },
+    ...(isAdmin ? [{ href: '/admin/audit', label: '🔒 감사 로그' }] : []),
   ];
 
   return (

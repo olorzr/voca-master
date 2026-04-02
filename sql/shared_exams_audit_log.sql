@@ -43,11 +43,16 @@ CREATE INDEX IF NOT EXISTS idx_audit_log_created ON audit_log(created_at);
 
 ALTER TABLE audit_log ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Authenticated users can read audit_log"
+-- 감사 로그 읽기: 관리자만 허용
+CREATE POLICY "Admin can read audit_log"
   ON audit_log FOR SELECT
-  USING (auth.role() = 'authenticated');
+  USING (
+    (SELECT email FROM auth.users WHERE id = auth.uid()) = 'ara0723@araeducation.co.kr'
+  );
 
-CREATE POLICY "Authenticated users can insert audit_log"
+-- 감사 로그 쓰기: 트리거에서 SECURITY DEFINER로 삽입하므로 일반 INSERT 정책 불필요
+-- 하지만 RLS가 활성화되어 있으므로 트리거 함수가 SECURITY DEFINER로 우회함
+CREATE POLICY "System can insert audit_log"
   ON audit_log FOR INSERT
   WITH CHECK (auth.role() = 'authenticated');
 
