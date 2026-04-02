@@ -69,6 +69,8 @@ export default function ExamSheetRenderer({
 
   return (
     <table className={`exam-print-table eb-sheet-table bg-white mx-auto ${interactive ? 'eb-concept-interactive' : ''}`}>
+      {/* 상단 여백 — 매 인쇄 페이지 상단에 자동 반복 */}
+      <thead><tr><td><div className="exam-print-header-spacer" /></td></tr></thead>
       {/* 푸터 — 매 인쇄 페이지 하단에 자동 반복 */}
       <tfoot>
         <tr>

@@ -28,6 +28,8 @@ export default function ExamPaperView({ exam, words, categories, showAnswer }: E
 
   return (
     <table className="exam-print-table bg-white mx-auto">
+      {/* 상단 여백 — 매 인쇄 페이지 상단에 자동 반복 */}
+      <thead><tr><td><div className="exam-print-header-spacer" /></td></tr></thead>
       {/* 푸터 — 매 인쇄 페이지 하단에 자동 반복 */}
       <tfoot>
         <tr>
