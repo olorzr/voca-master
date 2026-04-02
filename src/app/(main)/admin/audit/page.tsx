@@ -56,12 +56,19 @@ export default function AuditLogPage() {
     if (filterTable) query = query.eq('table_name', filterTable);
     if (filterAction) query = query.eq('action', filterAction);
 
-    const { data } = await query;
+    const { data, error } = await query;
+    if (error) {
+      console.error('감사 로그 조회 실패:', error.message);
+    }
     setLogs(data ?? []);
     setLoading(false);
   }, [filterTable, filterAction]);
 
-  useEffect(() => { loadLogs(); }, [loadLogs]);
+  useEffect(() => {
+    if (!authLoading && user?.email === ADMIN_EMAIL) {
+      loadLogs();
+    }
+  }, [loadLogs, authLoading, user]);
 
   if (authLoading || !user || user.email !== ADMIN_EMAIL) {
     return (
