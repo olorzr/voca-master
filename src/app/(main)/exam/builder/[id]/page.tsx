@@ -209,80 +209,81 @@ export default function ConceptEditorPage() {
     );
   }
 
-  /* ── 미리보기 화면 ── */
-  if (screen === 'preview') {
-    return (
-      <div className="-mx-4 sm:-mx-6 lg:-mx-8 -my-8" style={{ height: 'calc(100vh - 64px)' }}>
-        <ExamPreview
-          editorHTML={editorHTML}
-          category={category}
-          markCount={marks.length}
-          activeTab={previewTab}
-          onTabChange={setPreviewTab}
-          onBack={() => setScreen('editor')}
-          onConceptClick={removeMarkByText}
-          onConceptDrag={addMarkByText}
-        />
-      </div>
-    );
-  }
-
-  /* ── 에디터 화면 ── */
+  /* ── 에디터 + 미리보기 (동시 마운트, CSS로 전환) ── */
   return (
-    <div className="-mx-4 sm:-mx-6 lg:-mx-8 -mt-8">
-      {/* 상단 바: 뒤로가기 + 제목 + 저장 */}
-      <div className="bg-white border-b border-gray-200 px-5 py-3 flex items-center gap-3 sticky top-16 z-50">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => router.push('/exam/builder')}
-          className="shrink-0"
-        >
-          <ArrowLeft className="h-4 w-4 mr-1" />
-          목록
-        </Button>
-
-        <Input
-          placeholder="개념지 제목을 입력하세요"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          className="flex-1 max-w-md border-transparent hover:border-gray-300 focus:border-primary bg-transparent text-base font-semibold"
-        />
-
-        <Button
-          size="sm"
-          className="bg-primary hover:bg-primary-hover text-white ml-auto shrink-0"
-          onClick={handleSave}
-          disabled={saving}
-        >
-          <Save className="h-4 w-4 mr-1" />
-          {saving ? '저장 중...' : '저장'}
-        </Button>
-      </div>
-
-      {/* 카테고리 바 */}
-      <ExamCategoryBar category={category} onChange={setCategory} />
-
-      {/* 에디터 + 사이드바 */}
-      <div className="flex gap-5 p-5" style={{ height: 'calc(100vh - 64px - 56px - 80px)' }}>
-        <div className="flex-[7] min-w-0">
-          <ExamEditor
-            onHTMLChange={setEditorHTML}
-            onMarksChange={setMarks}
-            editorRef={editorRef}
-            initialContent={initialHTMLRef.current ?? undefined}
+    <>
+      {/* 미리보기 화면 */}
+      {screen === 'preview' && (
+        <div className="-mx-4 sm:-mx-6 lg:-mx-8 -my-8" style={{ height: 'calc(100vh - 64px)' }}>
+          <ExamPreview
+            editorHTML={editorHTML}
+            category={category}
+            markCount={marks.length}
+            activeTab={previewTab}
+            onTabChange={setPreviewTab}
+            onBack={() => setScreen('editor')}
+            onConceptClick={removeMarkByText}
+            onConceptDrag={addMarkByText}
           />
         </div>
-        <div className="flex-[3] min-w-[280px]">
-          <ExamMarkingSidebar
-            marks={marks}
-            onDelete={deleteMark}
-            onClearAll={clearAllMarks}
-            onPreview={() => { setPreviewTab('concept'); setScreen('preview'); }}
+      )}
+
+      {/* 에디터 화면 — preview 중에는 숨김 (언마운트하지 않음) */}
+      <div className="-mx-4 sm:-mx-6 lg:-mx-8 -mt-8" style={{ display: screen === 'editor' ? undefined : 'none' }}>
+        {/* 상단 바: 뒤로가기 + 제목 + 저장 */}
+        <div className="bg-white border-b border-gray-200 px-5 py-3 flex items-center gap-3 sticky top-16 z-50">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => router.push('/exam/builder')}
+            className="shrink-0"
+          >
+            <ArrowLeft className="h-4 w-4 mr-1" />
+            목록
+          </Button>
+
+          <Input
+            placeholder="개념지 제목을 입력하세요"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            className="flex-1 max-w-md border-transparent hover:border-gray-300 focus:border-primary bg-transparent text-base font-semibold"
           />
+
+          <Button
+            size="sm"
+            className="bg-primary hover:bg-primary-hover text-white ml-auto shrink-0"
+            onClick={handleSave}
+            disabled={saving}
+          >
+            <Save className="h-4 w-4 mr-1" />
+            {saving ? '저장 중...' : '저장'}
+          </Button>
+        </div>
+
+        {/* 카테고리 바 */}
+        <ExamCategoryBar category={category} onChange={setCategory} />
+
+        {/* 에디터 + 사이드바 */}
+        <div className="flex gap-5 p-5" style={{ height: 'calc(100vh - 64px - 56px - 80px)' }}>
+          <div className="flex-[7] min-w-0">
+            <ExamEditor
+              onHTMLChange={setEditorHTML}
+              onMarksChange={setMarks}
+              editorRef={editorRef}
+              initialContent={initialHTMLRef.current ?? undefined}
+            />
+          </div>
+          <div className="flex-[3] min-w-[280px]">
+            <ExamMarkingSidebar
+              marks={marks}
+              onDelete={deleteMark}
+              onClearAll={clearAllMarks}
+              onPreview={() => { setPreviewTab('concept'); setScreen('preview'); }}
+            />
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }
 
