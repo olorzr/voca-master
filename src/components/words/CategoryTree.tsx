@@ -76,13 +76,15 @@ function TreeNodeItem({
 
   return (
     <div>
-      <button
-        type="button"
-        className={`flex items-center gap-1.5 w-full px-2 py-1.5 rounded-md text-sm transition-colors text-left ${
+      <div
+        role="button"
+        tabIndex={0}
+        className={`flex items-center gap-1.5 w-full px-2 py-1.5 rounded-md text-sm transition-colors text-left cursor-pointer ${
           isSelected ? 'bg-primary/10 text-primary font-medium' : 'hover:bg-gray-50'
         }`}
         style={{ paddingLeft: `${depth * 16 + 8}px` }}
         onClick={handleClick}
+        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleClick(); } }}
       >
         {!isLeaf ? (
           expanded
@@ -107,7 +109,7 @@ function TreeNodeItem({
         }
 
         <span className="truncate">{node.label}</span>
-      </button>
+      </div>
 
       {expanded && node.children.length > 0 && (
         <div>
