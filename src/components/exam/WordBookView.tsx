@@ -15,12 +15,47 @@ interface WordBookViewProps {
 }
 
 /**
+ * 단어장 단일 열 렌더링
+ * 헤더(# 단어 뜻 암기)를 포함한 하나의 열을 렌더링한다.
+ */
+function WordColumn({ words, startIndex }: { words: WordBookWord[]; startIndex: number }) {
+  return (
+    <div className="wb-col">
+      <div className="wb-thead">
+        <span className="w-7 text-center">#</span>
+        <span className="wb-thead__word">단어</span>
+        <span className="wb-thead__meaning">뜻</span>
+        <span className="wb-thead__check">암기</span>
+      </div>
+      {words.map((w, idx) => (
+        <div
+          key={w.id}
+          className={`wb-row ${idx === words.length - 1 ? 'wb-row--last' : ''}`}
+        >
+          <span className="wb-row__num">{String(startIndex + idx + 1).padStart(2, '0')}</span>
+          <span className="wb-row__word">{w.word}</span>
+          <span className="wb-row__meaning">{w.meaning}</span>
+          <span className="wb-row__check">
+            <span className="wb-checkbox" />
+            <span className="wb-checkbox" />
+            <span className="wb-checkbox" />
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/**
  * 단어장 뷰 (핑크 테마)
  * table + tfoot으로 푸터가 매 페이지 하단에 자동 반복.
- * CSS columns로 자동 분할하여 A4 페이지를 자연스럽게 넘긴다.
+ * 수동 2단 분할로 각 열마다 헤더(# 단어 뜻 암기)가 반복된다.
  */
 export default function WordBookView({ sourceText, words }: WordBookViewProps) {
   const useSingleCol = words.length <= SINGLE_COL_THRESHOLD;
+  const mid = Math.ceil(words.length / 2);
+  const leftWords = words.slice(0, mid);
+  const rightWords = words.slice(mid);
 
   return (
     <table className="exam-print-table bg-white mx-auto">
@@ -58,32 +93,15 @@ export default function WordBookView({ sourceText, words }: WordBookViewProps) {
               </div>
             </div>
 
-            {/* 단어 테이블 — CSS columns로 자동 분할 */}
-            <div className={`wb-grid ${useSingleCol ? 'wb-grid--single' : 'wb-grid--dual'}`}>
-              {words.map((w, idx) => (
-                <div key={w.id} className="wb-item">
-                  {/* 각 열의 첫 번째 항목에 헤더 표시 */}
-                  {idx === 0 && (
-                    <div className="wb-thead">
-                      <span className="w-7 text-center">#</span>
-                      <span className="wb-thead__word">단어</span>
-                      <span className="wb-thead__meaning">뜻</span>
-                      <span className="wb-thead__check">암기</span>
-                    </div>
-                  )}
-                  <div className={`wb-row ${idx === words.length - 1 ? 'wb-row--last' : ''}`}>
-                    <span className="wb-row__num">{String(idx + 1).padStart(2, '0')}</span>
-                    <span className="wb-row__word">{w.word}</span>
-                    <span className="wb-row__meaning">{w.meaning}</span>
-                    <span className="wb-row__check">
-                      <span className="wb-checkbox" />
-                      <span className="wb-checkbox" />
-                      <span className="wb-checkbox" />
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
+            {/* 단어 테이블 — 각 열마다 헤더 포함 */}
+            {useSingleCol ? (
+              <WordColumn words={words} startIndex={0} />
+            ) : (
+              <div className="wb-grid wb-grid--dual">
+                <WordColumn words={leftWords} startIndex={0} />
+                <WordColumn words={rightWords} startIndex={mid} />
+              </div>
+            )}
           </td>
         </tr>
       </tbody>
