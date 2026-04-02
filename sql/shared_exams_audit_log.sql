@@ -3,9 +3,11 @@
 -- 실행: Supabase SQL Editor에서 실행
 -- =============================================
 
--- 1. 기존 RLS 정책 삭제
+-- 1. 기존 RLS 정책 삭제 (이전 이름 + 현재 이름 모두 정리)
 DROP POLICY IF EXISTS "Users can manage own exams" ON exams;
 DROP POLICY IF EXISTS "Users can manage own exam words" ON exam_words;
+DROP POLICY IF EXISTS "Authenticated users can manage exams" ON exams;
+DROP POLICY IF EXISTS "Authenticated users can manage exam_words" ON exam_words;
 
 -- 2. 새 RLS 정책: 모든 인증된 사용자 공유
 CREATE POLICY "Authenticated users can manage exams"
@@ -44,6 +46,7 @@ CREATE INDEX IF NOT EXISTS idx_audit_log_created ON audit_log(created_at);
 ALTER TABLE audit_log ENABLE ROW LEVEL SECURITY;
 
 -- 감사 로그 읽기: 관리자만 허용
+DROP POLICY IF EXISTS "Admin can read audit_log" ON audit_log;
 CREATE POLICY "Admin can read audit_log"
   ON audit_log FOR SELECT
   USING (
@@ -52,6 +55,7 @@ CREATE POLICY "Admin can read audit_log"
 
 -- 감사 로그 쓰기: 트리거에서 SECURITY DEFINER로 삽입하므로 일반 INSERT 정책 불필요
 -- 하지만 RLS가 활성화되어 있으므로 트리거 함수가 SECURITY DEFINER로 우회함
+DROP POLICY IF EXISTS "System can insert audit_log" ON audit_log;
 CREATE POLICY "System can insert audit_log"
   ON audit_log FOR INSERT
   WITH CHECK (auth.role() = 'authenticated');
