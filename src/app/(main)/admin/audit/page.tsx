@@ -24,6 +24,7 @@ const ACTION_COLOR: Record<string, string> = {
 const TABLE_LABEL: Record<string, string> = {
   exams: '시험지',
   concept_sheets: '개념지',
+  words: '단어',
 };
 
 const PAGE_SIZE = 50;
@@ -88,6 +89,11 @@ export default function AuditLogPage() {
   const extractTitle = (log: AuditLog): string => {
     const data = log.new_data ?? log.old_data;
     if (!data) return '-';
+    if (log.table_name === 'words') {
+      const word = data.word as string;
+      const meaning = data.meaning as string;
+      return word ? `${word} — ${meaning ?? ''}` : '-';
+    }
     return (data.title as string) ?? '-';
   };
 
@@ -109,6 +115,7 @@ export default function AuditLogPage() {
           <option value="">전체 테이블</option>
           <option value="exams">시험지</option>
           <option value="concept_sheets">개념지</option>
+          <option value="words">단어</option>
         </select>
         <select
           value={filterAction}
