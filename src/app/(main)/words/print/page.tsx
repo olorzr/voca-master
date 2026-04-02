@@ -24,7 +24,10 @@ function WordsPrintContent() {
         supabase.from('words').select('*').eq('category_id', categoryId).order('order_index'),
       ]);
       if (catRes.data) setCategory(catRes.data);
-      if (wordsRes.data) setWords(wordsRes.data);
+      if (wordsRes.data) {
+        const sorted = [...wordsRes.data].sort((a, b) => a.word.localeCompare(b.word, 'ko'));
+        setWords(sorted);
+      }
     }
     load();
   }, [categoryId]);

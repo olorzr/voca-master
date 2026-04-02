@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth-context';
@@ -12,7 +12,8 @@ import { Badge } from '@/components/ui/badge';
 import { WordCardGrid, CategoryTree, MoveWordsDialog } from '@/components/words';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
-import { PlusCircle, Search, Settings, CheckSquare, X, ArrowRightLeft, Trash2, BookOpen } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { PlusCircle, Search, Settings, CheckSquare, X, ArrowRightLeft, Trash2, BookOpen, ArrowUpDown } from 'lucide-react';
 import { toast } from 'sonner';
 import { formatCategoryLabel } from '@/lib/format';
 import { buildCategoryTree } from '@/lib/category-tree';
@@ -29,6 +30,9 @@ export default function WordsPage() {
   const [editWord, setEditWord] = useState<Word | null>(null);
   const [editForm, setEditForm] = useState({ word: '', meaning: '' });
   const [loading, setLoading] = useState(true);
+
+  // 정렬 상태: asc(ㄱ~ㅎ), desc(ㅎ~ㄱ), order(등록순)
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc' | 'order'>('asc');
 
   // 선택 모드 상태
   const [selectMode, setSelectMode] = useState(false);
@@ -60,6 +64,15 @@ export default function WordsPage() {
       .order('order_index');
     setWords(data ?? []);
   }, []);
+
+  /** 정렬된 단어 목록 */
+  const sortedWords = useMemo(() => {
+    if (sortOrder === 'order') return words;
+    return [...words].sort((a, b) => {
+      const cmp = a.word.localeCompare(b.word, 'ko');
+      return sortOrder === 'asc' ? cmp : -cmp;
+    });
+  }, [words, sortOrder]);
 
   const handleSelectCategory = (cat: Category) => {
     setSelectedCategory(cat);
@@ -215,6 +228,17 @@ export default function WordsPage() {
                     {formatCategoryLabel(selectedCategory)}
                   </h2>
                   <Badge variant="outline">{words.length}개</Badge>
+                  <Select value={sortOrder} onValueChange={(v) => { if (v) setSortOrder(v as 'asc' | 'desc' | 'order'); }}>
+                    <SelectTrigger className="w-[130px] h-8 text-xs">
+                      <ArrowUpDown className="h-3 w-3 mr-1" />
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="asc">오름차순 (ㄱ~ㅎ)</SelectItem>
+                      <SelectItem value="desc">내림차순 (ㅎ~ㄱ)</SelectItem>
+                      <SelectItem value="order">등록순</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
                 {!selectMode ? (
                   <div className="flex items-center gap-2">
@@ -289,7 +313,7 @@ export default function WordsPage() {
               )}
 
               <WordCardGrid
-                words={words}
+                words={sortedWords}
                 onEdit={(word) => {
                   setEditWord(word);
                   setEditForm({ word: word.word, meaning: word.meaning });
