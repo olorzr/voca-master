@@ -21,22 +21,11 @@ create table concept_sheets (
 -- RLS 활성화
 alter table concept_sheets enable row level security;
 
--- 인증된 사용자만 자신의 데이터 접근
-create policy "Users can view own concept sheets"
-  on concept_sheets for select
-  using (auth.uid() = user_id);
-
-create policy "Users can insert own concept sheets"
-  on concept_sheets for insert
-  with check (auth.uid() = user_id);
-
-create policy "Users can update own concept sheets"
-  on concept_sheets for update
-  using (auth.uid() = user_id);
-
-create policy "Users can delete own concept sheets"
-  on concept_sheets for delete
-  using (auth.uid() = user_id);
+-- 모든 인증된 사용자 공유 (감사 로그로 변경 이력 추적)
+create policy "Authenticated users can manage concept_sheets"
+  on concept_sheets for all
+  using (auth.role() = 'authenticated')
+  with check (auth.role() = 'authenticated');
 
 -- updated_at 자동 갱신 트리거
 create or replace function update_concept_sheets_updated_at()
