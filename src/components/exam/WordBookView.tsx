@@ -1,5 +1,3 @@
-import Image from 'next/image';
-
 /** 단일 열 최대 문항 수 기준 */
 const SINGLE_COL_THRESHOLD = 20;
 
@@ -26,11 +24,10 @@ function WordHeader() {
   );
 }
 
-/** 단어장 단일 열 렌더링 — 헤더 포함 */
-function WordColumn({ words, startIndex }: { words: WordBookWord[]; startIndex: number }) {
+/** 단어 행만 렌더링 (헤더 없음) */
+function WordRows({ words, startIndex }: { words: WordBookWord[]; startIndex: number }) {
   return (
     <div className="wb-col">
-      <WordHeader />
       {words.map((w, idx) => (
         <div
           key={w.id}
@@ -52,8 +49,8 @@ function WordColumn({ words, startIndex }: { words: WordBookWord[]; startIndex: 
 
 /**
  * 단어장 뷰 (핑크 테마)
- * table + tfoot으로 푸터가 매 페이지 하단에 자동 반복.
- * flexbox 수동 2단 분할로 각 열마다 헤더(# 단어 뜻 암기)가 반복된다.
+ * thead에 제목 + 컬럼 헤더를 넣어 매 인쇄 페이지 상단에 자동 반복.
+ * tfoot으로 푸터도 매 페이지 하단에 자동 반복.
  */
 export default function WordBookView({ sourceText, words }: WordBookViewProps) {
   const useSingleCol = words.length <= SINGLE_COL_THRESHOLD;
@@ -63,8 +60,42 @@ export default function WordBookView({ sourceText, words }: WordBookViewProps) {
 
   return (
     <table className="exam-print-table bg-white mx-auto">
-      {/* 상단 여백 — 매 인쇄 페이지 상단에 자동 반복 */}
-      <thead><tr><td><div className="exam-print-header-spacer" /></td></tr></thead>
+      {/* 매 인쇄 페이지 상단에 자동 반복: 제목 + 컬럼 헤더 */}
+      <thead>
+        <tr>
+          <td className="px-8 pt-8">
+            {/* 제목 */}
+            <div className="flex items-start justify-between mb-4">
+              <div>
+                <h2 className="text-[18px] font-extrabold text-gray-900 leading-tight">
+                  단어장{sourceText ? ` - ${sourceText}` : ''}
+                </h2>
+                <p className="text-[10px] text-gray-400 mt-0.5 tracking-widest">아라국어논술</p>
+              </div>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/logo.png" alt="아라국어논술" width={52} height={52} className="object-contain" />
+            </div>
+
+            {/* 총 단어 수 바 */}
+            <div className="border-t-[1.5px] border-b-[1.5px] border-[#F5C6D8] py-2.5 mb-4 text-[11px]">
+              <div className="flex justify-end items-center">
+                <span className="text-gray-500">총 <strong className="text-gray-800">{words.length}</strong>개</span>
+              </div>
+            </div>
+
+            {/* 컬럼 헤더 (# 단어 뜻 암기) */}
+            {useSingleCol ? (
+              <WordHeader />
+            ) : (
+              <div className="wb-grid wb-grid--dual">
+                <WordHeader />
+                <WordHeader />
+              </div>
+            )}
+          </td>
+        </tr>
+      </thead>
+
       {/* 푸터 — 매 인쇄 페이지 하단에 자동 반복 */}
       <tfoot>
         <tr>
@@ -78,35 +109,16 @@ export default function WordBookView({ sourceText, words }: WordBookViewProps) {
         </tr>
       </tfoot>
 
-      {/* 본문 */}
+      {/* 본문 — 단어 행만 */}
       <tbody>
         <tr>
-          <td className="p-8">
-            {/* 헤더 */}
-            <div className="flex items-start justify-between mb-4">
-              <div>
-                <h2 className="text-[18px] font-extrabold text-gray-900 leading-tight">
-                  단어장{sourceText ? ` - ${sourceText}` : ''}
-                </h2>
-                <p className="text-[10px] text-gray-400 mt-0.5 tracking-widest">아라국어논술</p>
-              </div>
-              <Image src="/logo.png" alt="아라국어논술" width={52} height={52} className="object-contain" />
-            </div>
-
-            {/* 총 단어 수 바 */}
-            <div className="border-t-[1.5px] border-b-[1.5px] border-[#F5C6D8] py-2.5 mb-4 text-[11px]">
-              <div className="flex justify-end items-center">
-                <span className="text-gray-500">총 <strong className="text-gray-800">{words.length}</strong>개</span>
-              </div>
-            </div>
-
-            {/* 단어 테이블 — 각 열마다 헤더 포함 */}
+          <td className="px-8 pb-8">
             {useSingleCol ? (
-              <WordColumn words={words} startIndex={0} />
+              <WordRows words={words} startIndex={0} />
             ) : (
               <div className="wb-grid wb-grid--dual">
-                <WordColumn words={leftWords} startIndex={0} />
-                <WordColumn words={rightWords} startIndex={mid} />
+                <WordRows words={leftWords} startIndex={0} />
+                <WordRows words={rightWords} startIndex={mid} />
               </div>
             )}
           </td>
