@@ -243,17 +243,20 @@
   border-bottom: 1.5px dashed #bbb;
 }
 
-/* 단어장 2단 레이아웃 */
+/* 단어장 CSS columns 레이아웃 */
 .wb-grid--dual {
-  display: flex;
-  gap: 24px;
+  columns: 2;
+  column-gap: 24px;
+  column-rule: 1px solid #F0C6D6;
 }
-.wb-grid--dual > .wb-col {
-  flex: 1;
-  min-width: 0;
+.wb-grid--single {
+  columns: 1;
 }
-.wb-col {
+.wb-item {
   break-inside: avoid;
+}
+.wb-col-break {
+  break-before: column;
 }
 
 /* 단어장 테이블 */
