@@ -353,7 +353,7 @@
 
 /* 인쇄 미디어 쿼리 */
 @media print {
-  @page { size: A4; margin: 15mm; }
+  @page { size: A4; margin: 15mm 15mm 22mm 15mm; }
   body { background: white !important; }
   .no-print, [data-no-print] { display: none !important; }
   header, nav { display: none !important; }
@@ -372,9 +372,15 @@
     height: 13mm;
   }
 
-  /* tfoot이 매 페이지 하단에 자동 반복 — 콘텐츠 겹침 없음 */
+  /* tfoot 숨기고 푸터를 페이지 하단에 고정 */
   .exam-print-table tfoot {
-    display: table-footer-group;
+    display: none;
+  }
+  .exam-print-footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
   }
 }
 
