@@ -9,6 +9,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Editor } from '@tiptap/react';
 import type { MarkItem } from './ExamMarkingSidebar';
 import { CustomTableCell, CustomTableHeader } from './CustomTableCell';
+import CellStyleToolbar from './CellStyleToolbar';
 
 /** TipTap 커스텀 마크: 개념 하이라이트 */
 const ConceptMark = Mark.create({
@@ -170,9 +171,6 @@ const TB_CMDS = [
   { cmd: 'deleteRow', label: '-행', title: '행 삭제' },
   { cmd: 'mergeCells', label: '⊟', title: '셀 병합' },
   { cmd: 'sep' },
-  { cmd: 'borderBlack', label: '▣', title: '테두리 검정' },
-  { cmd: 'borderNone', label: '▢', title: '테두리 투명' },
-  { cmd: 'sep' },
   { cmd: 'undo', label: '↩', title: '실행취소' },
   { cmd: 'redo', label: '↪', title: '다시실행' },
 ] as const;
@@ -194,17 +192,10 @@ function EditorToolbar({ editor, markingMode, onToggleMarking }: ToolbarProps) {
       deleteCol: () => chain.deleteColumn().run(),
       deleteRow: () => chain.deleteRow().run(),
       mergeCells: () => chain.mergeCells().run(),
-      borderBlack: () => chain.setCellAttribute('borderColor', null).run(),
-      borderNone: () => chain.setCellAttribute('borderColor', 'transparent').run(),
       undo: () => chain.undo().run(),
       redo: () => chain.redo().run(),
     };
     map[cmd]?.();
-  }
-
-  /** 셀 배경색 적용 */
-  function setBgColor(color: string | null) {
-    editor.chain().focus().setCellAttribute('backgroundColor', color).run();
   }
 
   function isActive(cmd: string): boolean {
@@ -238,10 +229,8 @@ function EditorToolbar({ editor, markingMode, onToggleMarking }: ToolbarProps) {
         ),
       )}
 
-      {/* 셀 배경색 팔레트 */}
-      {editor.isActive('tableCell') || editor.isActive('tableHeader') ? (
-        <CellBgPalette onSelect={setBgColor} />
-      ) : null}
+      {/* 셀 스타일 (테두리 방향별 + 배경색) */}
+      <CellStyleToolbar editor={editor} />
 
       {/* 마킹 모드 토글 */}
       <button
@@ -259,33 +248,3 @@ function EditorToolbar({ editor, markingMode, onToggleMarking }: ToolbarProps) {
   );
 }
 
-/* ── 셀 배경색 팔레트 ── */
-
-const BG_COLORS = [
-  { value: null, label: '없음', css: 'bg-white' },
-  { value: '#F3F4F6', label: '회색', css: 'bg-gray-100' },
-  { value: '#FEF3C7', label: '노랑', css: 'bg-amber-100' },
-  { value: '#DBEAFE', label: '파랑', css: 'bg-blue-100' },
-  { value: '#D1FAE5', label: '초록', css: 'bg-emerald-100' },
-  { value: '#FCE7F3', label: '분홍', css: 'bg-pink-100' },
-] as const;
-
-interface CellBgPaletteProps {
-  onSelect: (color: string | null) => void;
-}
-
-function CellBgPalette({ onSelect }: CellBgPaletteProps) {
-  return (
-    <div className="flex items-center gap-1 ml-1" title="셀 배경색">
-      <span className="text-[11px] text-gray-500 mr-0.5">배경</span>
-      {BG_COLORS.map((c) => (
-        <button
-          key={c.label}
-          className={`w-5 h-5 rounded border border-gray-300 hover:scale-125 transition-transform ${c.css}`}
-          title={c.label}
-          onClick={() => onSelect(c.value)}
-        />
-      ))}
-    </div>
-  );
-}
