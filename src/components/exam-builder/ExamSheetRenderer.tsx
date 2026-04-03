@@ -69,19 +69,8 @@ export default function ExamSheetRenderer({
 
   return (
     <table className={`exam-print-table eb-sheet-table bg-white mx-auto ${interactive ? 'eb-concept-interactive' : ''}`}>
-      {/* 반복 헤더 — 인쇄 시 매 페이지 상단에 한 줄로 반복 (화면에서는 숨김) */}
-      <thead>
-        <tr>
-          <td className="eb-sheet-thead-cell">
-            <div className="eb-sheet-repeat-header">
-              <span>{unitText}</span>
-              <span className={`inline-block px-2 py-0.5 rounded text-[8pt] font-bold ${config.badgeClass}`}>
-                {config.badge}
-              </span>
-            </div>
-          </td>
-        </tr>
-      </thead>
+      {/* 상단 여백 — 매 인쇄 페이지 상단에 자동 반복 */}
+      <thead><tr><td><div className="exam-print-header-spacer" /></td></tr></thead>
 
       {/* 푸터 — 매 인쇄 페이지 하단에 자동 반복 */}
       <tfoot>
@@ -99,7 +88,7 @@ export default function ExamSheetRenderer({
       {/* 본문 */}
       <tbody>
         <tr>
-          <td className="eb-sheet-tbody-cell">
+          <td className="p-8">
             {/* 헤더 — 첫 페이지에만 표시 */}
             <div className="flex items-start justify-between mb-3">
               <div>
