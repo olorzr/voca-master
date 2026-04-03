@@ -509,8 +509,11 @@
   font-size: 10pt;
   line-height: 1.7;
 }
-.eb-sheet-body-cell {
-  padding: 15mm;
+.eb-sheet-thead-cell {
+  padding: 15mm 15mm 8px;
+}
+.eb-sheet-tbody-cell {
+  padding: 0 15mm 15mm;
 }
 .eb-sheet-table h3 { font-size: 12pt; font-weight: 700; margin: 10pt 0 5pt; }
 .eb-sheet-table h4 { font-size: 10pt; font-weight: 600; margin: 8pt 0 4pt; }
@@ -535,6 +538,21 @@
 .eb-sheet-table .sheet-body td[data-bg-color],
 .eb-sheet-table .sheet-body th[data-bg-color] { background: none; }
 .eb-sheet-table .sheet-body tr:nth-child(even) td[data-bg-color] { background: none; }
+
+/* 개념지 본문 — 페이지 넘김 시 요소 분리 방지 */
+.sheet-body p,
+.sheet-body h3,
+.sheet-body h4,
+.sheet-body li {
+  break-inside: avoid;
+}
+.sheet-body tr {
+  break-inside: avoid;
+}
+.sheet-body h3,
+.sheet-body h4 {
+  break-after: avoid;
+}
 
 /* 개념지 본문 2단 레이아웃 */
 .sheet-body--dual {
@@ -653,4 +671,16 @@
 /* 빌더 인쇄 — A4 최적화 */
 @media print {
   .eb-section-break { page-break-before: always; }
+
+  /* 2단 레이아웃 — 인쇄 시 순차 채움 (페이지 경계에서 안정적) */
+  .sheet-body--dual { column-fill: auto; }
+
+  /* 개념지 미리보기 영역 — 인쇄 시 스크롤/높이 제한 해제 */
+  .eb-preview-area {
+    overflow: visible !important;
+    height: auto !important;
+  }
+  .eb-preview-wrap {
+    height: auto !important;
+  }
 }

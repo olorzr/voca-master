@@ -69,25 +69,10 @@ export default function ExamSheetRenderer({
 
   return (
     <table className={`exam-print-table eb-sheet-table bg-white mx-auto ${interactive ? 'eb-concept-interactive' : ''}`}>
-      {/* 상단 여백 — 매 인쇄 페이지 상단에 자동 반복 */}
-      <thead><tr><td><div className="exam-print-header-spacer" /></td></tr></thead>
-      {/* 푸터 — 매 인쇄 페이지 하단에 자동 반복 */}
-      <tfoot>
+      {/* 헤더 + 정보바 — 매 인쇄 페이지 상단에 자동 반복 */}
+      <thead>
         <tr>
-          <td>
-            <div className="exam-print-footer">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/logo.png" alt="아라국어논술" width={16} height={16} />
-              <span>아라국어논술</span>
-            </div>
-          </td>
-        </tr>
-      </tfoot>
-
-      {/* 본문 */}
-      <tbody>
-        <tr>
-          <td className="eb-sheet-body-cell">
+          <td className="eb-sheet-thead-cell">
             {/* 헤더 */}
             <div className="flex items-start justify-between mb-3">
               <div>
@@ -104,7 +89,7 @@ export default function ExamSheetRenderer({
             </div>
 
             {/* 정보 바 */}
-            <div className="border-t-[1.5px] border-b-[1.5px] border-[#B8EDE8] py-2 mb-3">
+            <div className="border-t-[1.5px] border-b-[1.5px] border-[#B8EDE8] py-2">
               <div className="flex items-center gap-6 text-[10pt] text-gray-600">
                 <span className="font-semibold">
                   이름 <span className="inline-block border-b border-gray-400 w-28 ml-2" />
@@ -123,7 +108,27 @@ export default function ExamSheetRenderer({
                 </div>
               )}
             </div>
+          </td>
+        </tr>
+      </thead>
 
+      {/* 푸터 — 매 인쇄 페이지 하단에 자동 반복 */}
+      <tfoot>
+        <tr>
+          <td>
+            <div className="exam-print-footer">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/logo.png" alt="아라국어논술" width={16} height={16} />
+              <span>아라국어논술</span>
+            </div>
+          </td>
+        </tr>
+      </tfoot>
+
+      {/* 본문 */}
+      <tbody>
+        <tr>
+          <td className="eb-sheet-tbody-cell">
             {/* 본문 — 변환된 HTML (글자 수 300자 초과 시 2단) */}
             <div
               className={`sheet-body ${useDualCol ? 'sheet-body--dual' : ''}`}

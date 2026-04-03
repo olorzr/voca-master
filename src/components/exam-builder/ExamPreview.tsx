@@ -174,7 +174,7 @@ export default function ExamPreview({
 
       {/* 미리보기 영역 */}
       <div
-        className="flex-1 overflow-y-auto p-8 bg-gray-100 flex justify-center"
+        className="flex-1 overflow-y-auto p-8 bg-gray-100 flex justify-center eb-preview-area"
         ref={previewRef}
         onClick={handleConceptClick}
         onMouseUp={handlePreviewMouseUp}

@@ -233,7 +233,7 @@ export default function ConceptEditorPage() {
     <>
       {/* 미리보기 화면 */}
       {screen === 'preview' && (
-        <div className="-mx-4 sm:-mx-6 lg:-mx-8 -my-8" style={{ height: 'calc(100vh - 64px)' }}>
+        <div className="-mx-4 sm:-mx-6 lg:-mx-8 -my-8 eb-preview-wrap" style={{ height: 'calc(100vh - 64px)' }}>
           <ExamPreview
             editorHTML={editorHTML}
             category={category}
