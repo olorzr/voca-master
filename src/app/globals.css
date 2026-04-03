@@ -428,13 +428,19 @@
   header, nav { display: none !important; }
 
   /* 레이아웃 래퍼 — 인쇄 시 패딩/마진/높이 제약 완전 해제 */
+  html, body {
+    height: auto !important;
+    min-height: 0 !important;
+  }
   main {
     padding: 0 !important;
     max-width: none !important;
     margin: 0 !important;
   }
+  main > div, /* min-h-screen wrapper */
   .min-h-screen {
     min-height: 0 !important;
+    height: auto !important;
   }
 
   .exam-print-table {
