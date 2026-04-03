@@ -39,7 +39,7 @@ export default function ConceptEditorPage() {
   const sheetId = params.id as string;
   const isNew = sheetId === 'new';
 
-  const [screen, setScreen] = useState<'editor' | 'preview'>('editor');
+  const [screen, setScreen] = useState<'editor' | 'preview'>(isNew ? 'editor' : 'preview');
   const [title, setTitle] = useState('');
   const [titleManuallyEdited, setTitleManuallyEdited] = useState(!isNew);
   const [category, setCategory] = useState<BuilderCategory>(DEFAULT_CATEGORY);
@@ -240,7 +240,8 @@ export default function ConceptEditorPage() {
             markCount={marks.length}
             activeTab={previewTab}
             onTabChange={setPreviewTab}
-            onBack={() => setScreen('editor')}
+            onBack={() => router.push('/exam/builder')}
+            onEdit={() => setScreen('editor')}
             onConceptClick={removeMarkByText}
             onConceptDrag={addMarkByText}
           />

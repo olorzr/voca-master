@@ -2,7 +2,7 @@
 
 import { useCallback, useRef } from 'react';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Download, FileDown } from 'lucide-react';
+import { ArrowLeft, Download, FileDown, Pencil } from 'lucide-react';
 import { toast } from 'sonner';
 import { transformHTML } from '@/lib/exam-transform';
 import ExamSheetRenderer, { SHEET_CONFIGS } from './ExamSheetRenderer';
@@ -26,6 +26,8 @@ interface ExamPreviewProps {
   activeTab: string;
   onTabChange: (tab: string) => void;
   onBack: () => void;
+  /** 수정 모드로 전환 */
+  onEdit?: () => void;
   /** 개념지 탭에서 마킹 클릭/드래그 시 에디터 동기화 콜백 */
   onConceptClick?: (text: string) => void;
   onConceptDrag?: (text: string) => void;
@@ -41,6 +43,7 @@ export default function ExamPreview({
   activeTab,
   onTabChange,
   onBack,
+  onEdit,
   onConceptClick,
   onConceptDrag,
 }: ExamPreviewProps) {
@@ -181,9 +184,16 @@ export default function ExamPreview({
 
       {/* 하단 액션 바 */}
       <div className="bg-white border-t border-gray-200 px-6 py-3 flex justify-between items-center" data-no-print>
-        <Button variant="outline" onClick={onBack}>
-          <ArrowLeft className="h-4 w-4 mr-1" /> 에디터로 돌아가기
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={onBack}>
+            <ArrowLeft className="h-4 w-4 mr-1" /> 목록
+          </Button>
+          {onEdit && (
+            <Button variant="outline" onClick={onEdit}>
+              <Pencil className="h-4 w-4 mr-1" /> 수정하기
+            </Button>
+          )}
+        </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={() => window.print()}>
             인쇄
