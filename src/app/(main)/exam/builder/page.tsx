@@ -1,27 +1,31 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth-context';
 import { formatDateKR } from '@/lib/format';
+import { buildCategoryTree } from '@/lib/category-tree';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { PlusCircle, Search, FileText, Trash2 } from 'lucide-react';
+import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@/components/ui/resizable';
+import { CategoryTree } from '@/components/words';
+import { PlusCircle, Search, FileText, Trash2, List } from 'lucide-react';
 import { toast } from 'sonner';
-import type { ConceptSheet } from '@/types';
+import type { ConceptSheet, Category } from '@/types';
 
 /**
  * 개념지 목록 페이지.
- * 저장된 개념지를 카드 형태로 보여주고, 새로 만들기 / 편집 / 삭제 기능을 제공한다.
+ * 좌측에 카테고리 트리, 우측에 개념지 카드 목록을 표시한다.
  */
 export default function ConceptListPage() {
   const { user } = useAuth();
   const [sheets, setSheets] = useState<ConceptSheet[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
 
   const loadSheets = useCallback(async () => {
     if (!user) return;
@@ -43,6 +47,32 @@ export default function ConceptListPage() {
     loadSheets();
   }, [loadSheets]);
 
+  /** 개념지 카테고리 필드로 합성 Category를 생성하여 트리를 구성한다 */
+  const tree = useMemo(() => {
+    const seen = new Map<string, Category>();
+    for (const s of sheets) {
+      const key = [s.level, s.grade, s.publisher, s.semester, s.unit, s.subunit].join('|');
+      if (!seen.has(key)) {
+        seen.set(key, {
+          id: key,
+          level: s.level as Category['level'],
+          grade: s.grade,
+          publisher: s.publisher,
+          semester: s.semester,
+          chapter: s.unit,
+          sub_chapter: s.subunit,
+          user_id: s.user_id,
+          created_at: s.created_at,
+        });
+      }
+    }
+    return buildCategoryTree(Array.from(seen.values()));
+  }, [sheets]);
+
+  const handleSelectCategory = (cat: Category) => {
+    setSelectedCategory((prev) => (prev?.id === cat.id ? null : cat));
+  };
+
   const handleDelete = async (id: string, title: string) => {
     if (!confirm(`"${title}" 개념지를 삭제하시겠습니까?`)) return;
     const { error } = await supabase.from('concept_sheets').delete().eq('id', id);
@@ -54,17 +84,31 @@ export default function ConceptListPage() {
     toast.success('개념지가 삭제되었습니다.');
   };
 
-  const filtered = searchQuery
-    ? sheets.filter((s) => {
-        const q = searchQuery.toLowerCase();
-        return (
+  const filtered = useMemo(() => {
+    let result = sheets;
+    if (selectedCategory) {
+      result = result.filter(
+        (s) =>
+          s.level === selectedCategory.level &&
+          s.grade === selectedCategory.grade &&
+          s.publisher === selectedCategory.publisher &&
+          s.semester === selectedCategory.semester &&
+          s.unit === selectedCategory.chapter &&
+          s.subunit === selectedCategory.sub_chapter,
+      );
+    }
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      result = result.filter(
+        (s) =>
           s.title.toLowerCase().includes(q) ||
           s.publisher.toLowerCase().includes(q) ||
           s.unit.toLowerCase().includes(q) ||
-          s.grade.toLowerCase().includes(q)
-        );
-      })
-    : sheets;
+          s.grade.toLowerCase().includes(q),
+      );
+    }
+    return result;
+  }, [sheets, selectedCategory, searchQuery]);
 
   if (loading) {
     return (
@@ -87,43 +131,90 @@ export default function ConceptListPage() {
         </Link>
       </div>
 
-      {/* 검색 */}
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-        <Input
-          placeholder="제목, 출판사, 단원으로 검색..."
-          className="pl-10"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-        />
-      </div>
+      {/* 트리 + 목록 (드래그로 크기 조절 가능) */}
+      <ResizablePanelGroup orientation="horizontal" className="min-h-[600px] rounded-lg border border-gray-200">
+        {/* 카테고리 트리 */}
+        <ResizablePanel defaultSize={30} minSize={20} maxSize={50}>
+          <div className="h-full overflow-y-auto p-4 space-y-3">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Input
+                placeholder="제목, 출판사, 단원 검색..."
+                className="pl-10"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+            {selectedCategory && (
+              <button
+                className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-primary px-2"
+                onClick={() => setSelectedCategory(null)}
+              >
+                <List className="h-3.5 w-3.5" />
+                전체 보기
+              </button>
+            )}
+            {tree.length > 0 ? (
+              <CategoryTree
+                nodes={tree}
+                selectedId={selectedCategory?.id}
+                onSelect={handleSelectCategory}
+              />
+            ) : (
+              <p className="text-sm text-gray-400 text-center py-4">
+                아직 만든 개념지가 없습니다.
+              </p>
+            )}
+          </div>
+        </ResizablePanel>
 
-      {/* 목록 */}
-      {filtered.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 text-gray-300">
-          <FileText className="h-12 w-12 mb-3" />
-          <p className="text-sm">
-            {sheets.length === 0 ? '아직 만든 개념지가 없습니다.' : '검색 결과가 없습니다.'}
-          </p>
-          {sheets.length === 0 && (
-            <Link href="/exam/builder/new" className="mt-4">
-              <Button variant="outline" size="sm">
-                첫 개념지 만들기
-              </Button>
-            </Link>
-          )}
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filtered.map((sheet) => (
-            <ConceptSheetCard
-              key={sheet.id}
-              sheet={sheet}
-              onDelete={handleDelete}
-            />
-          ))}
-        </div>
-      )}
+        <ResizableHandle withHandle />
+
+        {/* 개념지 목록 */}
+        <ResizablePanel defaultSize={70} minSize={40}>
+          <div className="h-full overflow-y-auto p-4">
+            {filtered.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-20 text-gray-300">
+                <FileText className="h-12 w-12 mb-3" />
+                <p className="text-sm">
+                  {sheets.length === 0
+                    ? '아직 만든 개념지가 없습니다.'
+                    : selectedCategory
+                      ? '이 카테고리에 해당하는 개념지가 없습니다.'
+                      : '검색 결과가 없습니다.'}
+                </p>
+                {sheets.length === 0 && (
+                  <Link href="/exam/builder/new" className="mt-4">
+                    <Button variant="outline" size="sm">
+                      첫 개념지 만들기
+                    </Button>
+                  </Link>
+                )}
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline">{filtered.length}개</Badge>
+                  {selectedCategory && (
+                    <span className="text-sm text-gray-500">
+                      {[selectedCategory.grade, selectedCategory.publisher, selectedCategory.semester, selectedCategory.chapter, selectedCategory.sub_chapter].filter(Boolean).join(' ')}
+                    </span>
+                  )}
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {filtered.map((sheet) => (
+                    <ConceptSheetCard
+                      key={sheet.id}
+                      sheet={sheet}
+                      onDelete={handleDelete}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </ResizablePanel>
+      </ResizablePanelGroup>
     </div>
   );
 }

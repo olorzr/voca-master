@@ -41,6 +41,7 @@ export default function ConceptEditorPage() {
 
   const [screen, setScreen] = useState<'editor' | 'preview'>('editor');
   const [title, setTitle] = useState('');
+  const [titleManuallyEdited, setTitleManuallyEdited] = useState(!isNew);
   const [category, setCategory] = useState<BuilderCategory>(DEFAULT_CATEGORY);
   const [editorHTML, setEditorHTML] = useState('');
   const [marks, setMarks] = useState<MarkItem[]>([]);
@@ -50,6 +51,20 @@ export default function ConceptEditorPage() {
   const [savedId, setSavedId] = useState<string | null>(isNew ? null : sheetId);
   const editorRef = useRef<Editor | null>(null);
   const initialHTMLRef = useRef<string | null>(isNew ? '' : null);
+
+  /** 카테고리 값으로 자동 제목을 생성한다 */
+  const generateTitle = useCallback((cat: BuilderCategory) => {
+    const parts = [cat.grade, cat.publisher, cat.semester, cat.unit, cat.subunit].filter(Boolean);
+    return parts.length > 0 ? `${parts.join(' ')} 개념지` : '';
+  }, []);
+
+  /** 카테고리 변경 시 자동 제목도 갱신한다 */
+  const handleCategoryChange = useCallback((next: BuilderCategory) => {
+    setCategory(next);
+    if (!titleManuallyEdited) {
+      setTitle(generateTitle(next));
+    }
+  }, [titleManuallyEdited, generateTitle]);
 
   /* ── 기존 개념지 불러오기 ── */
   useEffect(() => {
@@ -107,7 +122,6 @@ export default function ConceptEditorPage() {
       subunit: category.subunit,
       editor_html: html,
       marks: currentMarks,
-      user_id: user.id,
     };
 
     if (savedId) {
@@ -125,7 +139,7 @@ export default function ConceptEditorPage() {
     } else {
       const { data, error } = await supabase
         .from('concept_sheets')
-        .insert(payload)
+        .insert({ ...payload, user_id: user.id })
         .select('id')
         .single();
 
@@ -245,7 +259,7 @@ export default function ConceptEditorPage() {
           <Input
             placeholder="개념지 제목을 입력하세요"
             value={title}
-            onChange={(e) => setTitle(e.target.value)}
+            onChange={(e) => { setTitle(e.target.value); setTitleManuallyEdited(true); }}
             className="flex-1 max-w-md border-transparent hover:border-gray-300 focus:border-primary bg-transparent text-base font-semibold"
           />
 
@@ -261,7 +275,7 @@ export default function ConceptEditorPage() {
         </div>
 
         {/* 카테고리 바 */}
-        <ExamCategoryBar category={category} onChange={setCategory} />
+        <ExamCategoryBar category={category} onChange={handleCategoryChange} />
 
         {/* 에디터 + 사이드바 */}
         <div className="flex gap-5 p-5" style={{ height: 'calc(100vh - 64px - 56px - 80px)' }}>
