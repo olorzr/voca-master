@@ -427,6 +427,16 @@
   .no-print, [data-no-print] { display: none !important; }
   header, nav { display: none !important; }
 
+  /* 레이아웃 래퍼 — 인쇄 시 패딩/마진/높이 제약 완전 해제 */
+  main {
+    padding: 0 !important;
+    max-width: none !important;
+    margin: 0 !important;
+  }
+  .min-h-screen {
+    min-height: 0 !important;
+  }
+
   .exam-print-table {
     width: 100%;
     -webkit-print-color-adjust: exact !important;
@@ -687,21 +697,28 @@
   /* 2단 레이아웃 — 인쇄 시 순차 채움 (페이지 경계에서 안정적) */
   .sheet-body--dual { column-fill: auto; }
 
-  /* 개념지 미리보기 — 인쇄 시 모든 래퍼 제약 해제 */
+  /* 개념지 미리보기 — 인쇄 시 래퍼 div 제약 완전 해제 (테이블 제외) */
   .eb-preview-wrap {
     height: auto !important;
     margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
   }
   .eb-preview-wrap > div {
     height: auto !important;
+    min-height: 0 !important;
     display: block !important;
+    overflow: visible !important;
   }
   .eb-preview-area {
-    overflow: visible !important;
     height: auto !important;
     padding: 0 !important;
     background: white !important;
+    display: block !important;
+    overflow: visible !important;
     flex: none !important;
+  }
+  .eb-preview-area > div {
     display: block !important;
   }
 }
