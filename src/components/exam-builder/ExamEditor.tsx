@@ -3,6 +3,7 @@
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Underline from '@tiptap/extension-underline';
+import TextAlign from '@tiptap/extension-text-align';
 import { Table, TableRow } from '@tiptap/extension-table';
 import { Mark } from '@tiptap/core';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -10,6 +11,7 @@ import type { Editor } from '@tiptap/react';
 import type { MarkItem } from './ExamMarkingSidebar';
 import { CustomTableCell, CustomTableHeader } from './CustomTableCell';
 import CellStyleToolbar from './CellStyleToolbar';
+import { AlignLeft, AlignCenter, AlignRight } from 'lucide-react';
 
 /** TipTap 커스텀 마크: 개념 하이라이트 */
 const ConceptMark = Mark.create({
@@ -57,6 +59,7 @@ export default function ExamEditor({ onHTMLChange, onMarksChange, editorRef, ini
     extensions: [
       StarterKit.configure({ heading: { levels: [3, 4] } }),
       Underline,
+      TextAlign.configure({ types: ['heading', 'paragraph'] }),
       Table.configure({ resizable: false }),
       TableRow,
       CustomTableCell,
@@ -164,6 +167,7 @@ const TB_CMDS = [
   { cmd: 'heading3', label: 'H3', title: '제목' },
   { cmd: 'heading4', label: 'H4', title: '소제목' },
   { cmd: 'sep' },
+  { cmd: 'sep' },
   { cmd: 'insertTable', label: '⊞', title: '표 삽입' },
   { cmd: 'addColAfter', label: '+열', title: '열 추가' },
   { cmd: 'addRowAfter', label: '+행', title: '행 추가' },
@@ -192,6 +196,9 @@ function EditorToolbar({ editor, markingMode, onToggleMarking }: ToolbarProps) {
       deleteCol: () => chain.deleteColumn().run(),
       deleteRow: () => chain.deleteRow().run(),
       mergeCells: () => chain.mergeCells().run(),
+      alignLeft: () => chain.setTextAlign('left').run(),
+      alignCenter: () => chain.setTextAlign('center').run(),
+      alignRight: () => chain.setTextAlign('right').run(),
       undo: () => chain.undo().run(),
       redo: () => chain.redo().run(),
     };
@@ -207,6 +214,9 @@ function EditorToolbar({ editor, markingMode, onToggleMarking }: ToolbarProps) {
       orderedList: editor.isActive('orderedList'),
       heading3: editor.isActive('heading', { level: 3 }),
       heading4: editor.isActive('heading', { level: 4 }),
+      alignLeft: editor.isActive({ textAlign: 'left' }),
+      alignCenter: editor.isActive({ textAlign: 'center' }),
+      alignRight: editor.isActive({ textAlign: 'right' }),
     };
     return map[cmd] ?? false;
   }
@@ -228,6 +238,24 @@ function EditorToolbar({ editor, markingMode, onToggleMarking }: ToolbarProps) {
           </button>
         ),
       )}
+
+      {/* 정렬 */}
+      <div className="w-px h-6 bg-gray-200 mx-1" />
+      {([
+        { cmd: 'alignLeft', icon: AlignLeft, title: '왼쪽 정렬' },
+        { cmd: 'alignCenter', icon: AlignCenter, title: '가운데 정렬' },
+        { cmd: 'alignRight', icon: AlignRight, title: '오른쪽 정렬' },
+      ] as const).map(({ cmd, icon: Icon, title }) => (
+        <button
+          key={cmd}
+          className={`w-8 h-8 flex items-center justify-center rounded-md transition-colors
+            ${isActive(cmd) ? 'bg-primary/20 text-primary' : 'text-gray-700 hover:bg-gray-200'}`}
+          onClick={() => runCmd(cmd)}
+          title={title}
+        >
+          <Icon className="h-4 w-4" />
+        </button>
+      ))}
 
       {/* 셀 스타일 (테두리 방향별 + 배경색) */}
       <CellStyleToolbar editor={editor} />
