@@ -69,44 +69,15 @@ export default function ExamSheetRenderer({
 
   return (
     <table className={`exam-print-table eb-sheet-table bg-white mx-auto ${interactive ? 'eb-concept-interactive' : ''}`}>
-      {/* 헤더 + 정보바 — 매 인쇄 페이지 상단에 자동 반복 */}
+      {/* 반복 헤더 — 인쇄 시 매 페이지 상단에 한 줄로 반복 (화면에서는 숨김) */}
       <thead>
         <tr>
           <td className="eb-sheet-thead-cell">
-            {/* 헤더 */}
-            <div className="flex items-start justify-between mb-3">
-              <div>
-                <h2 className="text-[14pt] font-extrabold text-gray-900 leading-tight">
-                  {title}
-                  <span className={`inline-block ml-2 px-2 py-0.5 rounded text-[9pt] font-bold ${config.badgeClass}`}>
-                    {config.badge}
-                  </span>
-                </h2>
-                <p className="text-[8pt] text-gray-400 mt-0.5 tracking-widest">아라국어논술</p>
-              </div>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/logo.png" alt="아라국어논술" width={48} height={48} className="object-contain" />
-            </div>
-
-            {/* 정보 바 */}
-            <div className="border-t-[1.5px] border-b-[1.5px] border-[#B8EDE8] py-2">
-              <div className="flex items-center gap-6 text-[10pt] text-gray-600">
-                <span className="font-semibold">
-                  이름 <span className="inline-block border-b border-gray-400 w-28 ml-2" />
-                </span>
-                <span>날짜 <span className="ml-1 text-gray-800">{today}</span></span>
-                {config.showScore && (
-                  <span className="ml-auto font-semibold text-[#C83C6E]">
-                    <span className="inline-block border-b border-gray-400 w-10 text-center" /> / {markCount}개
-                  </span>
-                )}
-              </div>
-              {(unitText || category.semester) && (
-                <div className="flex justify-between text-[9pt] text-gray-500 mt-1">
-                  <span className="text-gray-800 font-medium">{unitText}</span>
-                  <span>{category.semester}</span>
-                </div>
-              )}
+            <div className="eb-sheet-repeat-header">
+              <span>{unitText}</span>
+              <span className={`inline-block px-2 py-0.5 rounded text-[8pt] font-bold ${config.badgeClass}`}>
+                {config.badge}
+              </span>
             </div>
           </td>
         </tr>
@@ -129,6 +100,42 @@ export default function ExamSheetRenderer({
       <tbody>
         <tr>
           <td className="eb-sheet-tbody-cell">
+            {/* 헤더 — 첫 페이지에만 표시 */}
+            <div className="flex items-start justify-between mb-3">
+              <div>
+                <h2 className="text-[14pt] font-extrabold text-gray-900 leading-tight">
+                  {title}
+                  <span className={`inline-block ml-2 px-2 py-0.5 rounded text-[9pt] font-bold ${config.badgeClass}`}>
+                    {config.badge}
+                  </span>
+                </h2>
+                <p className="text-[8pt] text-gray-400 mt-0.5 tracking-widest">아라국어논술</p>
+              </div>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/logo.png" alt="아라국어논술" width={48} height={48} className="object-contain" />
+            </div>
+
+            {/* 정보 바 */}
+            <div className="border-t-[1.5px] border-b-[1.5px] border-[#B8EDE8] py-2 mb-3">
+              <div className="flex items-center gap-6 text-[10pt] text-gray-600">
+                <span className="font-semibold">
+                  이름 <span className="inline-block border-b border-gray-400 w-28 ml-2" />
+                </span>
+                <span>날짜 <span className="ml-1 text-gray-800">{today}</span></span>
+                {config.showScore && (
+                  <span className="ml-auto font-semibold text-[#C83C6E]">
+                    <span className="inline-block border-b border-gray-400 w-10 text-center" /> / {markCount}개
+                  </span>
+                )}
+              </div>
+              {(unitText || category.semester) && (
+                <div className="flex justify-between text-[9pt] text-gray-500 mt-1">
+                  <span className="text-gray-800 font-medium">{unitText}</span>
+                  <span>{category.semester}</span>
+                </div>
+              )}
+            </div>
+
             {/* 본문 — 변환된 HTML (글자 수 300자 초과 시 2단) */}
             <div
               className={`sheet-body ${useDualCol ? 'sheet-body--dual' : ''}`}
