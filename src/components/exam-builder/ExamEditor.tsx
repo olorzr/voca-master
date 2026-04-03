@@ -60,7 +60,7 @@ export default function ExamEditor({ onHTMLChange, onMarksChange, editorRef, ini
       StarterKit.configure({ heading: { levels: [3, 4] } }),
       Underline,
       TextAlign.configure({ types: ['heading', 'paragraph'] }),
-      Table.configure({ resizable: false }),
+      Table.configure({ resizable: true }),
       TableRow,
       CustomTableCell,
       CustomTableHeader,
