@@ -105,6 +105,11 @@ export default function ConceptEditorPage() {
   const handleSave = useCallback(async () => {
     if (!user) return;
 
+    if (!category.grade || !category.publisher) {
+      toast.error('카테고리를 먼저 설정해주세요.');
+      return;
+    }
+
     const editor = editorRef.current;
     const html = editor ? editor.getHTML() : editorHTML;
     const currentMarks = editor ? extractMarks(editor) : marks;
