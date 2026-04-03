@@ -463,7 +463,7 @@
   flex: 1;
   overflow-y: auto;
   padding: 24px;
-  min-height: 500px;
+  min-height: 0;
 }
 .eb-editor-wrap .ProseMirror {
   outline: none;

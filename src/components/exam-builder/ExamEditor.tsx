@@ -132,7 +132,7 @@ export default function ExamEditor({ onHTMLChange, onMarksChange, editorRef, ini
 
   return (
     <div
-      className={`bg-white rounded-lg shadow-sm border-2 transition-colors flex flex-col overflow-hidden ${markingMode ? 'border-primary' : 'border-transparent'}`}
+      className={`bg-white rounded-lg shadow-sm border-2 transition-colors flex flex-col overflow-hidden h-full ${markingMode ? 'border-primary' : 'border-transparent'}`}
     >
       {/* 툴바 */}
       <EditorToolbar editor={editor} markingMode={markingMode} onToggleMarking={() => setMarkingMode((v) => !v)} />

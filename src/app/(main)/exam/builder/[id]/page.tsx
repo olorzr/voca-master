@@ -278,8 +278,8 @@ export default function ConceptEditorPage() {
         <ExamCategoryBar category={category} onChange={handleCategoryChange} />
 
         {/* 에디터 + 사이드바 */}
-        <div className="flex gap-5 p-5" style={{ height: 'calc(100vh - 64px - 56px - 80px)' }}>
-          <div className="flex-[7] min-w-0">
+        <div className="flex gap-5 p-5 overflow-hidden" style={{ height: 'calc(100vh - 64px - 56px - 80px)' }}>
+          <div className="flex-[7] min-w-0 h-full">
             <ExamEditor
               onHTMLChange={setEditorHTML}
               onMarksChange={setMarks}
@@ -287,7 +287,7 @@ export default function ConceptEditorPage() {
               initialContent={initialHTMLRef.current ?? undefined}
             />
           </div>
-          <div className="flex-[3] min-w-[280px]">
+          <div className="flex-[3] min-w-[280px] h-full overflow-y-auto">
             <ExamMarkingSidebar
               marks={marks}
               onDelete={deleteMark}
