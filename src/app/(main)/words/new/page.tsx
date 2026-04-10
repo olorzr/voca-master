@@ -3,13 +3,18 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth-context';
 import { EXTERNAL_LEVEL, DRAFT_STORAGE_KEY } from '@/lib/constants';
+import {
+  ensureCategoryId,
+  findDuplicateWords,
+  removeDuplicateWords,
+  insertWordsToCategory,
+  type DuplicateWordsResult,
+} from '@/lib/words-save';
 import type { CategoryLevel } from '@/types';
 import type { WordEntry } from '@/components/words';
-import { CategoryForm } from '@/components/words';
-import { WordEntryTable } from '@/components/words';
+import { CategoryForm, WordEntryTable, DuplicateWordsDialog } from '@/components/words';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
@@ -31,63 +36,96 @@ export default function NewWordsPage() {
   const [wordEntries, setWordEntries] = useState<WordEntry[]>([{ word: '', meaning: '' }]);
   const [saving, setSaving] = useState(false);
 
-  const handleSave = async () => {
-    if (!user) return;
+  const [duplicateCheck, setDuplicateCheck] = useState<DuplicateWordsResult | null>(null);
+  const [pendingCategoryId, setPendingCategoryId] = useState<string | null>(null);
+  const [pendingValidWords, setPendingValidWords] = useState<WordEntry[] | null>(null);
 
-    const validWords = wordEntries.filter((w) => w.word.trim() && w.meaning.trim());
+  const validateInputs = (validWords: WordEntry[]): boolean => {
     if (validWords.length === 0) {
       toast.error('최소 1개의 단어를 입력해주세요.');
-      return;
+      return false;
     }
     if (level !== EXTERNAL_LEVEL && (!grade || !publisher || !semester || !chapter)) {
       toast.error('학년, 출판사, 학기, 대단원을 모두 입력해주세요.');
-      return;
+      return false;
     }
     if (level === EXTERNAL_LEVEL && !chapter) {
       toast.error('단원명을 입력해주세요.');
-      return;
+      return false;
     }
+    return true;
+  };
+
+  const finalizeInsert = async (categoryId: string, words: WordEntry[]) => {
+    const ok = await insertWordsToCategory(categoryId, words);
+    if (!ok) {
+      toast.error('단어 저장 중 오류가 발생했습니다.');
+      return false;
+    }
+    toast.success(`${words.length}개 단어가 저장되었습니다.`);
+    router.push('/words');
+    return true;
+  };
+
+  const handleSave = async () => {
+    if (!user) return;
+    const validWords = wordEntries.filter((w) => w.word.trim() && w.meaning.trim());
+    if (!validateInputs(validWords)) return;
 
     setSaving(true);
 
-    const { data: cat, error: catErr } = await supabase
-      .from('categories')
-      .insert({
-        level,
-        grade: level === EXTERNAL_LEVEL ? '' : grade,
-        publisher: level === EXTERNAL_LEVEL ? '' : publisher,
-        semester: level === EXTERNAL_LEVEL ? '' : semester,
-        chapter,
-        sub_chapter: subChapter,
-        school_name: level === EXTERNAL_LEVEL ? schoolName : '',
-        user_id: user.id,
-      })
-      .select()
-      .single();
-
-    if (catErr || !cat) {
+    const categoryId = await ensureCategoryId({
+      level, grade, publisher, semester, chapter, subChapter, schoolName, userId: user.id,
+    });
+    if (!categoryId) {
       toast.error('카테고리 저장 중 오류가 발생했습니다.');
       setSaving(false);
       return;
     }
 
-    const wordsToInsert = validWords.map((w, i) => ({
-      word: w.word.trim(),
-      meaning: w.meaning.trim(),
-      category_id: cat.id,
-      order_index: i,
-    }));
-
-    const { error: wordErr } = await supabase.from('words').insert(wordsToInsert);
-
-    if (wordErr) {
-      toast.error('단어 저장 중 오류가 발생했습니다.');
+    const dupes = await findDuplicateWords(categoryId, validWords);
+    if (!dupes) {
+      toast.error('단어 중복 확인 중 오류가 발생했습니다.');
       setSaving(false);
       return;
     }
 
-    toast.success(`${validWords.length}개 단어가 저장되었습니다.`);
-    router.push('/words');
+    if (dupes.inBatch.length > 0 || dupes.existing.length > 0) {
+      setPendingCategoryId(categoryId);
+      setPendingValidWords(validWords);
+      setDuplicateCheck(dupes);
+      setSaving(false);
+      return;
+    }
+
+    await finalizeInsert(categoryId, validWords);
+    setSaving(false);
+  };
+
+  const handleConfirmSkipDuplicates = async () => {
+    if (!pendingCategoryId || !pendingValidWords || !duplicateCheck) return;
+
+    const deduped = removeDuplicateWords(pendingValidWords, duplicateCheck.existing);
+    setDuplicateCheck(null);
+
+    if (deduped.length === 0) {
+      toast.error('저장할 단어가 없습니다. 모두 중복입니다.');
+      setPendingCategoryId(null);
+      setPendingValidWords(null);
+      return;
+    }
+
+    setSaving(true);
+    await finalizeInsert(pendingCategoryId, deduped);
+    setSaving(false);
+    setPendingCategoryId(null);
+    setPendingValidWords(null);
+  };
+
+  const handleCancelDuplicates = () => {
+    setDuplicateCheck(null);
+    setPendingCategoryId(null);
+    setPendingValidWords(null);
   };
 
   const handleSaveDraft = () => {
@@ -150,6 +188,15 @@ export default function NewWordsPage() {
         onSave={handleSave}
         onSaveDraft={handleSaveDraft}
         onLoadDraft={handleLoadDraft}
+      />
+
+      <DuplicateWordsDialog
+        open={duplicateCheck !== null}
+        onOpenChange={(v) => { if (!v) handleCancelDuplicates(); }}
+        inBatchDuplicates={duplicateCheck?.inBatch ?? []}
+        existingDuplicates={duplicateCheck?.existing ?? []}
+        onConfirmSkipDuplicates={handleConfirmSkipDuplicates}
+        onCancel={handleCancelDuplicates}
       />
     </div>
   );

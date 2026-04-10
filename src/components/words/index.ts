@@ -4,4 +4,5 @@ export { default as WordCardGrid } from './WordCardGrid';
 export { default as CategoryTree } from './CategoryTree';
 export { default as MasterListPanel } from './MasterListPanel';
 export { default as MoveWordsDialog } from './MoveWordsDialog';
+export { default as DuplicateWordsDialog } from './DuplicateWordsDialog';
 export type { WordEntry } from './WordEntryTable';
