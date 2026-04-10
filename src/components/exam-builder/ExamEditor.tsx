@@ -12,6 +12,8 @@ import type { MarkItem } from './ExamMarkingSidebar';
 import { CustomTableCell, CustomTableHeader } from './CustomTableCell';
 import CellStyleToolbar from './CellStyleToolbar';
 import { AlignLeft, AlignCenter, AlignRight } from 'lucide-react';
+import { extractMarks } from '@/lib/concept-marks';
+import { splitRangeByWords } from '@/lib/word-range';
 
 /** TipTap 커스텀 마크: 개념 하이라이트 */
 const ConceptMark = Mark.create({
@@ -82,24 +84,7 @@ export default function ExamEditor({ onHTMLChange, onMarksChange, editorRef, ini
   }, [editor]);
 
   const syncMarks = useCallback((e: Editor) => {
-    const raw: MarkItem[] = [];
-    e.state.doc.descendants((node, pos) => {
-      if (node.isText && node.marks.some((m) => m.type.name === 'concept')) {
-        raw.push({ text: node.text ?? '', pos, len: node.nodeSize });
-      }
-    });
-    // 인접 텍스트 노드 병합
-    const merged: MarkItem[] = [];
-    for (const m of raw) {
-      const last = merged[merged.length - 1];
-      if (last && last.pos + last.len === m.pos) {
-        last.text += m.text;
-        last.len += m.len;
-      } else {
-        merged.push({ ...m });
-      }
-    }
-    onMarksChange(merged);
+    onMarksChange(extractMarks(e));
   }, [onMarksChange]);
 
   /** 에디터 클릭/드래그 → 마킹 적용/해제 */
@@ -127,7 +112,16 @@ export default function ExamEditor({ onHTMLChange, onMarksChange, editorRef, ini
       }
       return;
     }
-    editor.chain().focus().setMark('concept').run();
+
+    // 드래그 → 공백 기준 단어 경계로 스냅한 뒤 단어별로 마크 적용
+    const words = splitRangeByWords(editor.state, from, to);
+    if (words.length === 0) return;
+
+    let chain = editor.chain().focus();
+    for (const w of words) {
+      chain = chain.setTextSelection({ from: w.from, to: w.to }).setMark('concept');
+    }
+    chain.run();
     syncMarks(editor);
   }, [markingMode, editor, syncMarks]);
 
