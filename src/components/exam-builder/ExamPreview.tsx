@@ -1,12 +1,9 @@
 'use client';
 
-import { useCallback, useRef } from 'react';
+import { useCallback } from 'react';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Download, FileDown, Pencil } from 'lucide-react';
-import { toast } from 'sonner';
-import { transformHTML, stripTrailingEmpty } from '@/lib/exam-transform';
+import { ArrowLeft, Pencil } from 'lucide-react';
 import ExamSheetRenderer, { SHEET_CONFIGS } from './ExamSheetRenderer';
-import type { SheetConfig } from './ExamSheetRenderer';
 import type { BuilderCategory } from './ExamCategoryBar';
 
 /** 미리보기 탭 목록 */
@@ -34,7 +31,7 @@ interface ExamPreviewProps {
 }
 
 /**
- * 미리보기 화면: 탭 전환 + A4 렌더링 + PDF 다운로드.
+ * 미리보기 화면: 탭 전환 + A4 렌더링 + 인쇄.
  */
 export default function ExamPreview({
   editorHTML,
@@ -47,8 +44,6 @@ export default function ExamPreview({
   onConceptClick,
   onConceptDrag,
 }: ExamPreviewProps) {
-  const previewRef = useRef<HTMLDivElement>(null);
-
   /** 개념지 미리보기 클릭/드래그 핸들러 */
   const handlePreviewMouseUp = useCallback(() => {
     if (activeTab !== 'concept') return;
@@ -73,54 +68,6 @@ export default function ExamPreview({
     },
     [onConceptClick],
   );
-
-  /** PDF 다운로드 (현재 탭) */
-  const downloadPDF = useCallback(async () => {
-    const el = previewRef.current;
-    if (!el) return;
-    toast.info('PDF 생성 중...');
-    const html2pdf = (await import('html2pdf.js')).default;
-    const clone = el.cloneNode(true) as HTMLElement;
-    clone.querySelectorAll('.eb-concept-preview-mark').forEach((m) => {
-      m.className = 'eb-concept-highlight';
-      m.removeAttribute('data-concept-interactive');
-    });
-    const filename = buildFilename(category, activeTab);
-    const container = document.createElement('div');
-    container.appendChild(clone);
-    document.body.appendChild(container);
-    await html2pdf().set(pdfOptions(filename)).from(clone).save();
-    document.body.removeChild(container);
-    toast.success('PDF 다운로드 완료!');
-  }, [category, activeTab]);
-
-  /** 전체 PDF 다운로드 (5종) */
-  const downloadAllPDF = useCallback(async () => {
-    toast.info('전체 PDF 생성 중...');
-    const html2pdf = (await import('html2pdf.js')).default;
-    const wrapper = document.createElement('div');
-
-    const cleanHTML = stripTrailingEmpty(editorHTML);
-    const allConfigs = ['concept', 'stage1', 'stage2', 'stage3', 'answer'] as const;
-    allConfigs.forEach((key, i) => {
-      const page = document.createElement('div');
-      page.className = `eb-sheet-pdf-page${i > 0 ? ' eb-section-break' : ''}`;
-      const config = SHEET_CONFIGS[key];
-      const mode = key === 'concept' ? 'concept' as const : config.mode;
-      const bodyHTML = transformHTML(cleanHTML, mode);
-      page.innerHTML = buildSheetHTML(category, config, markCount, bodyHTML, cleanHTML);
-      wrapper.appendChild(page);
-    });
-
-    document.body.appendChild(wrapper);
-    const filename = buildFilename(category, '전체');
-    await html2pdf().set({
-      ...pdfOptions(filename),
-      pagebreak: { mode: ['css'], before: '.eb-section-break', avoid: ['tr'] },
-    }).from(wrapper).save();
-    document.body.removeChild(wrapper);
-    toast.success('전체 PDF 다운로드 완료!');
-  }, [editorHTML, category, markCount]);
 
   const renderSheets = () => {
     if (activeTab === 'all') {
@@ -176,7 +123,6 @@ export default function ExamPreview({
       {/* 미리보기 영역 */}
       <div
         className="flex-1 overflow-y-auto p-8 bg-gray-100 flex justify-center eb-preview-area"
-        ref={previewRef}
         onClick={handleConceptClick}
         onMouseUp={handlePreviewMouseUp}
       >
@@ -199,69 +145,8 @@ export default function ExamPreview({
           <Button variant="outline" onClick={() => window.print()}>
             인쇄
           </Button>
-          <Button className="bg-primary text-white hover:bg-primary-hover" onClick={downloadPDF}>
-            <Download className="h-4 w-4 mr-1" /> 현재 탭 PDF
-          </Button>
-          <Button className="bg-[#C83C6E] text-white hover:bg-[#8B1A4A]" onClick={downloadAllPDF}>
-            <FileDown className="h-4 w-4 mr-1" /> 전체 PDF
-          </Button>
         </div>
       </div>
     </div>
   );
-}
-
-/* ── 헬퍼 ── */
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function pdfOptions(filename: string): any {
-  return {
-    margin: [15, 15, 15, 15],
-    filename,
-    image: { type: 'jpeg', quality: 0.98 },
-    html2canvas: { scale: 2, useCORS: true, logging: false },
-    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-    pagebreak: { mode: ['css', 'legacy'], avoid: ['tr'] },
-  };
-}
-
-function buildFilename(cat: BuilderCategory, type: string): string {
-  const pub = cat.publisher.replace(/[()]/g, '').replace(/\s/g, '');
-  const unit = cat.unit.replace(/\s/g, '_').replace(/[,]/g, '').substring(0, 20);
-  return `${cat.grade}_${pub}_${unit}_${type}.pdf`;
-}
-
-function buildSheetHTML(cat: BuilderCategory, config: SheetConfig, markCount: number, bodyHTML: string, editorHTML?: string): string {
-  const year = new Date().getFullYear();
-  const today = new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' });
-  const unitText = cat.subunit ? `${cat.unit} — ${cat.subunit}` : cat.unit;
-  const titleText = [`${year} ${cat.grade} 국어 ${cat.publisher}`, unitText].filter(Boolean).join(' ');
-  const subtitleRow = (unitText || cat.semester) ? `
-      <div style="display:flex;justify-content:space-between;font-size:9pt;color:#6B7280;margin-top:4pt">
-        <span style="color:#1F2937;font-weight:500">${unitText}</span>
-        <span>${cat.semester}</span>
-      </div>` : '';
-  return `
-    <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:10pt">
-      <div>
-        <h2 style="font-size:14pt;font-weight:800">${titleText}
-          <span class="${config.badgeClass}" style="display:inline-block;margin-left:6pt;padding:2pt 6pt;border-radius:4pt;font-size:9pt;font-weight:700">${config.badge}</span>
-        </h2>
-        <p style="font-size:8pt;color:#9CA3AF;letter-spacing:2px">아라국어논술</p>
-      </div>
-      <img src="/logo.png" width="48" height="48" style="object-fit:contain" />
-    </div>
-    <div style="border-top:1.5px solid #B8EDE8;border-bottom:1.5px solid #B8EDE8;padding:6pt 0;margin-bottom:10pt">
-      <div style="display:flex;gap:16pt;font-size:10pt;color:#4B5563">
-        <span style="font-weight:600">이름 <span style="display:inline-block;border-bottom:1px solid #9CA3AF;width:80pt;margin-left:4pt"></span></span>
-        <span>날짜 <span style="color:#1F2937;margin-left:2pt">${today}</span></span>
-        ${config.showScore ? `<span style="margin-left:auto;font-weight:600;color:#C83C6E"><span style="display:inline-block;border-bottom:1px solid #9CA3AF;width:30pt;text-align:center"></span> / ${markCount}개</span>` : ''}
-      </div>${subtitleRow}
-    </div>
-    <div class="${editorHTML && editorHTML.replace(/<[^>]*>/g, '').trim().length > 300 ? 'sheet-body--dual' : ''}">${bodyHTML}</div>
-    <div style="display:flex;align-items:center;justify-content:center;gap:6px;border-top:1px solid #e5e7eb;padding:8px 0;margin-top:20pt;font-size:9px;color:#aaa;letter-spacing:2px">
-      <img src="/logo.png" width="16" height="16" />
-      <span>아라국어논술</span>
-    </div>
-  `;
 }
