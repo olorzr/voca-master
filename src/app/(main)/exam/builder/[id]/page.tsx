@@ -17,7 +17,6 @@ import {
 } from '@/components/exam-builder';
 import type { BuilderCategory, MarkItem } from '@/components/exam-builder';
 import { extractMarks } from '@/lib/concept-marks';
-import { splitRangeByWords } from '@/lib/word-range';
 import type { ConceptSheet } from '@/types';
 
 const DEFAULT_CATEGORY: BuilderCategory = {
@@ -211,15 +210,7 @@ export default function ConceptEditorPage() {
         const idx = (node.text ?? '').indexOf(text);
         if (idx !== -1) {
           const from = pos + idx;
-          const to = from + text.length;
-          const words = splitRangeByWords(editor.state, from, to);
-          if (words.length > 0) {
-            let chain = editor.chain();
-            for (const w of words) {
-              chain = chain.setTextSelection({ from: w.from, to: w.to }).setMark('concept');
-            }
-            chain.run();
-          }
+          editor.chain().setTextSelection({ from, to: from + text.length }).setMark('concept').run();
           found = true;
           return false;
         }

@@ -13,7 +13,6 @@ import { CustomTableCell, CustomTableHeader } from './CustomTableCell';
 import CellStyleToolbar from './CellStyleToolbar';
 import { AlignLeft, AlignCenter, AlignRight } from 'lucide-react';
 import { extractMarks } from '@/lib/concept-marks';
-import { splitRangeByWords } from '@/lib/word-range';
 
 /** TipTap 커스텀 마크: 개념 하이라이트 */
 const ConceptMark = Mark.create({
@@ -113,15 +112,10 @@ export default function ExamEditor({ onHTMLChange, onMarksChange, editorRef, ini
       return;
     }
 
-    // 드래그 → 공백 기준 단어 경계로 스냅한 뒤 단어별로 마크 적용
-    const words = splitRangeByWords(editor.state, from, to);
-    if (words.length === 0) return;
-
-    let chain = editor.chain().focus();
-    for (const w of words) {
-      chain = chain.setTextSelection({ from: w.from, to: w.to }).setMark('concept');
-    }
-    chain.run();
+    // 드래그 → 선택한 범위 그대로 마크 적용 (부분 단어 마킹 허용)
+    // 여러 단어를 걸쳐 드래그해도 사이드바는 extractMarks 가 공백 기준으로
+    // 쪼개어 단어별로 표시하므로 채점 카운트는 정확하게 유지된다.
+    editor.chain().focus().setMark('concept').run();
     syncMarks(editor);
   }, [markingMode, editor, syncMarks]);
 
