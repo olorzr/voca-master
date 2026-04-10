@@ -55,6 +55,39 @@ export function transformHTML(editorHTML: string, mode: TransformMode): string {
   return div.innerHTML;
 }
 
+/** 블록으로 취급하는 태그들 */
+const BLOCK_TAGS = new Set(['P', 'DIV', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6']);
+
+/**
+ * 블록 요소가 시각적으로 "비었는지" 판정한다.
+ * 텍스트가 공백/비파괴공백뿐이고, 자식은 없거나 `<br>` 만 있는 경우 true.
+ */
+function isVisuallyEmptyBlock(el: Element): boolean {
+  if (!BLOCK_TAGS.has(el.tagName)) return false;
+  const text = (el.textContent ?? '').replace(/\u00A0/g, ' ').trim();
+  if (text !== '') return false;
+  const hasNonBr = Array.from(el.children).some((c) => c.tagName !== 'BR');
+  return !hasNonBr;
+}
+
+/**
+ * TipTap 이 문서 끝에 자주 남기는 빈 `<p></p>` · `<p><br></p>` 등을
+ * 재귀적으로 제거한다. 인쇄 시 trailing 빈 블록이 새 페이지로 밀려
+ * 빈 페이지가 생기는 현상을 방지한다.
+ */
+export function stripTrailingEmpty(editorHTML: string): string {
+  const div = document.createElement('div');
+  div.innerHTML = editorHTML;
+
+  let last = div.lastElementChild;
+  while (last && isVisuallyEmptyBlock(last)) {
+    last.remove();
+    last = div.lastElementChild;
+  }
+
+  return div.innerHTML;
+}
+
 /** 마킹된 텍스트에서 개념 목록을 추출한다. */
 export function extractMarkedWords(html: string): string[] {
   const div = document.createElement('div');

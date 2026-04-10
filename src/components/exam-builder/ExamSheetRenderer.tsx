@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
-import { transformHTML } from '@/lib/exam-transform';
+import { transformHTML, stripTrailingEmpty } from '@/lib/exam-transform';
 import type { TransformMode } from '@/lib/exam-transform';
 import type { BuilderCategory } from './ExamCategoryBar';
 
@@ -57,7 +57,7 @@ export default function ExamSheetRenderer({
   ].filter(Boolean).join(' ');
 
   const bodyHTML = useMemo(
-    () => transformHTML(editorHTML, config.mode),
+    () => transformHTML(stripTrailingEmpty(editorHTML), config.mode),
     [editorHTML, config.mode],
   );
 

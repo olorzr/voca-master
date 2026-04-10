@@ -4,7 +4,7 @@ import { useCallback, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Download, FileDown, Pencil } from 'lucide-react';
 import { toast } from 'sonner';
-import { transformHTML } from '@/lib/exam-transform';
+import { transformHTML, stripTrailingEmpty } from '@/lib/exam-transform';
 import ExamSheetRenderer, { SHEET_CONFIGS } from './ExamSheetRenderer';
 import type { SheetConfig } from './ExamSheetRenderer';
 import type { BuilderCategory } from './ExamCategoryBar';
@@ -100,14 +100,15 @@ export default function ExamPreview({
     const html2pdf = (await import('html2pdf.js')).default;
     const wrapper = document.createElement('div');
 
+    const cleanHTML = stripTrailingEmpty(editorHTML);
     const allConfigs = ['concept', 'stage1', 'stage2', 'stage3', 'answer'] as const;
     allConfigs.forEach((key, i) => {
       const page = document.createElement('div');
       page.className = `eb-sheet-pdf-page${i > 0 ? ' eb-section-break' : ''}`;
       const config = SHEET_CONFIGS[key];
       const mode = key === 'concept' ? 'concept' as const : config.mode;
-      const bodyHTML = transformHTML(editorHTML, mode);
-      page.innerHTML = buildSheetHTML(category, config, markCount, bodyHTML, editorHTML);
+      const bodyHTML = transformHTML(cleanHTML, mode);
+      page.innerHTML = buildSheetHTML(category, config, markCount, bodyHTML, cleanHTML);
       wrapper.appendChild(page);
     });
 

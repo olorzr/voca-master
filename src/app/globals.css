@@ -703,6 +703,11 @@
   /* 2단 레이아웃 — 인쇄 시 순차 채움 (페이지 경계에서 안정적) */
   .sheet-body--dual { column-fill: auto; }
 
+  /* 빈 블록 안전망 — JS 에서 놓친 trailing 빈 요소를 숨겨 빈 페이지 방지 */
+  .sheet-body p:empty,
+  .eb-sheet-pdf-page p:empty { display: none !important; }
+  .sheet-body > :last-child { margin-bottom: 0 !important; }
+
   /* 개념지 미리보기 — 인쇄 시 래퍼 div 제약 완전 해제 (테이블 제외) */
   .eb-preview-wrap {
     height: auto !important;
