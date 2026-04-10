@@ -11,7 +11,7 @@ import {
   SheetTitle,
   SheetDescription,
 } from '@/components/ui/sheet';
-import { supabase } from '@/lib/supabase';
+import { getAllSchoolLevelCategories } from '@/lib/category-master';
 import { buildCategoryTree } from '@/lib/category-tree';
 import CategoryTree from '@/components/words/CategoryTree';
 import { formatCategoryLabel } from '@/lib/format';
@@ -59,15 +59,8 @@ export default function ExamCategoryBar({ category, onChange }: ExamCategoryBarP
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>();
 
   const loadCategories = useCallback(async () => {
-    const { data } = await supabase
-      .from('categories')
-      .select('*')
-      .in('level', ['중등', '고등'])
-      .order('level')
-      .order('grade')
-      .order('publisher')
-      .order('chapter');
-    setCategories(data ?? []);
+    const all = await getAllSchoolLevelCategories();
+    setCategories(all);
   }, []);
 
   useEffect(() => {
@@ -106,7 +99,7 @@ export default function ExamCategoryBar({ category, onChange }: ExamCategoryBarP
         <SheetContent side="left" className="w-[380px] sm:max-w-[380px]">
           <SheetHeader>
             <SheetTitle>카테고리 선택</SheetTitle>
-            <SheetDescription>단어관리에 등록된 카테고리에서 선택하세요.</SheetDescription>
+            <SheetDescription>학년 · 출판사 · 단원을 선택하세요.</SheetDescription>
           </SheetHeader>
           <div className="px-4 pb-2">
             <div className="relative">
