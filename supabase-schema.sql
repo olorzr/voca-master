@@ -36,7 +36,7 @@ CREATE TABLE exams (
   pass_count INT NOT NULL DEFAULT 0,
   category_ids UUID[] DEFAULT '{}',
   word_ids UUID[] DEFAULT '{}',
-  parent_exam_id UUID REFERENCES exams(id) ON DELETE SET NULL,
+  parent_exam_id UUID REFERENCES exams(id) ON DELETE CASCADE,
   retake_number INT DEFAULT 0,
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   created_at TIMESTAMPTZ DEFAULT NOW()
