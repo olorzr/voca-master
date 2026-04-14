@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
@@ -49,8 +49,8 @@ export default function ConceptEditorPage() {
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(!isNew);
   const [savedId, setSavedId] = useState<string | null>(isNew ? null : sheetId);
+  const [initialHTML, setInitialHTML] = useState<string | null>(isNew ? '' : null);
   const editorRef = useRef<Editor | null>(null);
-  const initialHTMLRef = useRef<string | null>(isNew ? '' : null);
 
   /** 카테고리 값으로 자동 제목을 생성한다 */
   const generateTitle = useCallback((cat: BuilderCategory) => {
@@ -68,11 +68,11 @@ export default function ConceptEditorPage() {
 
   /* ── 기존 개념지 불러오기 ── */
   useEffect(() => {
-    if (isNew || !user) {
-      setLoading(false);
-      return;
-    }
     (async () => {
+      if (isNew || !user) {
+        setLoading(false);
+        return;
+      }
       const { data, error } = await supabase
         .from('concept_sheets')
         .select('*')
@@ -95,7 +95,7 @@ export default function ConceptEditorPage() {
         unit: sheet.unit,
         subunit: sheet.subunit,
       });
-      initialHTMLRef.current = sheet.editor_html;
+      setInitialHTML(sheet.editor_html);
       setEditorHTML(sheet.editor_html);
       setLoading(false);
     })();
@@ -290,7 +290,7 @@ export default function ConceptEditorPage() {
               onHTMLChange={setEditorHTML}
               onMarksChange={setMarks}
               editorRef={editorRef}
-              initialContent={initialHTMLRef.current ?? undefined}
+              initialContent={initialHTML ?? undefined}
             />
           </div>
           <div className="flex-[3] min-w-[280px] h-full overflow-y-auto">

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth-context';
@@ -47,29 +47,26 @@ export default function AuditLogPage() {
     }
   }, [user, authLoading, router]);
 
-  const loadLogs = useCallback(async () => {
-    let query = supabase
-      .from('audit_log')
-      .select('*')
-      .order('created_at', { ascending: false })
-      .limit(PAGE_SIZE);
-
-    if (filterTable) query = query.eq('table_name', filterTable);
-    if (filterAction) query = query.eq('action', filterAction);
-
-    const { data, error } = await query;
-    if (error) {
-      console.error('감사 로그 조회 실패:', error.message);
-    }
-    setLogs(data ?? []);
-    setLoading(false);
-  }, [filterTable, filterAction]);
-
   useEffect(() => {
-    if (!authLoading && user?.email === ADMIN_EMAIL) {
-      loadLogs();
-    }
-  }, [loadLogs, authLoading, user]);
+    (async () => {
+      if (authLoading || user?.email !== ADMIN_EMAIL) return;
+      let query = supabase
+        .from('audit_log')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(PAGE_SIZE);
+
+      if (filterTable) query = query.eq('table_name', filterTable);
+      if (filterAction) query = query.eq('action', filterAction);
+
+      const { data, error } = await query;
+      if (error) {
+        console.error('감사 로그 조회 실패:', error.message);
+      }
+      setLogs(data ?? []);
+      setLoading(false);
+    })();
+  }, [filterTable, filterAction, authLoading, user]);
 
   if (authLoading || !user || user.email !== ADMIN_EMAIL) {
     return (

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
@@ -9,7 +9,6 @@ import { Button } from '@/components/ui/button';
 import { FileText, Trash2, Search, CheckSquare, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { ExamHistoryCard, ExamHistoryFilter } from '@/components/exam';
-import { formatDateKR } from '@/lib/format';
 import { buildCategoryTree } from '@/lib/category-tree';
 import type { Category } from '@/types';
 
@@ -46,18 +45,18 @@ export default function ExamHistoryPage() {
   const [selectMode, setSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
-  const loadData = useCallback(async () => {
-    if (!user) return;
-    const [examRes, catRes] = await Promise.all([
-      supabase.from('exams').select('*').order('created_at', { ascending: false }),
-      supabase.from('categories').select('*').order('level').order('grade'),
-    ]);
-    setExams(examRes.data ?? []);
-    setCategories(catRes.data ?? []);
-    setLoading(false);
+  useEffect(() => {
+    (async () => {
+      if (!user) return;
+      const [examRes, catRes] = await Promise.all([
+        supabase.from('exams').select('*').order('created_at', { ascending: false }),
+        supabase.from('categories').select('*').order('level').order('grade'),
+      ]);
+      setExams(examRes.data ?? []);
+      setCategories(catRes.data ?? []);
+      setLoading(false);
+    })();
   }, [user]);
-
-  useEffect(() => { loadData(); }, [loadData]);
 
   const categoryTree = useMemo(() => buildCategoryTree(categories), [categories]);
 

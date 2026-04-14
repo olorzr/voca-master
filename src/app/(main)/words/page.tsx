@@ -39,22 +39,20 @@ export default function WordsPage() {
   const [selectedWordIds, setSelectedWordIds] = useState<Set<string>>(new Set());
   const [moveDialogOpen, setMoveDialogOpen] = useState(false);
 
-  const loadCategories = useCallback(async () => {
-    if (!user) return;
-    const { data } = await supabase
-      .from('categories')
-      .select('*')
-      .order('level')
-      .order('grade')
-      .order('publisher')
-      .order('chapter');
-    setCategories(data ?? []);
-    setLoading(false);
-  }, [user]);
-
   useEffect(() => {
-    loadCategories();
-  }, [loadCategories]);
+    (async () => {
+      if (!user) return;
+      const { data } = await supabase
+        .from('categories')
+        .select('*')
+        .order('level')
+        .order('grade')
+        .order('publisher')
+        .order('chapter');
+      setCategories(data ?? []);
+      setLoading(false);
+    })();
+  }, [user]);
 
   const loadWords = useCallback(async (categoryId: string) => {
     const { data } = await supabase

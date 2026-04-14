@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth-context';
@@ -27,25 +27,23 @@ export default function ConceptListPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
 
-  const loadSheets = useCallback(async () => {
-    if (!user) return;
-    const { data, error } = await supabase
-      .from('concept_sheets')
-      .select('*')
-      .order('updated_at', { ascending: false });
-
-    if (error) {
-      toast.error('개념지 목록을 불러오지 못했습니다.');
-      setLoading(false);
-      return;
-    }
-    setSheets(data ?? []);
-    setLoading(false);
-  }, [user]);
-
   useEffect(() => {
-    loadSheets();
-  }, [loadSheets]);
+    (async () => {
+      if (!user) return;
+      const { data, error } = await supabase
+        .from('concept_sheets')
+        .select('*')
+        .order('updated_at', { ascending: false });
+
+      if (error) {
+        toast.error('개념지 목록을 불러오지 못했습니다.');
+        setLoading(false);
+        return;
+      }
+      setSheets(data ?? []);
+      setLoading(false);
+    })();
+  }, [user]);
 
   /** 개념지 카테고리 필드로 합성 Category를 생성하여 트리를 구성한다 */
   const tree = useMemo(() => {

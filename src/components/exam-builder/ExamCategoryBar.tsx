@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -58,14 +58,12 @@ export default function ExamCategoryBar({ category, onChange }: ExamCategoryBarP
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>();
 
-  const loadCategories = useCallback(async () => {
-    const all = await getAllSchoolLevelCategories();
-    setCategories(all);
-  }, []);
-
   useEffect(() => {
-    loadCategories();
-  }, [loadCategories]);
+    (async () => {
+      const all = await getAllSchoolLevelCategories();
+      setCategories(all);
+    })();
+  }, []);
 
   const filtered = searchQuery
     ? categories.filter((c) =>

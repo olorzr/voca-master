@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth-context';
@@ -33,34 +33,31 @@ export default function ExamCreatePage() {
   const [shuffle, setShuffle] = useState(true);
   const [creating, setCreating] = useState(false);
 
-  const loadCategories = useCallback(async () => {
-    if (!user) return;
-    const { data } = await supabase
-      .from('categories')
-      .select('*')
-      .order('level')
-      .order('grade');
-    setCategories(data ?? []);
+  useEffect(() => {
+    (async () => {
+      if (!user) return;
+      const { data } = await supabase
+        .from('categories')
+        .select('*')
+        .order('level')
+        .order('grade');
+      setCategories(data ?? []);
+    })();
   }, [user]);
 
   useEffect(() => {
-    loadCategories();
-  }, [loadCategories]);
-
-  useEffect(() => {
-    if (selectedCatIds.length === 0) {
-      setWords([]);
-      return;
-    }
-    async function loadWords() {
+    (async () => {
+      if (selectedCatIds.length === 0) {
+        setWords([]);
+        return;
+      }
       const { data } = await supabase
         .from('words')
         .select('*')
         .in('category_id', selectedCatIds)
         .order('order_index');
       setWords(data ?? []);
-    }
-    loadWords();
+    })();
   }, [selectedCatIds]);
 
   /** 선택된 카테고리로 자동 제목을 생성한다 */

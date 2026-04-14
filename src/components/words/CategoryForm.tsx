@@ -55,64 +55,82 @@ export default function CategoryForm({
 
   // 출판사/학교 목록 로드
   useEffect(() => {
-    if (level === EXTERNAL_LEVEL) {
-      getSchools().then(setSchools);
-    } else {
-      getPublishers(level).then(setPublishers);
-    }
+    (async () => {
+      if (level === EXTERNAL_LEVEL) {
+        setSchools(await getSchools());
+      } else {
+        setPublishers(await getPublishers(level));
+      }
+    })();
   }, [level]);
 
   // 출판사 이름 → ID 역추적 (임시저장 복원용)
   useEffect(() => {
-    if (!publisher || publishers.length === 0) return;
-    const found = publishers.find((p) => p.name === publisher);
-    if (found && found.id !== publisherId) setPublisherId(found.id);
+    (async () => {
+      if (!publisher || publishers.length === 0) return;
+      const found = publishers.find((p) => p.name === publisher);
+      if (found && found.id !== publisherId) setPublisherId(found.id);
+    })();
   }, [publisher, publishers, publisherId]);
 
   // 대단원 로드
   useEffect(() => {
-    if (!publisherId || !grade || !semester) { setChapters([]); return; }
-    getMajorChapters(publisherId, grade, semester).then(setChapters);
+    (async () => {
+      if (!publisherId || !grade || !semester) { setChapters([]); return; }
+      setChapters(await getMajorChapters(publisherId, grade, semester));
+    })();
   }, [publisherId, grade, semester]);
 
   // 대단원 이름 → ID 역추적
   useEffect(() => {
-    if (!chapter || chapters.length === 0) return;
-    const found = chapters.find((c) => c.name === chapter);
-    if (found && found.id !== chapterId) setChapterId(found.id);
+    (async () => {
+      if (!chapter || chapters.length === 0) return;
+      const found = chapters.find((c) => c.name === chapter);
+      if (found && found.id !== chapterId) setChapterId(found.id);
+    })();
   }, [chapter, chapters, chapterId]);
 
   // 소단원 로드
   useEffect(() => {
-    if (!chapterId) { setSubChaptersList([]); return; }
-    getSubChapters(chapterId).then(setSubChaptersList);
+    (async () => {
+      if (!chapterId) { setSubChaptersList([]); return; }
+      setSubChaptersList(await getSubChapters(chapterId));
+    })();
   }, [chapterId]);
 
   // 소단원 이름 → ID 역추적
   useEffect(() => {
-    if (!subChapter || subChaptersList.length === 0) return;
-    const found = subChaptersList.find((s) => s.name === subChapter);
-    if (found && found.id !== subChapterId) setSubChapterId(found.id);
+    (async () => {
+      if (!subChapter || subChaptersList.length === 0) return;
+      const found = subChaptersList.find((s) => s.name === subChapter);
+      if (found && found.id !== subChapterId) setSubChapterId(found.id);
+    })();
   }, [subChapter, subChaptersList, subChapterId]);
 
   // 학교 이름 → ID 역추적
   useEffect(() => {
-    if (!schoolName || schools.length === 0) return;
-    const found = schools.find((s) => s.name === schoolName);
-    if (found && found.id !== schoolId) setSchoolId(found.id);
+    (async () => {
+      if (!schoolName || schools.length === 0) return;
+      const found = schools.find((s) => s.name === schoolName);
+      if (found && found.id !== schoolId) setSchoolId(found.id);
+    })();
   }, [schoolName, schools, schoolId]);
 
   // 프린트/작품명 로드
   useEffect(() => {
-    if (!schoolId) { setMaterials([]); return; }
-    getSchoolMaterials(schoolId).then(setMaterials);
+    (async () => {
+      if (!schoolId) { setMaterials([]); return; }
+      setMaterials(await getSchoolMaterials(schoolId));
+    })();
   }, [schoolId]);
 
   // 프린트/작품명 이름 → ID 역추적
   useEffect(() => {
-    if (!chapter || materials.length === 0) return;
-    const found = materials.find((m) => m.name === chapter);
-    if (found && found.id !== materialId) setMaterialId(found.id);
+    (async () => {
+      if (!chapter || materials.length === 0) return;
+      const found = materials.find((m) => m.name === chapter);
+      if (found && found.id !== materialId) setMaterialId(found.id);
+    })();
   }, [chapter, materials, materialId]);
 
   const handleLevelChange = (v: CategoryLevel) => {

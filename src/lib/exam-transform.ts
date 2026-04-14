@@ -161,7 +161,7 @@ function buildStage2Boxes(text: string): HTMLSpanElement {
   wrapper.style.display = 'inline';
   wrapper.style.whiteSpace = 'nowrap';
 
-  for (const _char of text) {
+  for (let i = 0; i < text.length; i++) {
     const box = document.createElement('span');
     box.className = 'eb-stage2-box';
     wrapper.appendChild(box);

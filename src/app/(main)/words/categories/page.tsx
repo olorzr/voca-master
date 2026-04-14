@@ -41,28 +41,36 @@ export default function CategoryManagePage() {
   }, [level]);
 
   useEffect(() => {
-    loadPublishers();
-    setSelectedPubId('');
-    setChapters([]);
-    setSelectedChapterId('');
-    setSubChapters([]);
+    (async () => {
+      await loadPublishers();
+      setSelectedPubId('');
+      setChapters([]);
+      setSelectedChapterId('');
+      setSubChapters([]);
+    })();
   }, [loadPublishers]);
 
   // --- 대단원 로드 ---
   useEffect(() => {
-    if (!selectedPubId || !grade || !semester) {
-      setChapters([]); setSelectedChapterId(''); setSubChapters([]);
-      return;
-    }
-    cm.getMajorChapters(selectedPubId, grade, semester).then(setChapters);
-    setSelectedChapterId('');
-    setSubChapters([]);
+    (async () => {
+      if (!selectedPubId || !grade || !semester) {
+        setChapters([]); setSelectedChapterId(''); setSubChapters([]);
+        return;
+      }
+      const data = await cm.getMajorChapters(selectedPubId, grade, semester);
+      setChapters(data);
+      setSelectedChapterId('');
+      setSubChapters([]);
+    })();
   }, [selectedPubId, grade, semester]);
 
   // --- 소단원 로드 ---
   useEffect(() => {
-    if (!selectedChapterId) { setSubChapters([]); return; }
-    cm.getSubChapters(selectedChapterId).then(setSubChapters);
+    (async () => {
+      if (!selectedChapterId) { setSubChapters([]); return; }
+      const data = await cm.getSubChapters(selectedChapterId);
+      setSubChapters(data);
+    })();
   }, [selectedChapterId]);
 
   // --- 학교 로드 ---
@@ -70,12 +78,17 @@ export default function CategoryManagePage() {
     setSchools(await cm.getSchools());
   }, []);
 
-  useEffect(() => { loadSchools(); }, [loadSchools]);
+  useEffect(() => {
+    (async () => { await loadSchools(); })();
+  }, [loadSchools]);
 
   // --- 프린트/작품명 로드 ---
   useEffect(() => {
-    if (!selectedSchoolId) { setMaterials([]); return; }
-    cm.getSchoolMaterials(selectedSchoolId).then(setMaterials);
+    (async () => {
+      if (!selectedSchoolId) { setMaterials([]); return; }
+      const data = await cm.getSchoolMaterials(selectedSchoolId);
+      setMaterials(data);
+    })();
   }, [selectedSchoolId]);
 
   // --- Publisher CRUD ---

@@ -56,6 +56,10 @@ export default function ExamEditor({ onHTMLChange, onMarksChange, editorRef, ini
   const [markingMode, setMarkingMode] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
 
+  const syncMarks = useCallback((e: Editor) => {
+    onMarksChange(extractMarks(e));
+  }, [onMarksChange]);
+
   const editor = useEditor({
     extensions: [
       StarterKit.configure({ heading: { levels: [3, 4] } }),
@@ -80,16 +84,12 @@ export default function ExamEditor({ onHTMLChange, onMarksChange, editorRef, ini
       onHTMLChange(editor.getHTML());
       syncMarks(editor);
     }
-  }, [editor]);
-
-  const syncMarks = useCallback((e: Editor) => {
-    onMarksChange(extractMarks(e));
-  }, [onMarksChange]);
+  }, [editor, editorRef, onHTMLChange, syncMarks]);
 
   /** 에디터 클릭/드래그 → 마킹 적용/해제 */
   const handleMouseUp = useCallback(() => {
     if (!markingMode || !editor) return;
-    const { from, to, empty } = editor.state.selection;
+    const { from, empty } = editor.state.selection;
     if (empty) {
       // 기존 마크 위 클릭 → 해제
       const resolved = editor.state.doc.resolve(from);
