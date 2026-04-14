@@ -123,44 +123,33 @@ export default function ExamCreatePage() {
       ? [...words].sort(() => Math.random() - 0.5)
       : words;
 
-    const { data: exam, error: examErr } = await supabase
-      .from('exams')
-      .insert({
-        title: title.trim(),
-        pass_percentage: passPercentage,
-        total_questions: totalQuestions,
-        pass_count: passCount,
-        category_ids: selectedCatIds,
-        word_ids: orderedWords.map((w) => w.id),
-        user_id: user.id,
-      })
-      .select()
-      .single();
+    const { data: examId, error: rpcErr } = await supabase.rpc(
+      'create_exam_with_words',
+      {
+        p_title: title.trim(),
+        p_pass_percentage: passPercentage,
+        p_total_questions: totalQuestions,
+        p_pass_count: passCount,
+        p_category_ids: selectedCatIds,
+        p_word_ids: orderedWords.map((w) => w.id),
+        p_user_id: user.id,
+        p_words: orderedWords.map((w, i) => ({
+          word_id: w.id,
+          word: w.word,
+          meaning: w.meaning,
+          order_index: i,
+        })),
+      },
+    );
 
-    if (examErr || !exam) {
+    if (rpcErr || !examId) {
       toast.error('시험지 생성 중 오류가 발생했습니다.');
       setCreating(false);
       return;
     }
 
-    const examWords = orderedWords.map((w, i) => ({
-      exam_id: exam.id,
-      word_id: w.id,
-      word: w.word,
-      meaning: w.meaning,
-      order_index: i,
-    }));
-
-    const { error: ewErr } = await supabase.from('exam_words').insert(examWords);
-
-    if (ewErr) {
-      toast.error('시험지 단어 저장 중 오류가 발생했습니다.');
-      setCreating(false);
-      return;
-    }
-
     toast.success('시험지가 생성되었습니다.');
-    router.push(`/exam/view?id=${exam.id}`);
+    router.push(`/exam/view?id=${examId}`);
   };
 
   return (

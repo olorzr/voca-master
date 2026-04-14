@@ -176,36 +176,36 @@ export default function ExamHistoryPage() {
     const nextNumber = existingRetakes.length + 1;
     const shuffled = [...originalWords].sort(() => Math.random() - 0.5);
 
-    const { data: newExam, error: examErr } = await supabase.from('exams').insert({
-      title: `${originalExam.title} (재시험 ${nextNumber}차)`,
-      pass_percentage: originalExam.pass_percentage,
-      total_questions: originalExam.total_questions,
-      pass_count: originalExam.pass_count,
-      category_ids: originalExam.category_ids,
-      parent_exam_id: examId,
-      retake_number: nextNumber,
-      user_id: user.id,
-    }).select().single();
+    const { data: newExamId, error: rpcErr } = await supabase.rpc(
+      'create_exam_with_words',
+      {
+        p_title: `${originalExam.title} (재시험 ${nextNumber}차)`,
+        p_pass_percentage: originalExam.pass_percentage,
+        p_total_questions: originalExam.total_questions,
+        p_pass_count: originalExam.pass_count,
+        p_category_ids: originalExam.category_ids,
+        p_word_ids: [],
+        p_user_id: user.id,
+        p_words: shuffled.map((w, i) => ({
+          word_id: w.word_id,
+          word: w.word,
+          meaning: w.meaning,
+          order_index: i,
+        })),
+        p_parent_exam_id: examId,
+        p_retake_number: nextNumber,
+      },
+    );
 
-    if (examErr || !newExam) {
+    if (rpcErr || !newExamId) {
       toast.error('재시험지 생성 중 오류가 발생했어요');
-      setRetestingId(null);
-      return;
-    }
-
-    const newWords = shuffled.map((w, i) => ({
-      exam_id: newExam.id, word_id: w.word_id, word: w.word, meaning: w.meaning, order_index: i,
-    }));
-    const { error: ewErr } = await supabase.from('exam_words').insert(newWords);
-    if (ewErr) {
-      toast.error('재시험지 단어 저장 중 오류가 발생했어요');
       setRetestingId(null);
       return;
     }
 
     toast.success(`재시험 ${nextNumber}차가 생성되었어요!`);
     setRetestingId(null);
-    router.push(`/exam/view?id=${newExam.id}`);
+    router.push(`/exam/view?id=${newExamId}`);
   };
 
   if (loading) {
