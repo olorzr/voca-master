@@ -10,6 +10,7 @@ import { FileText, Trash2, Search, CheckSquare, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { ExamHistoryCard, ExamHistoryFilter } from '@/components/exam';
 import { buildCategoryTree } from '@/lib/category-tree';
+import { MIN_EXAM_WORDS } from '@/lib/constants';
 import type { Category } from '@/types';
 
 interface ExamRecord {
@@ -175,6 +176,11 @@ export default function ExamHistoryPage() {
       .from('exam_words').select('*').eq('exam_id', examId).order('order_index');
     if (!originalWords || originalWords.length === 0) {
       toast.error('원본 시험지의 단어를 불러올 수 없어요');
+      setRetestingId(null);
+      return;
+    }
+    if (originalWords.length < MIN_EXAM_WORDS) {
+      toast.error(`재시험 생성에는 최소 ${MIN_EXAM_WORDS}개 단어가 필요해요 (현재 ${originalWords.length}개)`);
       setRetestingId(null);
       return;
     }

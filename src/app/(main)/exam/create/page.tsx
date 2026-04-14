@@ -14,9 +14,8 @@ import { Separator } from '@/components/ui/separator';
 import { CategoryTree } from '@/components/words';
 import { FileText, Eye } from 'lucide-react';
 import { toast } from 'sonner';
-import { DEFAULT_PASS_PERCENTAGE, PERCENTAGE_BASE } from '@/lib/constants';
+import { DEFAULT_PASS_PERCENTAGE, PERCENTAGE_BASE, MIN_EXAM_WORDS, EXTERNAL_LEVEL } from '@/lib/constants';
 import { buildCategoryTree } from '@/lib/category-tree';
-import { EXTERNAL_LEVEL } from '@/lib/constants';
 
 /**
  * 시험지 생성 페이지 (트리 구조 카테고리 선택, 합격선 설정, 셔플 옵션)
@@ -111,6 +110,10 @@ export default function ExamCreatePage() {
     }
     if (words.length === 0) {
       toast.error('카테고리를 선택해주세요.');
+      return;
+    }
+    if (words.length < MIN_EXAM_WORDS) {
+      toast.error(`객관식 시험을 지원하려면 최소 ${MIN_EXAM_WORDS}개 이상의 단어가 필요합니다. (현재 ${words.length}개)`);
       return;
     }
 
@@ -230,6 +233,11 @@ export default function ExamCreatePage() {
                   <span className="text-gray-500">총 문항 수</span>
                   <span className="font-bold">{totalQuestions}문항</span>
                 </div>
+                {totalQuestions > 0 && totalQuestions < MIN_EXAM_WORDS && (
+                  <p className="text-xs text-red-500 text-right">
+                    최소 {MIN_EXAM_WORDS}문항 필요 (객관식 5지선다 보장)
+                  </p>
+                )}
                 <div className="flex justify-between">
                   <span className="text-gray-500">합격 기준</span>
                   <span className="font-bold">{passPercentage}%</span>
@@ -246,7 +254,7 @@ export default function ExamCreatePage() {
               <Button
                 className="w-full bg-primary hover:bg-primary-hover text-white"
                 onClick={handleCreate}
-                disabled={creating || words.length === 0}
+                disabled={creating || words.length < MIN_EXAM_WORDS}
               >
                 <FileText className="h-4 w-4 mr-2" />
                 {creating ? '생성 중...' : '시험지 생성'}

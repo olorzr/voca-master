@@ -31,6 +31,12 @@ AS $$
 DECLARE
   v_exam_id UUID;
 BEGIN
+  -- 객관식 5지선다(정답 1 + 오답 4) 보장용. 클라이언트 우회 방어선.
+  IF jsonb_array_length(p_words) < 5 THEN
+    RAISE EXCEPTION 'exam requires at least 5 words (got %)', jsonb_array_length(p_words)
+      USING ERRCODE = 'check_violation';
+  END IF;
+
   INSERT INTO exams (
     title, pass_percentage, total_questions, pass_count,
     category_ids, word_ids, parent_exam_id, retake_number, user_id

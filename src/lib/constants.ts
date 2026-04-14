@@ -7,6 +7,9 @@ export const COLOR_PRIMARY_HOVER = '#6bc4bc';
 /** 기본 합격 기준 퍼센트 */
 export const DEFAULT_PASS_PERCENTAGE = 80;
 
+/** 시험지 최소 단어 수 (객관식 5지선다 = 정답 1 + 오답 4 확보용) */
+export const MIN_EXAM_WORDS = 5;
+
 /** 퍼센트 계산용 기준값 */
 export const PERCENTAGE_BASE = 100;
 
