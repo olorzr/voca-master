@@ -53,12 +53,11 @@ CREATE POLICY "Admin can read audit_log"
     auth.jwt() ->> 'email' = 'ara0723@araeducation.co.kr'
   );
 
--- 감사 로그 쓰기: 트리거에서 SECURITY DEFINER로 삽입하므로 일반 INSERT 정책 불필요
--- 하지만 RLS가 활성화되어 있으므로 트리거 함수가 SECURITY DEFINER로 우회함
+-- 감사 로그 쓰기: SECURITY DEFINER 트리거 함수(postgres 소유, BYPASSRLS)가
+-- RLS를 우회하여 직접 INSERT 한다. 클라이언트에서의 직접 INSERT 는 허용하지 않으므로
+-- INSERT 정책을 의도적으로 만들지 않는다(기본 deny).
+-- 과거에 존재했을 수 있는 열린 정책을 확실히 제거한다.
 DROP POLICY IF EXISTS "System can insert audit_log" ON audit_log;
-CREATE POLICY "System can insert audit_log"
-  ON audit_log FOR INSERT
-  WITH CHECK (auth.role() = 'authenticated');
 
 -- 5. 감사 트리거 함수: INSERT
 CREATE OR REPLACE FUNCTION audit_exam_insert()
