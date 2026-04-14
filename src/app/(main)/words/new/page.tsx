@@ -84,12 +84,23 @@ export default function NewWordsPage() {
   };
 
   const finalizeInsert = async (categoryId: string, words: WordEntry[]) => {
-    const ok = await insertWordsToCategory(categoryId, words);
-    if (!ok) {
+    const result = await insertWordsToCategory(categoryId, words);
+    if (!result.ok) {
       toast.error('단어 저장 중 오류가 발생했습니다.');
       return false;
     }
-    toast.success(`${words.length}개 단어가 저장되었습니다.`);
+
+    const skipped = result.skippedDuplicates.length;
+    if (result.insertedCount === 0) {
+      toast.error('모두 중복이라 저장되지 않았습니다.');
+      return false;
+    }
+
+    if (skipped > 0) {
+      toast.success(`${result.insertedCount}개 저장, ${skipped}개는 다른 사용자가 방금 추가해 건너뛰었습니다.`);
+    } else {
+      toast.success(`${result.insertedCount}개 단어가 저장되었습니다.`);
+    }
     router.push('/words');
     return true;
   };

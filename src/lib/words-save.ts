@@ -19,6 +19,18 @@ export interface DuplicateWordsResult {
   existing: string[];
 }
 
+export interface InsertWordsResult {
+  ok: boolean;
+  insertedCount: number;
+  skippedDuplicates: string[];
+  errorCode?: string;
+}
+
+interface InsertWordsRpcRow {
+  inserted_count: number;
+  skipped_duplicates: string[] | null;
+}
+
 /**
  * 입력된 카테고리 메타데이터로 기존 단원을 조회해 있으면 재사용하고,
  * 없으면 새로 생성한다. 기존 DB 에 이미 중복이 있어도 첫 번째 row 를 선택한다.
@@ -116,31 +128,40 @@ export function removeDuplicateWords(
 }
 
 /**
- * 단어 목록을 지정된 단원에 저장한다. 기존 단어 뒤에 이어서 저장하기 위해
- * 현재 단원의 최대 order_index + 1 부터 붙인다.
- * @returns 성공 여부
+ * 단어 목록을 지정된 단원에 저장한다. DB 함수 `insert_words_batch` 를 호출해
+ * 카테고리 단위 advisory lock 안에서 순번을 부여하고 UNIQUE 제약으로 중복을
+ * 방어한다. 프리체크 이후 다른 사용자가 먼저 추가한 단어는 자동 스킵되며
+ * `skippedDuplicates` 로 반환된다.
+ * @returns 저장 결과 (성공 여부, 삽입/스킵 건수, 에러 코드)
  */
 export async function insertWordsToCategory(
   categoryId: string,
   validWords: WordEntry[],
-): Promise<boolean> {
-  const { data: lastRow } = await supabase
-    .from('words')
-    .select('order_index')
-    .eq('category_id', categoryId)
-    .order('order_index', { ascending: false })
-    .limit(1)
-    .maybeSingle();
-
-  const startIndex = (lastRow?.order_index ?? -1) + 1;
-
-  const wordsToInsert = validWords.map((w, i) => ({
+): Promise<InsertWordsResult> {
+  const payload = validWords.map((w) => ({
     word: w.word.trim(),
     meaning: w.meaning.trim(),
-    category_id: categoryId,
-    order_index: startIndex + i,
   }));
 
-  const { error } = await supabase.from('words').insert(wordsToInsert);
-  return !error;
+  const { data, error } = await supabase.rpc('insert_words_batch', {
+    p_category_id: categoryId,
+    p_words: payload,
+  });
+
+  if (error) {
+    return {
+      ok: false,
+      insertedCount: 0,
+      skippedDuplicates: [],
+      errorCode: error.code,
+    };
+  }
+
+  const rows = (data ?? []) as InsertWordsRpcRow[];
+  const row = rows[0];
+  return {
+    ok: true,
+    insertedCount: row?.inserted_count ?? 0,
+    skippedDuplicates: row?.skipped_duplicates ?? [],
+  };
 }
