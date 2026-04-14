@@ -19,6 +19,33 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
 
+interface DraftShape {
+  level: CategoryLevel;
+  grade: string;
+  publisher: string;
+  semester: string;
+  chapter: string;
+  subChapter: string;
+  schoolName: string;
+  wordEntries: WordEntry[];
+}
+
+const CATEGORY_LEVELS: readonly CategoryLevel[] = ['중등', '고등', '외부지문 및 프린트'];
+
+const isWordEntry = (v: unknown): v is WordEntry =>
+  typeof v === 'object'
+  && v !== null
+  && typeof (v as WordEntry).word === 'string'
+  && typeof (v as WordEntry).meaning === 'string';
+
+const isDraftShape = (v: unknown): v is DraftShape => {
+  if (typeof v !== 'object' || v === null) return false;
+  const d = v as Record<string, unknown>;
+  if (!CATEGORY_LEVELS.includes(d.level as CategoryLevel)) return false;
+  if (!Array.isArray(d.wordEntries) || !d.wordEntries.every(isWordEntry)) return false;
+  return true;
+};
+
 /**
  * 새 단어 입력 페이지 (카테고리 설정 + 단어 목록 입력)
  */
@@ -140,15 +167,30 @@ export default function NewWordsPage() {
       toast.error('저장된 임시 데이터가 없습니다.');
       return;
     }
-    const draft = JSON.parse(saved);
-    setLevel(draft.level);
-    setGrade(draft.grade ?? '');
-    setPublisher(draft.publisher ?? '');
-    setSemester(draft.semester ?? '');
-    setChapter(draft.chapter ?? '');
-    setSubChapter(draft.subChapter ?? '');
-    setSchoolName(draft.schoolName ?? '');
-    setWordEntries(draft.wordEntries ?? [{ word: '', meaning: '' }]);
+
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(saved);
+    } catch {
+      localStorage.removeItem(DRAFT_STORAGE_KEY);
+      toast.error('임시 저장 데이터가 손상되어 삭제했습니다.');
+      return;
+    }
+
+    if (!isDraftShape(parsed)) {
+      localStorage.removeItem(DRAFT_STORAGE_KEY);
+      toast.error('임시 저장 데이터 형식이 올바르지 않아 삭제했습니다.');
+      return;
+    }
+
+    setLevel(parsed.level);
+    setGrade(parsed.grade ?? '');
+    setPublisher(parsed.publisher ?? '');
+    setSemester(parsed.semester ?? '');
+    setChapter(parsed.chapter ?? '');
+    setSubChapter(parsed.subChapter ?? '');
+    setSchoolName(parsed.schoolName ?? '');
+    setWordEntries(parsed.wordEntries.length > 0 ? parsed.wordEntries : [{ word: '', meaning: '' }]);
     toast.success('임시 저장 데이터를 불러왔습니다.');
   };
 
