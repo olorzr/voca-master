@@ -145,21 +145,15 @@ export default function WordsPage() {
     exitSelectMode();
   };
 
-  /** 카테고리 삭제 (관련 단어도 함께 삭제) */
+  /** 카테고리 삭제 (words.category_id ON DELETE CASCADE로 단어도 함께 삭제) */
   const handleDeleteCategory = async () => {
     if (!selectedCategory) return;
     const label = formatCategoryLabel(selectedCategory);
     if (!confirm(`"${label}" 카테고리를 삭제하시겠습니까?\n포함된 단어 ${words.length}개도 함께 삭제됩니다.`)) return;
-    const { error: wordsErr } = await supabase
-      .from('words').delete().eq('category_id', selectedCategory.id);
-    if (wordsErr) {
-      toast.error('카테고리 내 단어 삭제에 실패했어요.');
-      return;
-    }
-    const { error: catErr } = await supabase
+    const { error } = await supabase
       .from('categories').delete().eq('id', selectedCategory.id);
-    if (catErr) {
-      toast.error('카테고리 삭제에 실패했어요. 단어는 이미 삭제되었을 수 있어요.');
+    if (error) {
+      toast.error('카테고리 삭제에 실패했어요.');
       return;
     }
     setCategories((prev) => prev.filter((c) => c.id !== selectedCategory.id));
