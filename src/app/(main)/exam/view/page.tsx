@@ -26,35 +26,63 @@ function ExamViewContent() {
   const [exam, setExam] = useState<ExamData | null>(null);
   const [examWords, setExamWords] = useState<ExamWord[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [notFound, setNotFound] = useState(false);
   const [showAnswer, setShowAnswer] = useState(false);
   const [viewMode, setViewMode] = useState<'exam' | 'answer' | 'mc-exam' | 'mc-answer' | 'wordbook'>('exam');
 
   useEffect(() => {
-    if (!examId) return;
+    if (!examId) {
+      setNotFound(true);
+      setLoading(false);
+      return;
+    }
     async function load() {
       const [examRes, wordsRes] = await Promise.all([
         supabase.from('exams').select('*').eq('id', examId).single(),
         supabase.from('exam_words').select('*').eq('exam_id', examId).order('order_index'),
       ]);
-      if (examRes.data) setExam(examRes.data);
-      if (wordsRes.data) setExamWords(wordsRes.data);
+      if (examRes.error || !examRes.data) {
+        setNotFound(true);
+        setLoading(false);
+        return;
+      }
+      setExam(examRes.data);
+      setExamWords(wordsRes.data ?? []);
 
       // 카테고리 출처 정보 로드
-      if (examRes.data?.category_ids?.length) {
+      if (examRes.data.category_ids?.length) {
         const catRes = await supabase
           .from('categories')
           .select('*')
           .in('id', examRes.data.category_ids);
         if (catRes.data) setCategories(catRes.data);
       }
+      setLoading(false);
     }
     load();
   }, [examId]);
 
-  if (!exam) {
+  if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+      </div>
+    );
+  }
+
+  if (notFound || !exam) {
+    return (
+      <div className="text-center py-20">
+        <div className="text-5xl mb-4">-</div>
+        <p className="text-sm text-gray-500 font-medium">시험지를 찾을 수 없어요</p>
+        <p className="text-xs text-gray-400 mt-1">삭제되었거나 잘못된 주소일 수 있어요.</p>
+        <Link href="/exam/history">
+          <Button variant="outline" className="mt-4">
+            <ArrowLeft className="h-4 w-4 mr-1" />
+            시험지 목록으로
+          </Button>
+        </Link>
       </div>
     );
   }
