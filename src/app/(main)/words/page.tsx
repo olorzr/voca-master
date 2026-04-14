@@ -82,17 +82,25 @@ export default function WordsPage() {
 
   const handleDeleteWord = async (wordId: string) => {
     if (!confirm('이 단어를 삭제하시겠습니까?')) return;
-    await supabase.from('words').delete().eq('id', wordId);
+    const { error } = await supabase.from('words').delete().eq('id', wordId);
+    if (error) {
+      toast.error('단어 삭제에 실패했어요. 잠시 후 다시 시도해주세요.');
+      return;
+    }
     setWords((prev) => prev.filter((w) => w.id !== wordId));
     toast.success('단어가 삭제되었습니다.');
   };
 
   const handleEditSave = async () => {
     if (!editWord) return;
-    await supabase
+    const { error } = await supabase
       .from('words')
       .update({ word: editForm.word, meaning: editForm.meaning })
       .eq('id', editWord.id);
+    if (error) {
+      toast.error('단어 수정에 실패했어요.');
+      return;
+    }
     setWords((prev) =>
       prev.map((w) => (w.id === editWord.id ? { ...w, ...editForm } : w))
     );
@@ -129,7 +137,11 @@ export default function WordsPage() {
   const handleBulkDelete = async () => {
     if (!confirm(`선택한 ${selectedWordIds.size}개의 단어를 삭제하시겠습니까?`)) return;
     const ids = Array.from(selectedWordIds);
-    await supabase.from('words').delete().in('id', ids);
+    const { error } = await supabase.from('words').delete().in('id', ids);
+    if (error) {
+      toast.error('단어 삭제에 실패했어요.');
+      return;
+    }
     setWords((prev) => prev.filter((w) => !selectedWordIds.has(w.id)));
     toast.success(`${ids.length}개의 단어가 삭제되었습니다.`);
     exitSelectMode();
@@ -140,8 +152,18 @@ export default function WordsPage() {
     if (!selectedCategory) return;
     const label = formatCategoryLabel(selectedCategory);
     if (!confirm(`"${label}" 카테고리를 삭제하시겠습니까?\n포함된 단어 ${words.length}개도 함께 삭제됩니다.`)) return;
-    await supabase.from('words').delete().eq('category_id', selectedCategory.id);
-    await supabase.from('categories').delete().eq('id', selectedCategory.id);
+    const { error: wordsErr } = await supabase
+      .from('words').delete().eq('category_id', selectedCategory.id);
+    if (wordsErr) {
+      toast.error('카테고리 내 단어 삭제에 실패했어요.');
+      return;
+    }
+    const { error: catErr } = await supabase
+      .from('categories').delete().eq('id', selectedCategory.id);
+    if (catErr) {
+      toast.error('카테고리 삭제에 실패했어요. 단어는 이미 삭제되었을 수 있어요.');
+      return;
+    }
     setCategories((prev) => prev.filter((c) => c.id !== selectedCategory.id));
     setSelectedCategory(null);
     setWords([]);
@@ -151,7 +173,12 @@ export default function WordsPage() {
   /** 선택한 단어를 다른 카테고리로 이동 */
   const handleMoveConfirm = async (targetCategory: Category) => {
     const ids = Array.from(selectedWordIds);
-    await supabase.from('words').update({ category_id: targetCategory.id }).in('id', ids);
+    const { error } = await supabase
+      .from('words').update({ category_id: targetCategory.id }).in('id', ids);
+    if (error) {
+      toast.error('단어 이동에 실패했어요.');
+      return;
+    }
     setWords((prev) => prev.filter((w) => !selectedWordIds.has(w.id)));
     setMoveDialogOpen(false);
     toast.success(`${ids.length}개의 단어가 이동되었습니다.`);

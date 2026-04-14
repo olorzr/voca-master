@@ -142,7 +142,11 @@ export default function ExamHistoryPage() {
 
   const handleDelete = async (id: string) => {
     if (!confirm('이 시험지를 삭제할까요?')) return;
-    await supabase.from('exams').delete().eq('id', id);
+    const { error } = await supabase.from('exams').delete().eq('id', id);
+    if (error) {
+      toast.error('시험지 삭제에 실패했어요.');
+      return;
+    }
     setExams((prev) => prev.filter((e) => e.id !== id && e.parent_exam_id !== id));
     setSelectedIds((prev) => { const next = new Set(prev); next.delete(id); return next; });
     toast.success('시험지가 삭제되었어요!');
@@ -152,7 +156,11 @@ export default function ExamHistoryPage() {
     if (selectedIds.size === 0) return;
     if (!confirm(`선택한 ${selectedIds.size}개의 시험지를 삭제할까요?\n관련 재시험도 함께 삭제돼요!`)) return;
     const ids = Array.from(selectedIds);
-    await supabase.from('exams').delete().in('id', ids);
+    const { error } = await supabase.from('exams').delete().in('id', ids);
+    if (error) {
+      toast.error('시험지 삭제에 실패했어요.');
+      return;
+    }
     setExams((prev) => prev.filter((e) => !ids.includes(e.id) && (!e.parent_exam_id || !ids.includes(e.parent_exam_id))));
     toast.success(`${ids.length}개의 시험지가 삭제되었어요!`);
     exitSelectMode();
