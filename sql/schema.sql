@@ -103,6 +103,10 @@ CREATE INDEX idx_exam_words_exam ON exam_words(exam_id);
 CREATE INDEX idx_categories_user ON categories(user_id);
 CREATE INDEX idx_exams_user ON exams(user_id);
 CREATE INDEX idx_exams_parent ON exams(parent_exam_id);
+-- 재시험 차수 경쟁 상태 방어선: 같은 부모에 동일 차수 두 행이 만들어지지 못하게 부분 유일 인덱스
+CREATE UNIQUE INDEX idx_exams_parent_retake_unique
+  ON exams (parent_exam_id, retake_number)
+  WHERE parent_exam_id IS NOT NULL;
 CREATE INDEX idx_publishers_level ON publishers(level);
 CREATE INDEX idx_major_chapters_publisher ON major_chapters(publisher_id);
 CREATE INDEX idx_major_chapters_grade ON major_chapters(grade);
@@ -299,11 +303,16 @@ CREATE TRIGGER sync_school_material_name_trigger
   EXECUTE FUNCTION sync_school_material_name();
 
 -- =============================================
--- 시험지/재시험 생성 RPC (원자성 보장)
+-- 시험지/재시험 생성 RPC (원자성 + 차수 경쟁 상태 방어)
 -- =============================================
 -- 클라이언트가 exams insert → exam_words insert 를 별도 호출하면 두 번째 insert 실패 시
 -- 단어 없는 유령 시험지가 남는다. 함수 본문은 단일 트랜잭션이므로 어느 insert가 실패해도 전체 롤백된다.
-
+--
+-- 재시험(p_parent_exam_id IS NOT NULL) 호출의 경우 차수 계산을 클라이언트에 맡기면
+-- 동시에 두 사용자가 같은 (parent, retake_number) 행을 만들 수 있어, 차수와 제목 접미사 모두
+-- 서버에서 결정한다. pg_advisory_xact_lock 으로 동일 부모 동시 호출을 직렬화하고,
+-- (parent_exam_id, retake_number) 부분 유일 인덱스가 마지막 안전망으로 동작한다.
+--
 -- user_id 는 sql/migration_enforce_user_id.sql 의 BEFORE INSERT 트리거가
 -- auth.uid() 로 채운다. 본 RPC 는 user_id 컬럼을 명시하지 않는다.
 CREATE OR REPLACE FUNCTION create_exam_with_words(
@@ -323,14 +332,35 @@ SECURITY INVOKER
 AS $$
 DECLARE
   v_exam_id UUID;
+  v_retake  INT  := p_retake_number;
+  v_title   TEXT := p_title;
 BEGIN
+  -- 객관식 5지선다(정답 1 + 오답 4) 보장용. 클라이언트 우회 방어선.
+  IF jsonb_array_length(p_words) < 5 THEN
+    RAISE EXCEPTION 'exam requires at least 5 words (got %)', jsonb_array_length(p_words)
+      USING ERRCODE = 'check_violation';
+  END IF;
+
+  IF p_parent_exam_id IS NOT NULL THEN
+    -- 같은 부모에 대한 동시 재시험 생성을 트랜잭션 범위 advisory lock 으로 직렬화.
+    PERFORM pg_advisory_xact_lock(hashtext(p_parent_exam_id::text));
+
+    SELECT COALESCE(MAX(retake_number), 0) + 1
+      INTO v_retake
+      FROM exams
+     WHERE parent_exam_id = p_parent_exam_id;
+
+    -- 클라이언트는 원본 제목만 넘기므로 서버에서 차수 접미사를 조립한다.
+    v_title := format('%s (재시험 %s차)', p_title, v_retake);
+  END IF;
+
   INSERT INTO exams (
     title, pass_percentage, total_questions, pass_count,
     category_ids, word_ids, parent_exam_id, retake_number
   )
   VALUES (
-    p_title, p_pass_percentage, p_total_questions, p_pass_count,
-    p_category_ids, p_word_ids, p_parent_exam_id, p_retake_number
+    v_title, p_pass_percentage, p_total_questions, p_pass_count,
+    p_category_ids, p_word_ids, p_parent_exam_id, v_retake
   )
   RETURNING id INTO v_exam_id;
 

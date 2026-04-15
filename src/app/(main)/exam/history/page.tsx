@@ -185,19 +185,19 @@ export default function ExamHistoryPage() {
       return;
     }
 
-    const existingRetakes = retakeMap.get(examId) ?? [];
-    const nextNumber = existingRetakes.length + 1;
     const shuffled = [...originalWords].sort(() => Math.random() - 0.5);
 
+    // 차수와 제목 접미사는 서버(create_exam_with_words RPC)가 advisory lock 아래에서 결정한다.
+    // 클라이언트는 원본 제목만 넘기고, p_retake_number 는 전달하지 않는다.
     const { data: newExamId, error: rpcErr } = await supabase.rpc(
       'create_exam_with_words',
       {
-        p_title: `${originalExam.title} (재시험 ${nextNumber}차)`,
+        p_title: originalExam.title,
         p_pass_percentage: originalExam.pass_percentage,
         p_total_questions: originalExam.total_questions,
         p_pass_count: originalExam.pass_count,
         p_category_ids: originalExam.category_ids,
-        p_word_ids: [],
+        p_word_ids: shuffled.map((w) => w.word_id),
         p_words: shuffled.map((w, i) => ({
           word_id: w.word_id,
           word: w.word,
@@ -205,7 +205,6 @@ export default function ExamHistoryPage() {
           order_index: i,
         })),
         p_parent_exam_id: examId,
-        p_retake_number: nextNumber,
       },
     );
 
@@ -215,7 +214,20 @@ export default function ExamHistoryPage() {
       return;
     }
 
-    toast.success(`재시험 ${nextNumber}차가 생성되었어요!`);
+    // 서버가 결정한 차수를 토스트/로컬 상태에 반영하기 위해 새 행을 한 번 더 조회한다.
+    const { data: createdExam } = await supabase
+      .from('exams')
+      .select('*')
+      .eq('id', newExamId)
+      .single();
+
+    if (createdExam) {
+      setExams((prev) => [createdExam, ...prev]);
+      toast.success(`재시험 ${createdExam.retake_number}차가 생성되었어요!`);
+    } else {
+      toast.success('재시험지가 생성되었어요!');
+    }
+
     setRetestingId(null);
     router.push(`/exam/view?id=${newExamId}`);
   };
