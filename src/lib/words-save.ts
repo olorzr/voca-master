@@ -11,7 +11,6 @@ export interface CategoryMatchInput {
   chapter: string;
   subChapter: string;
   schoolName: string;
-  userId: string;
 }
 
 export interface DuplicateWordsResult {
@@ -38,6 +37,8 @@ interface InsertWordsRpcRow {
  */
 export async function ensureCategoryId(input: CategoryMatchInput): Promise<string | null> {
   const isExternal = input.level === EXTERNAL_LEVEL;
+  // user_id 는 categories 의 BEFORE INSERT 트리거가 auth.uid() 로 채운다.
+  // 매칭에도 user_id 를 빼서 학원 내 모든 사용자가 같은 단원을 공유하도록 한다.
   const row = {
     level: input.level,
     grade: isExternal ? '' : input.grade,
@@ -46,7 +47,6 @@ export async function ensureCategoryId(input: CategoryMatchInput): Promise<strin
     chapter: input.chapter,
     sub_chapter: input.subChapter,
     school_name: isExternal ? input.schoolName : '',
-    user_id: input.userId,
   };
 
   const { data: existingRows, error: selectErr } = await supabase

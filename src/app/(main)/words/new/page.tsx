@@ -113,7 +113,7 @@ export default function NewWordsPage() {
     setSaving(true);
 
     const categoryId = await ensureCategoryId({
-      level, grade, publisher, semester, chapter, subChapter, schoolName, userId: user.id,
+      level, grade, publisher, semester, chapter, subChapter, schoolName,
     });
     if (!categoryId) {
       toast.error('카테고리 저장 중 오류가 발생했습니다.');

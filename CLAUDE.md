@@ -168,3 +168,4 @@
 - [2026-03-09] `@supabase/auth-helpers-nextjs`는 deprecated됨. 현재 직접 `@supabase/supabase-js` 사용 중
 - [2026-03-09] exam_words 테이블은 단어 스냅샷이므로 원본 단어를 수정해도 기존 시험지에는 영향 없음
 - [2026-04-14] `audit_log` 에는 INSERT 정책을 만들지 말 것. SECURITY DEFINER 트리거(postgres 소유, BYPASSRLS)가 RLS 를 우회하여 쓰기를 수행하므로 정책은 불필요하며, 어떤 열린 INSERT 정책이든 authenticated 클라이언트에게 직접 쓰기를 허용해 감사 로그 오염 경로가 된다 (과거 `"System can insert audit_log"` 정책 사례 참고)
+- [2026-04-15] `exams` / `categories` / `concept_sheets` 의 `user_id` 는 BEFORE INSERT 트리거 `enforce_user_id_from_auth` 가 `auth.uid()` 로 강제 채우고, BEFORE UPDATE 트리거 `lock_user_id_on_update` 가 변경을 무효화한다. 클라이언트에서 `user_id` 를 보내지 말 것 — 보내도 무시되며, 이전엔 클라이언트가 임의 UUID 로 생성자 위조가 가능했다. RLS 는 여전히 `authenticated` 만 체크하는 공유 정책이므로 attribution 은 감사/필터용 메타로만 의미를 가진다. RPC `create_exam_with_words` 시그니처에서도 `p_user_id` 가 제거됨. `ensureCategoryId` 는 더 이상 `userId` 를 받지 않으며 매칭에서도 제외해 학원 내 동일 단원이 사용자별로 중복 생성되지 않는다

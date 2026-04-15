@@ -198,7 +198,6 @@ export default function ExamHistoryPage() {
         p_pass_count: originalExam.pass_count,
         p_category_ids: originalExam.category_ids,
         p_word_ids: [],
-        p_user_id: user.id,
         p_words: shuffled.map((w, i) => ({
           word_id: w.word_id,
           word: w.word,

@@ -304,6 +304,8 @@ CREATE TRIGGER sync_school_material_name_trigger
 -- 클라이언트가 exams insert → exam_words insert 를 별도 호출하면 두 번째 insert 실패 시
 -- 단어 없는 유령 시험지가 남는다. 함수 본문은 단일 트랜잭션이므로 어느 insert가 실패해도 전체 롤백된다.
 
+-- user_id 는 supabase-migration-enforce-user-id.sql 의 BEFORE INSERT 트리거가
+-- auth.uid() 로 채운다. 본 RPC 는 user_id 컬럼을 명시하지 않는다.
 CREATE OR REPLACE FUNCTION create_exam_with_words(
   p_title TEXT,
   p_pass_percentage INT,
@@ -311,7 +313,6 @@ CREATE OR REPLACE FUNCTION create_exam_with_words(
   p_pass_count INT,
   p_category_ids UUID[],
   p_word_ids UUID[],
-  p_user_id UUID,
   p_words JSONB,
   p_parent_exam_id UUID DEFAULT NULL,
   p_retake_number INT DEFAULT 0
@@ -325,11 +326,11 @@ DECLARE
 BEGIN
   INSERT INTO exams (
     title, pass_percentage, total_questions, pass_count,
-    category_ids, word_ids, parent_exam_id, retake_number, user_id
+    category_ids, word_ids, parent_exam_id, retake_number
   )
   VALUES (
     p_title, p_pass_percentage, p_total_questions, p_pass_count,
-    p_category_ids, p_word_ids, p_parent_exam_id, p_retake_number, p_user_id
+    p_category_ids, p_word_ids, p_parent_exam_id, p_retake_number
   )
   RETURNING id INTO v_exam_id;
 
@@ -347,5 +348,5 @@ END;
 $$;
 
 GRANT EXECUTE ON FUNCTION create_exam_with_words(
-  TEXT, INT, INT, INT, UUID[], UUID[], UUID, JSONB, UUID, INT
+  TEXT, INT, INT, INT, UUID[], UUID[], JSONB, UUID, INT
 ) TO authenticated;

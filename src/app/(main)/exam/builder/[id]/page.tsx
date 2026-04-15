@@ -144,7 +144,7 @@ export default function ConceptEditorPage() {
     } else {
       const { data, error } = await supabase
         .from('concept_sheets')
-        .insert({ ...payload, user_id: user.id })
+        .insert(payload)
         .select('id')
         .single();
 

@@ -132,7 +132,6 @@ export default function ExamCreatePage() {
         p_pass_count: passCount,
         p_category_ids: selectedCatIds,
         p_word_ids: orderedWords.map((w) => w.id),
-        p_user_id: user.id,
         p_words: orderedWords.map((w, i) => ({
           word_id: w.id,
           word: w.word,
