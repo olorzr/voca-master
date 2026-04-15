@@ -304,7 +304,7 @@ CREATE TRIGGER sync_school_material_name_trigger
 -- 클라이언트가 exams insert → exam_words insert 를 별도 호출하면 두 번째 insert 실패 시
 -- 단어 없는 유령 시험지가 남는다. 함수 본문은 단일 트랜잭션이므로 어느 insert가 실패해도 전체 롤백된다.
 
--- user_id 는 supabase-migration-enforce-user-id.sql 의 BEFORE INSERT 트리거가
+-- user_id 는 sql/migration_enforce_user_id.sql 의 BEFORE INSERT 트리거가
 -- auth.uid() 로 채운다. 본 RPC 는 user_id 컬럼을 명시하지 않는다.
 CREATE OR REPLACE FUNCTION create_exam_with_words(
   p_title TEXT,
