@@ -74,7 +74,7 @@ BEGIN
   );
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, pg_temp;
 
 -- 6. 감사 트리거 함수: UPDATE
 CREATE OR REPLACE FUNCTION audit_exam_update()
@@ -94,7 +94,7 @@ BEGIN
   );
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, pg_temp;
 
 -- 7. 감사 트리거 함수: DELETE
 CREATE OR REPLACE FUNCTION audit_exam_delete()
@@ -111,7 +111,7 @@ BEGIN
   );
   RETURN OLD;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, pg_temp;
 
 -- 8. 트리거 연결
 DROP TRIGGER IF EXISTS audit_exam_insert_trigger ON exams;

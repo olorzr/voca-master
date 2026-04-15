@@ -34,7 +34,7 @@ BEGIN
   );
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, pg_temp;
 
 -- 5. 감사 트리거 함수: UPDATE
 CREATE OR REPLACE FUNCTION audit_concept_sheet_update()
@@ -53,7 +53,7 @@ BEGIN
   );
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, pg_temp;
 
 -- 6. 감사 트리거 함수: DELETE
 CREATE OR REPLACE FUNCTION audit_concept_sheet_delete()
@@ -70,7 +70,7 @@ BEGIN
   );
   RETURN OLD;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, pg_temp;
 
 -- 7. 트리거 연결
 DROP TRIGGER IF EXISTS audit_concept_sheet_insert_trigger ON concept_sheets;
