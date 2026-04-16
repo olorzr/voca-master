@@ -642,12 +642,12 @@
   line-height: 1;
 }
 
-/* 2단계 — 빈 핑크 박스 */
+/* 2단계 — 빈 민트 박스 (1단계보다 약간 진한 톤) */
 .eb-stage2-box {
   display: inline-block;
   width: 28px;
   height: 28px;
-  border: 1px solid #C83C6E;
+  border: 1px solid #5BBFB7;
   border-radius: 2px;
   background: white;
   margin: 0 1px;
