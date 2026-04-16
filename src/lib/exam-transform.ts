@@ -157,16 +157,20 @@ function buildChosungBoxes(text: string): HTMLSpanElement {
   return wrapper;
 }
 
-/** 2단계: 글자 수만큼 빈 핑크 박스 */
+/** 2단계: 글자 수만큼 빈 핑크 박스 (공백은 박스 대신 띄어쓰기로 보존) */
 function buildStage2Boxes(text: string): HTMLSpanElement {
   const wrapper = document.createElement('span');
   wrapper.style.display = 'inline';
   wrapper.style.whiteSpace = 'nowrap';
 
-  for (let i = 0; i < text.length; i++) {
-    const box = document.createElement('span');
-    box.className = 'eb-stage2-box';
-    wrapper.appendChild(box);
+  for (const char of text) {
+    if (char === ' ') {
+      wrapper.appendChild(document.createTextNode(' '));
+    } else {
+      const box = document.createElement('span');
+      box.className = 'eb-stage2-box';
+      wrapper.appendChild(box);
+    }
   }
   return wrapper;
 }
