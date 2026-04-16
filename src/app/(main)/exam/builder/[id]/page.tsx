@@ -17,6 +17,7 @@ import {
 } from '@/components/exam-builder';
 import type { BuilderCategory, MarkItem } from '@/components/exam-builder';
 import { extractMarks } from '@/lib/concept-marks';
+import { sanitizeConceptHTML } from '@/lib/sanitize-html';
 import type { ConceptSheet } from '@/types';
 
 const DEFAULT_CATEGORY: BuilderCategory = {
@@ -111,7 +112,7 @@ export default function ConceptEditorPage() {
     }
 
     const editor = editorRef.current;
-    const html = editor ? editor.getHTML() : editorHTML;
+    const html = sanitizeConceptHTML(editor ? editor.getHTML() : editorHTML);
     const currentMarks = editor ? extractMarks(editor) : marks;
     const sheetTitle = title.trim() || '제목 없음';
 

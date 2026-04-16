@@ -152,6 +152,7 @@
 ## Known Issues
 - [2026-03-09] Tailwind CSS v4에서 `print\:hidden` 같은 이스케이프 pseudo-class가 CSS 파싱 에러를 발생시킴 → `data-no-print` 어트리뷰트 + 순수 CSS로 대체
 - [2026-03-09] shadcn Select의 `onValueChange`가 `string | null`을 전달함 → `(v) => { if (v) setter(v); }` 패턴 필요
+- [2026-04-16] `concept_sheets.editor_html` 은 `authenticated` 전원에게 쓰기가 허용된 공유 테이블이라 한 계정이 오염시키면 다른 사용자 세션이 탈취될 수 있다. Stored XSS 방지를 위해 `sanitizeConceptHTML` ([src/lib/sanitize-html.ts](src/lib/sanitize-html.ts)) 를 저장 경로(`handleSave` at [src/app/(main)/exam/builder/[id]/page.tsx](src/app/(main)/exam/builder/[id]/page.tsx)) 와 렌더 변환 경로([src/lib/exam-transform.ts](src/lib/exam-transform.ts) 의 `transformHTML` / `stripTrailingEmpty` / `extractMarkedWords` 세 함수 entry) 양쪽에서 반드시 호출해야 한다. 새 TipTap 확장을 추가할 때는 `sanitize-html.ts` 의 `ALLOWED_TAGS` / `ALLOWED_ATTR` 화이트리스트를 같이 갱신하지 않으면 새 마크업이 조용히 제거된다
 
 ## Architecture Decisions
 - [2026-03-09] 포인트 컬러 `#81D8D0`을 CSS 변수 `--primary`로 통합 → Tailwind `text-primary`, `bg-primary` 등으로 일관되게 사용
@@ -163,6 +164,8 @@
 - [2026-03-10] 카테고리 마스터 테이블 도입 (publishers, major_chapters, sub_chapters, schools, school_materials) → 모든 사용자 공유, RLS는 authenticated만 체크. 기존 categories 테이블은 단어 그룹 매핑용으로 유지 (텍스트 값 저장)
 - [2026-03-10] 외부지문 트리 구조: 학교명 > 프린트/작품명 (2레벨), 중등/고등: 출판사 > 학기 > 대단원 > 소단원 (4레벨)
 - [2026-03-10] CategoryTree 컴포넌트를 단어 관리/시험지 생성에서 공유 → 단일 선택(onSelect) / 다중 선택(onToggle+multiSelect) 모드 지원
+
+- [2026-04-16] concept_sheets Stored XSS 대응으로 `isomorphic-dompurify` 기반 화이트리스트 sanitize 를 다층 방어 (저장 경로 + exam-transform 세 함수 entry) 로 적용. CSP 는 [next.config.ts](next.config.ts) 의 정적 `headers()` 로 부여 — prod 에서도 Next App Router 부트스트랩 inline script 때문에 `script-src 'unsafe-inline'` 은 유지하되 `object-src 'none'`, `frame-ancestors 'none'`, `connect-src` 화이트리스트(`*.supabase.co`, NaverWorks) 로 유출 경로를 차단. DOMPurify 가 1차 방어, CSP 가 safety net 역할. RLS 는 학원 협업 모델을 위해 `authenticated` 공유를 유지. 향후 개선 후보: (1) `editor_html` → JSONB (TipTap `getJSON`), (2) nonce 기반 CSP, (3) concept_sheets 쓰기를 서버 라우트로 이전해 감사/rate limit 적용
 
 ## Gotchas
 - [2026-03-09] `@supabase/auth-helpers-nextjs`는 deprecated됨. 현재 직접 `@supabase/supabase-js` 사용 중

@@ -2,6 +2,7 @@ export { supabase } from './supabase';
 export { AuthProvider, useAuth } from './auth-context';
 export { cn } from './utils';
 export { formatCategoryLabel, groupCategoriesByLevel, formatDateKR } from './format';
+export { sanitizeConceptHTML } from './sanitize-html';
 export {
   COLOR_PRIMARY,
   COLOR_PRIMARY_HOVER,

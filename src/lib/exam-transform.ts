@@ -1,3 +1,5 @@
+import { sanitizeConceptHTML } from './sanitize-html';
+
 /** 초성 목록 (유니코드 순서) */
 const CHOSUNG = [
   'ㄱ','ㄲ','ㄴ','ㄷ','ㄸ','ㄹ','ㅁ','ㅂ','ㅃ',
@@ -43,7 +45,7 @@ export type TransformMode =
  */
 export function transformHTML(editorHTML: string, mode: TransformMode): string {
   const div = document.createElement('div');
-  div.innerHTML = editorHTML;
+  div.innerHTML = sanitizeConceptHTML(editorHTML);
 
   const marks = div.querySelectorAll('mark[data-concept]');
   marks.forEach((mark) => {
@@ -77,7 +79,7 @@ function isVisuallyEmptyBlock(el: Element): boolean {
  */
 export function stripTrailingEmpty(editorHTML: string): string {
   const div = document.createElement('div');
-  div.innerHTML = editorHTML;
+  div.innerHTML = sanitizeConceptHTML(editorHTML);
 
   let last = div.lastElementChild;
   while (last && isVisuallyEmptyBlock(last)) {
@@ -91,7 +93,7 @@ export function stripTrailingEmpty(editorHTML: string): string {
 /** 마킹된 텍스트에서 개념 목록을 추출한다. */
 export function extractMarkedWords(html: string): string[] {
   const div = document.createElement('div');
-  div.innerHTML = html;
+  div.innerHTML = sanitizeConceptHTML(html);
   const marks = div.querySelectorAll('mark[data-concept]');
   return Array.from(marks).map((m) => m.textContent ?? '');
 }
