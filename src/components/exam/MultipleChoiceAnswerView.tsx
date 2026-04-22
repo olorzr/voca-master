@@ -1,9 +1,7 @@
 import type { ExamWord, Category } from '@/types';
 import { formatCategoryLabel } from '@/lib/format';
+import { getCorrectLabel } from '@/lib/exam-choices';
 import Image from 'next/image';
-
-/** 객관식 선지 수 */
-const CHOICE_COUNT = 5;
 
 interface MultipleChoiceAnswerViewProps {
   exam: {
@@ -13,40 +11,6 @@ interface MultipleChoiceAnswerViewProps {
   };
   words: ExamWord[];
   categories: Category[];
-}
-
-/**
- * 시드 기반 난수 생성기 (MultipleChoiceView와 동일한 로직)
- */
-function seededShuffle<T>(arr: T[], seed: number): T[] {
-  const result = [...arr];
-  let s = seed;
-  for (let i = result.length - 1; i > 0; i--) {
-    s = (s * 1103515245 + 12345) & 0x7fffffff;
-    const j = s % (i + 1);
-    [result[i], result[j]] = [result[j], result[i]];
-  }
-  return result;
-}
-
-/**
- * 정답 번호를 계산한다 (MultipleChoiceView와 동일한 셔플 로직)
- */
-function getCorrectLabel(currentWord: ExamWord, allWords: ExamWord[], questionIndex: number): string {
-  const others = allWords.filter((w) => w.id !== currentWord.id);
-  const seed = currentWord.id.split('').reduce((acc, ch) => acc + ch.charCodeAt(0), questionIndex);
-  const shuffled = seededShuffle(others, seed);
-  const distractors = shuffled.slice(0, CHOICE_COUNT - 1);
-
-  const choices = [
-    { word: currentWord.word, isCorrect: true },
-    ...distractors.map((d) => ({ word: d.word, isCorrect: false })),
-  ];
-
-  const shuffledChoices = seededShuffle(choices, seed + 1);
-  const labels = ['①', '②', '③', '④', '⑤'];
-  const correctIndex = shuffledChoices.findIndex((c) => c.isCorrect);
-  return labels[correctIndex];
 }
 
 /**

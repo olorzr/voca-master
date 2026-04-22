@@ -1,9 +1,7 @@
 import type { ExamWord, Category } from '@/types';
 import { formatCategoryLabel } from '@/lib/format';
+import { generateChoices } from '@/lib/exam-choices';
 import Image from 'next/image';
-
-/** 객관식 선지 수 */
-const CHOICE_COUNT = 5;
 
 interface MultipleChoiceViewProps {
   exam: {
@@ -13,44 +11,6 @@ interface MultipleChoiceViewProps {
   };
   words: ExamWord[];
   categories: Category[];
-}
-
-/**
- * 시드 기반 난수 생성기 (같은 시험이면 같은 선지 순서 보장)
- */
-function seededShuffle<T>(arr: T[], seed: number): T[] {
-  const result = [...arr];
-  let s = seed;
-  for (let i = result.length - 1; i > 0; i--) {
-    s = (s * 1103515245 + 12345) & 0x7fffffff;
-    const j = s % (i + 1);
-    [result[i], result[j]] = [result[j], result[i]];
-  }
-  return result;
-}
-
-/**
- * 각 문항에 대해 5개 선지를 생성한다.
- * 정답 1개 + 같은 시험의 다른 단어 4개 (랜덤)
- */
-function generateChoices(
-  currentWord: ExamWord,
-  allWords: ExamWord[],
-  questionIndex: number,
-): { label: string; word: string; isCorrect: boolean }[] {
-  const others = allWords.filter((w) => w.id !== currentWord.id);
-  const seed = currentWord.id.split('').reduce((acc, ch) => acc + ch.charCodeAt(0), questionIndex);
-  const shuffled = seededShuffle(others, seed);
-  const distractors = shuffled.slice(0, CHOICE_COUNT - 1);
-
-  const choices = [
-    { label: '', word: currentWord.word, isCorrect: true },
-    ...distractors.map((d) => ({ label: '', word: d.word, isCorrect: false })),
-  ];
-
-  const shuffledChoices = seededShuffle(choices, seed + 1);
-  const labels = ['①', '②', '③', '④', '⑤'];
-  return shuffledChoices.map((c, i) => ({ ...c, label: labels[i] }));
 }
 
 /**
