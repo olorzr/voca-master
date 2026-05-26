@@ -19,7 +19,7 @@ BEGIN
   END IF;
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, pg_temp;
 
 -- 2) UPDATE 시 user_id 변경 차단(생성자 크레딧 탈취 방어)
 CREATE OR REPLACE FUNCTION lock_user_id_on_update()
@@ -30,7 +30,7 @@ BEGIN
   END IF;
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, pg_temp;
 
 -- 3) exams 테이블에 트리거 부착
 -- 트리거 이름은 알파벳 앞쪽으로 둬서 audit_exam_update 보다 먼저 실행되게 한다
@@ -68,62 +68,17 @@ CREATE TRIGGER aa_lock_user_id_concept_sheets_update
   FOR EACH ROW EXECUTE FUNCTION lock_user_id_on_update();
 
 -- 6) create_exam_with_words RPC 시그니처에서 p_user_id 제거
--- 기존 함수 DROP 후 재생성. 새 함수 본문은 user_id 컬럼을 명시하지 않고
--- 트리거가 auth.uid() 로 채우도록 맡긴다.
+-- 기존 옛 시그니처(p_user_id 포함)만 정리한다.
 DROP FUNCTION IF EXISTS create_exam_with_words(
   TEXT, INT, INT, INT, UUID[], UUID[], UUID, JSONB, UUID, INT
 );
 
-CREATE OR REPLACE FUNCTION create_exam_with_words(
-  p_title TEXT,
-  p_pass_percentage INT,
-  p_total_questions INT,
-  p_pass_count INT,
-  p_category_ids UUID[],
-  p_word_ids UUID[],
-  p_words JSONB,
-  p_parent_exam_id UUID DEFAULT NULL,
-  p_retake_number INT DEFAULT 0
-)
-RETURNS UUID
-LANGUAGE plpgsql
-SECURITY INVOKER
-AS $$
-DECLARE
-  v_exam_id UUID;
-BEGIN
-  -- 객관식 5지선다(정답 1 + 오답 4) 보장용. 클라이언트 우회 방어선.
-  IF jsonb_array_length(p_words) < 5 THEN
-    RAISE EXCEPTION 'exam requires at least 5 words (got %)', jsonb_array_length(p_words)
-      USING ERRCODE = 'check_violation';
-  END IF;
-
-  -- user_id 컬럼은 명시하지 않는다. aa_enforce_user_id_exams_insert 트리거가
-  -- auth.uid() 로 채운다. RPC 가 SECURITY INVOKER 이므로 호출자 컨텍스트의
-  -- auth.uid() 가 그대로 트리거에 전달된다.
-  INSERT INTO exams (
-    title, pass_percentage, total_questions, pass_count,
-    category_ids, word_ids, parent_exam_id, retake_number
-  )
-  VALUES (
-    p_title, p_pass_percentage, p_total_questions, p_pass_count,
-    p_category_ids, p_word_ids, p_parent_exam_id, p_retake_number
-  )
-  RETURNING id INTO v_exam_id;
-
-  INSERT INTO exam_words (exam_id, word_id, word, meaning, order_index)
-  SELECT
-    v_exam_id,
-    (w->>'word_id')::UUID,
-    w->>'word',
-    w->>'meaning',
-    (w->>'order_index')::INT
-  FROM jsonb_array_elements(p_words) AS w;
-
-  RETURN v_exam_id;
-END;
-$$;
-
-GRANT EXECUTE ON FUNCTION create_exam_with_words(
-  TEXT, INT, INT, INT, UUID[], UUID[], JSONB, UUID, INT
-) TO authenticated;
+-- [2026-05-26] 주의: 이 파일에 있던 create_exam_with_words 재정의(advisory lock·
+-- DEFINER·서버 검증 없음)는 제거했다. 과거 이 정의가 schema.sql /
+-- migration_retake_atomic.sql 의 최신 정의를 실행 순서에 따라 덮어써, 재시험
+-- 직렬화나 exam_words 쓰기 차단이 사라지는 퇴행을 일으킬 수 있었다.
+-- create_exam_with_words 의 정식(canonical) 정의는
+--   sql/migration_lock_exam_words.sql
+-- 한 곳에서만 관리한다. 마이그레이션 적용 시 이 파일을 먼저 실행하고,
+-- migration_retake_atomic.sql → migration_lock_exam_words.sql 순서로 마지막에
+-- 정식 RPC 를 올릴 것.

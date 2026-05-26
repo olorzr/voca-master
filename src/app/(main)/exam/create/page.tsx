@@ -16,6 +16,7 @@ import { FileText, Eye } from 'lucide-react';
 import { toast } from 'sonner';
 import { DEFAULT_PASS_PERCENTAGE, PERCENTAGE_BASE, MIN_EXAM_WORDS, EXTERNAL_LEVEL } from '@/lib/constants';
 import { buildCategoryTree } from '@/lib/category-tree';
+import { shuffle } from '@/lib/shuffle';
 
 /**
  * 시험지 생성 페이지 (트리 구조 카테고리 선택, 합격선 설정, 셔플 옵션)
@@ -29,7 +30,7 @@ export default function ExamCreatePage() {
   const [words, setWords] = useState<Word[]>([]);
   const [title, setTitle] = useState('');
   const [passPercentage, setPassPercentage] = useState(DEFAULT_PASS_PERCENTAGE);
-  const [shuffle, setShuffle] = useState(true);
+  const [shuffleEnabled, setShuffleEnabled] = useState(true);
   const [creating, setCreating] = useState(false);
 
   useEffect(() => {
@@ -119,9 +120,7 @@ export default function ExamCreatePage() {
 
     setCreating(true);
 
-    const orderedWords = shuffle
-      ? [...words].sort(() => Math.random() - 0.5)
-      : words;
+    const orderedWords = shuffleEnabled ? shuffle(words) : words;
 
     const { data: examId, error: rpcErr } = await supabase.rpc(
       'create_exam_with_words',
@@ -186,8 +185,8 @@ export default function ExamCreatePage() {
                   <div className="flex items-center gap-2">
                     <Checkbox
                       id="shuffle"
-                      checked={shuffle}
-                      onCheckedChange={(v) => setShuffle(v as boolean)}
+                      checked={shuffleEnabled}
+                      onCheckedChange={(v) => setShuffleEnabled(v === true)}
                     />
                     <Label htmlFor="shuffle">문제 순서 섞기</Label>
                   </div>

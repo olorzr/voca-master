@@ -14,53 +14,11 @@
 --     '[{"word_id":"...","word":"...","meaning":"...","order_index":0}]'::jsonb
 --   );
 
-CREATE OR REPLACE FUNCTION create_exam_with_words(
-  p_title TEXT,
-  p_pass_percentage INT,
-  p_total_questions INT,
-  p_pass_count INT,
-  p_category_ids UUID[],
-  p_word_ids UUID[],
-  p_words JSONB,
-  p_parent_exam_id UUID DEFAULT NULL,
-  p_retake_number INT DEFAULT 0
-)
-RETURNS UUID
-LANGUAGE plpgsql
-SECURITY INVOKER
-AS $$
-DECLARE
-  v_exam_id UUID;
-BEGIN
-  -- 객관식 5지선다(정답 1 + 오답 4) 보장용. 클라이언트 우회 방어선.
-  IF jsonb_array_length(p_words) < 5 THEN
-    RAISE EXCEPTION 'exam requires at least 5 words (got %)', jsonb_array_length(p_words)
-      USING ERRCODE = 'check_violation';
-  END IF;
-
-  INSERT INTO exams (
-    title, pass_percentage, total_questions, pass_count,
-    category_ids, word_ids, parent_exam_id, retake_number
-  )
-  VALUES (
-    p_title, p_pass_percentage, p_total_questions, p_pass_count,
-    p_category_ids, p_word_ids, p_parent_exam_id, p_retake_number
-  )
-  RETURNING id INTO v_exam_id;
-
-  INSERT INTO exam_words (exam_id, word_id, word, meaning, order_index)
-  SELECT
-    v_exam_id,
-    (w->>'word_id')::UUID,
-    w->>'word',
-    w->>'meaning',
-    (w->>'order_index')::INT
-  FROM jsonb_array_elements(p_words) AS w;
-
-  RETURN v_exam_id;
-END;
-$$;
-
-GRANT EXECUTE ON FUNCTION create_exam_with_words(
-  TEXT, INT, INT, INT, UUID[], UUID[], JSONB, UUID, INT
-) TO authenticated;
+-- [2026-05-26] 이 파일의 create_exam_with_words 정의(SECURITY INVOKER, advisory
+-- lock·도메인 가드·서버 검증 없음)는 제거했다. 이 구버전이 최신 정의를 덮어쓰면
+-- exam_words 쓰기 차단·재시험 직렬화·도메인 강제·내용 위조 방어가 모두 풀리는
+-- 퇴행이 발생한다.
+--
+-- create_exam_with_words 의 정식(canonical) 정의는
+--   sql/migration_lock_exam_words.sql (+ schema.sql 미러)
+-- 한 곳에서만 관리한다. 이 파일은 더 이상 함수를 정의하지 않는다(역사적 기록용).

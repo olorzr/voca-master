@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { supabase } from './supabase';
+import { isAllowedEmailDomain } from './constants';
 import type { User, Session } from '@supabase/supabase-js';
 
 interface AuthContextType {
@@ -23,16 +24,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
+    // 도메인 제한은 RLS 가 권위 있게 강제하지만, 클라이언트에서도 허용 도메인이
+    // 아닌 세션이면 즉시 로그아웃해 UI 노출을 막는다(defense-in-depth + UX).
+    const applySession = (nextSession: Session | null) => {
+      if (nextSession && !isAllowedEmailDomain(nextSession.user.email)) {
+        void supabase.auth.signOut();
+        setSession(null);
+        setUser(null);
+        setLoading(false);
+        return;
+      }
+      setSession(nextSession);
+      setUser(nextSession?.user ?? null);
       setLoading(false);
+    };
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      applySession(session);
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
+      applySession(session);
     });
 
     return () => subscription.unsubscribe();

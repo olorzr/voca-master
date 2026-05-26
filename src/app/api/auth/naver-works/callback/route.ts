@@ -1,10 +1,22 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { isAllowedEmailDomain } from '@/lib/constants';
 
 const TOKEN_URL = 'https://auth.worksmobile.com/oauth2/v2.0/token';
 const USER_API_URL = 'https://www.worksapis.com/v1.0/users/me';
-const ALLOWED_EMAIL_DOMAIN = 'araeducation.co.kr';
+
+/** unknown 값이 객체인지 좁히는 타입 가드 */
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
+/** 외부 응답에서 문자열 프로퍼티를 안전하게 읽는다(없거나 문자열이 아니면 undefined) */
+function readString(value: unknown, key: string): string | undefined {
+  if (!isRecord(value)) return undefined;
+  const field = value[key];
+  return typeof field === 'string' ? field : undefined;
+}
 
 /**
  * 네이버 웍스 OAuth 콜백. 인증 코드를 토큰으로 교환하고 사용자를 검증한다.
@@ -41,7 +53,7 @@ export async function GET(request: Request) {
   }
 
   const tokenData: unknown = await tokenRes.json();
-  const accessToken = (tokenData as Record<string, string>).access_token;
+  const accessToken = readString(tokenData, 'access_token');
 
   if (!accessToken) {
     return NextResponse.redirect(`${loginUrl}?error=token_failed`);
@@ -56,10 +68,9 @@ export async function GET(request: Request) {
   }
 
   const userData: unknown = await userRes.json();
-  const userRecord = userData as Record<string, unknown>;
-  const email = (userRecord.email as string) ?? (userRecord.userId as string);
+  const email = readString(userData, 'email') ?? readString(userData, 'userId');
 
-  if (!email || !email.endsWith(`@${ALLOWED_EMAIL_DOMAIN}`)) {
+  if (!isAllowedEmailDomain(email)) {
     return NextResponse.redirect(`${loginUrl}?error=unauthorized_domain`);
   }
 

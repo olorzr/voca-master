@@ -33,3 +33,15 @@ export const EXTERNAL_LEVEL = '외부지문 및 프린트' as const;
 
 /** 관리자 이메일 */
 export const ADMIN_EMAIL = 'ara0723@araeducation.co.kr';
+
+/** 로그인을 허용할 이메일 도메인 (이 도메인 계정만 사용 가능) */
+export const ALLOWED_EMAIL_DOMAIN = 'araeducation.co.kr';
+
+/**
+ * 이메일이 허용 도메인에 속하는지 검사한다(타입 가드: 통과 시 string 으로 좁힘).
+ * @param email - 검사할 이메일 (null/undefined 허용)
+ * @returns 허용 도메인이면 true
+ */
+export function isAllowedEmailDomain(email: string | null | undefined): email is string {
+  return !!email && email.endsWith(`@${ALLOWED_EMAIL_DOMAIN}`);
+}

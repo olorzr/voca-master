@@ -76,6 +76,53 @@ describe('sanitizeConceptHTML', () => {
     expect(out).not.toContain('<embed');
   });
 
+  it('전체화면 overlay CSS(position/inset)를 제거한다', () => {
+    const out = sanitizeConceptHTML(
+      '<p style="position:fixed;inset:0;z-index:9999">overlay</p>',
+    );
+    expect(out).not.toContain('position');
+    expect(out).not.toContain('inset');
+    expect(out).not.toContain('z-index');
+    expect(out).toContain('overlay');
+  });
+
+  it('background-image:url(...) 주입을 제거한다', () => {
+    const out = sanitizeConceptHTML(
+      '<p style="background-image:url(javascript:alert(1))">x</p>',
+    );
+    expect(out).not.toContain('url(');
+    expect(out).not.toContain('javascript');
+    expect(out).not.toContain('background-image');
+  });
+
+  it('화이트리스트 밖 CSS 만 있으면 style 속성을 통째로 제거한다', () => {
+    const out = sanitizeConceptHTML('<p style="display:none;width:9999px">x</p>');
+    expect(out).not.toContain('style');
+    expect(out).not.toContain('display');
+    expect(out).not.toContain('width');
+  });
+
+  it('허용 색상은 남기고 위험 속성은 제거한다(혼합 선언)', () => {
+    const out = sanitizeConceptHTML(
+      '<table><tbody><tr>' +
+        '<td style="background-color:#FEF3C7;position:fixed">셀</td>' +
+        '</tr></tbody></table>',
+    );
+    expect(out).toContain('background-color');
+    expect(out).toContain('#FEF3C7');
+    expect(out).not.toContain('position');
+  });
+
+  it('text-align 의 비정상 값(url 등)을 제거한다', () => {
+    const out = sanitizeConceptHTML(
+      '<h3 style="text-align:url(x)">제목</h3>',
+    );
+    expect(out).not.toContain('url(');
+    // 허용 키워드가 아니므로 text-align 자체가 제거된다
+    expect(out).not.toContain('text-align');
+    expect(out).toContain('제목');
+  });
+
   it('빈 문자열을 입력하면 빈 문자열을 반환한다', () => {
     expect(sanitizeConceptHTML('')).toBe('');
   });

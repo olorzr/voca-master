@@ -26,24 +26,23 @@ function ExamViewContent() {
   const [exam, setExam] = useState<ExamData | null>(null);
   const [examWords, setExamWords] = useState<ExamWord[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [notFound, setNotFound] = useState(false);
+  // examId 가 없는 경우는 effect 안에서 setState 하지 않고 렌더 단계 파생값으로 처리한다
+  // (react-hooks/set-state-in-effect 회피 + 불필요한 추가 렌더 제거).
+  const [loading, setLoading] = useState(Boolean(examId));
+  const [loadFailed, setLoadFailed] = useState(false);
   const [showAnswer, setShowAnswer] = useState(false);
   const [viewMode, setViewMode] = useState<'exam' | 'answer' | 'mc-exam' | 'mc-answer' | 'wordbook'>('exam');
+  const notFound = !examId || loadFailed;
 
   useEffect(() => {
-    if (!examId) {
-      setNotFound(true);
-      setLoading(false);
-      return;
-    }
+    if (!examId) return;
     async function load() {
       const [examRes, wordsRes] = await Promise.all([
         supabase.from('exams').select('*').eq('id', examId).single(),
         supabase.from('exam_words').select('*').eq('exam_id', examId).order('order_index'),
       ]);
       if (examRes.error || !examRes.data) {
-        setNotFound(true);
+        setLoadFailed(true);
         setLoading(false);
         return;
       }

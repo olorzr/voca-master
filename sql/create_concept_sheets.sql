@@ -21,11 +21,23 @@ create table concept_sheets (
 -- RLS 활성화
 alter table concept_sheets enable row level security;
 
+-- 도메인 제한 헬퍼(self-contained). schema.sql / migration_domain_restriction.sql
+-- 의 정의와 동일하며 CREATE OR REPLACE 라 멱등하다 — 이 파일만 단독 재적용해도
+-- 정책이 깨지지 않도록 함수를 먼저 보장한다.
+create or replace function public.is_allowed_domain()
+returns boolean
+language sql
+stable
+as $$
+  select coalesce(auth.jwt() ->> 'email', '') like '%@araeducation.co.kr';
+$$;
+grant execute on function public.is_allowed_domain() to authenticated;
+
 -- 모든 인증된 사용자 공유 (감사 로그로 변경 이력 추적)
 create policy "Authenticated users can manage concept_sheets"
   on concept_sheets for all
-  using (auth.role() = 'authenticated')
-  with check (auth.role() = 'authenticated');
+  using (auth.role() = 'authenticated' and public.is_allowed_domain())
+  with check (auth.role() = 'authenticated' and public.is_allowed_domain());
 
 -- updated_at 자동 갱신 트리거
 create or replace function update_concept_sheets_updated_at()

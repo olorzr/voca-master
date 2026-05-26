@@ -30,9 +30,15 @@ interface InsertWordsRpcRow {
   skipped_duplicates: string[] | null;
 }
 
+/** categories 자연키 유니크 인덱스(idx_categories_natural_key)와 일치하는 충돌 컬럼 */
+const CATEGORY_NATURAL_KEY =
+  'level,grade,publisher,semester,chapter,sub_chapter,school_name';
+
 /**
- * 입력된 카테고리 메타데이터로 기존 단원을 조회해 있으면 재사용하고,
- * 없으면 새로 생성한다. 기존 DB 에 이미 중복이 있어도 첫 번째 row 를 선택한다.
+ * 입력된 카테고리 메타데이터로 단원을 보장한다(있으면 재사용, 없으면 생성).
+ * SELECT→INSERT 분리 구조는 동시 저장 시 중복 row 를 만들 수 있어, 자연키
+ * 유니크 인덱스 기반 단일 upsert(ON CONFLICT)로 원자적으로 처리한다.
+ * (사전 조건: sql/migration_categories_unique.sql 적용)
  * @returns 카테고리 ID, 실패 시 null
  */
 export async function ensureCategoryId(input: CategoryMatchInput): Promise<string | null> {
@@ -49,23 +55,14 @@ export async function ensureCategoryId(input: CategoryMatchInput): Promise<strin
     school_name: isExternal ? input.schoolName : '',
   };
 
-  const { data: existingRows, error: selectErr } = await supabase
+  const { data: upserted, error: upsertErr } = await supabase
     .from('categories')
-    .select('id')
-    .match(row)
-    .limit(1);
-
-  if (selectErr) return null;
-  if (existingRows && existingRows.length > 0) return existingRows[0].id;
-
-  const { data: created, error: insertErr } = await supabase
-    .from('categories')
-    .insert(row)
+    .upsert(row, { onConflict: CATEGORY_NATURAL_KEY })
     .select('id')
     .single();
 
-  if (insertErr || !created) return null;
-  return created.id;
+  if (upsertErr || !upserted) return null;
+  return upserted.id;
 }
 
 /**
