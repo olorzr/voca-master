@@ -78,10 +78,14 @@ export async function GET(request: Request) {
       return NextResponse.redirect(`${loginUrl}?error=unauthorized_domain`);
     }
 
+    // provider 는 app_metadata 에 기록한다. user_metadata 와 달리 app_metadata 는
+    // service-role(admin)만 쓸 수 있어 클라이언트가 위조할 수 없는 권위 있는 출처
+    // 표식이 된다. (단, 다른 provider 우회를 막는 1차 방어선은 Supabase 대시보드에서
+    // 불필요한 인증 provider 를 비활성화하는 것 + RLS 의 도메인 제한이다.)
     const { error: createError } = await supabaseAdmin.auth.admin.createUser({
       email,
       email_confirm: true,
-      user_metadata: { provider: 'naver-works' },
+      app_metadata: { provider: 'naver-works' },
     });
 
     if (createError && !createError.message.includes('already been registered')) {
