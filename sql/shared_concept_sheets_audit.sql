@@ -3,17 +3,18 @@
 -- 실행: Supabase SQL Editor에서 실행
 -- =============================================
 
--- 1. 기존 RLS 정책 삭제
-DROP POLICY IF EXISTS "Users can view own concept sheets" ON concept_sheets;
-DROP POLICY IF EXISTS "Users can insert own concept sheets" ON concept_sheets;
-DROP POLICY IF EXISTS "Users can update own concept sheets" ON concept_sheets;
-DROP POLICY IF EXISTS "Users can delete own concept sheets" ON concept_sheets;
-
--- 2. 새 RLS 정책: 모든 인증된 사용자 공유
-CREATE POLICY "Authenticated users can manage concept_sheets"
-  ON concept_sheets FOR ALL
-  USING (auth.role() = 'authenticated')
-  WITH CHECK (auth.role() = 'authenticated');
+-- 1~2. RLS 정책 정의는 이 파일에서 제거했다.
+--
+-- [2026-06-16] 이 파일은 과거 concept_sheets 를 `FOR ALL` 공유 정책으로
+--   (재)생성했으나 도메인 조건 public.is_allowed_domain() 가 빠져 있었다
+--   (sql/migration_domain_restriction.sql 가 모든 공유 테이블 정책에 추가함).
+--   이 파일이 도메인 마이그레이션 뒤에 재실행되면 @araeducation.co.kr 이 아닌
+--   인증 계정에게도 공유 개념지 읽기/쓰기를 다시 열어버리는 퇴행이 발생한다
+--   (shared_exams_audit_log.sql 의 exam_words 퇴행과 동일한 패턴).
+--
+--   따라서 concept_sheets 의 RLS 정책은 schema.sql(기준 상태) +
+--   create_concept_sheets.sql(생성 시점) + migration_domain_restriction.sql
+--   (도메인 조건) 에서만 관리한다. 이 파일은 감사 컬럼/트리거만 담당한다.
 
 -- 3. 감사 컬럼 추가
 ALTER TABLE concept_sheets

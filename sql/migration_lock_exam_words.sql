@@ -54,9 +54,13 @@ DROP POLICY IF EXISTS "Users can manage own exam words" ON exam_words;
 DROP POLICY IF EXISTS "Authenticated users can manage exam_words" ON exam_words;
 DROP POLICY IF EXISTS "Authenticated users can read exam_words" ON exam_words;
 
+-- 도메인 조건(public.is_allowed_domain())을 반드시 포함한다. 이 파일은 적용
+-- 순서상 마지막(나머지 → retake_atomic → domain_restriction → categories_unique
+-- → lock_exam_words)이므로, 여기서 도메인 조건을 빠뜨리면 앞서
+-- migration_domain_restriction.sql 이 입힌 도메인 제한을 덮어써 제거하게 된다.
 CREATE POLICY "Authenticated users can read exam_words"
   ON exam_words FOR SELECT
-  USING (auth.role() = 'authenticated');
+  USING (auth.role() = 'authenticated' AND public.is_allowed_domain());
 -- INSERT/UPDATE/DELETE 정책을 의도적으로 만들지 않는다(기본 deny).
 -- 쓰기는 오직 SECURITY DEFINER 함수 create_exam_with_words 를 통해서만 가능하다.
 

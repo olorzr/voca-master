@@ -409,9 +409,12 @@ DROP POLICY IF EXISTS "Users can manage own exam words" ON exam_words;
 DROP POLICY IF EXISTS "Authenticated users can manage exam_words" ON exam_words;
 DROP POLICY IF EXISTS "Authenticated users can read exam_words" ON exam_words;
 
+-- 이 번들 앞부분(도메인 RLS 섹션)에서 동일 정책을 도메인 조건과 함께 한 번
+-- 생성하므로, 여기서 도메인 조건 없이 재생성하면 도메인 제한이 사라진다.
+-- 반드시 public.is_allowed_domain() 을 포함한다(번들 내 is_allowed_domain 정의됨).
 CREATE POLICY "Authenticated users can read exam_words"
   ON exam_words FOR SELECT
-  USING (auth.role() = 'authenticated');
+  USING (auth.role() = 'authenticated' AND public.is_allowed_domain());
 -- INSERT/UPDATE/DELETE 정책을 의도적으로 만들지 않는다(기본 deny).
 -- 쓰기는 오직 SECURITY DEFINER 함수 create_exam_with_words 를 통해서만 가능하다.
 
