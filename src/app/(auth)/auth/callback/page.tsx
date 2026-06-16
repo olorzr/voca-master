@@ -32,6 +32,11 @@ function CallbackHandler() {
         } else {
           router.push('/dashboard');
         }
+      })
+      // 네트워크/런타임 오류로 Promise 가 reject 되면 unhandled rejection 이
+      // 되어 스피너 화면에서 영원히 멈춘다. 실패도 명시적으로 처리한다.
+      .catch(() => {
+        router.push('/login?error=verification_failed');
       });
   }, [router, searchParams]);
 

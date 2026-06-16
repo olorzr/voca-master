@@ -36,66 +36,73 @@ export async function GET(request: Request) {
 
   cookieStore.delete('oauth_state');
 
-  const tokenRes = await fetch(TOKEN_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({
-      code,
-      grant_type: 'authorization_code',
-      client_id: process.env.NAVER_WORKS_CLIENT_ID!,
-      client_secret: process.env.NAVER_WORKS_CLIENT_SECRET!,
-      redirect_uri: `${url.origin}/api/auth/naver-works/callback`,
-    }),
-  });
-
-  if (!tokenRes.ok) {
-    return NextResponse.redirect(`${loginUrl}?error=token_failed`);
-  }
-
-  const tokenData: unknown = await tokenRes.json();
-  const accessToken = readString(tokenData, 'access_token');
-
-  if (!accessToken) {
-    return NextResponse.redirect(`${loginUrl}?error=token_failed`);
-  }
-
-  const userRes = await fetch(USER_API_URL, {
-    headers: { Authorization: `Bearer ${accessToken}` },
-  });
-
-  if (!userRes.ok) {
-    return NextResponse.redirect(`${loginUrl}?error=user_info_failed`);
-  }
-
-  const userData: unknown = await userRes.json();
-  const email = readString(userData, 'email') ?? readString(userData, 'userId');
-
-  if (!isAllowedEmailDomain(email)) {
-    return NextResponse.redirect(`${loginUrl}?error=unauthorized_domain`);
-  }
-
-  const { error: createError } = await supabaseAdmin.auth.admin.createUser({
-    email,
-    email_confirm: true,
-    user_metadata: { provider: 'naver-works' },
-  });
-
-  if (createError && !createError.message.includes('already been registered')) {
-    return NextResponse.redirect(`${loginUrl}?error=create_user_failed`);
-  }
-
-  const { data: linkData, error: linkError } =
-    await supabaseAdmin.auth.admin.generateLink({
-      type: 'magiclink',
-      email,
+  // 외부 fetch/Supabase 호출은 네트워크 오류·JSON 파싱 실패 등으로 throw 될 수
+  // 있다. try/catch 가 없으면 예외가 라우트 밖으로 새어 500 이 반환되므로,
+  // 모든 예기치 못한 실패를 안정적인 에러 리다이렉트로 매핑한다.
+  try {
+    const tokenRes = await fetch(TOKEN_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        code,
+        grant_type: 'authorization_code',
+        client_id: process.env.NAVER_WORKS_CLIENT_ID!,
+        client_secret: process.env.NAVER_WORKS_CLIENT_SECRET!,
+        redirect_uri: `${url.origin}/api/auth/naver-works/callback`,
+      }),
     });
 
-  if (linkError || !linkData?.properties?.hashed_token) {
-    return NextResponse.redirect(`${loginUrl}?error=session_failed`);
+    if (!tokenRes.ok) {
+      return NextResponse.redirect(`${loginUrl}?error=token_failed`);
+    }
+
+    const tokenData: unknown = await tokenRes.json();
+    const accessToken = readString(tokenData, 'access_token');
+
+    if (!accessToken) {
+      return NextResponse.redirect(`${loginUrl}?error=token_failed`);
+    }
+
+    const userRes = await fetch(USER_API_URL, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+
+    if (!userRes.ok) {
+      return NextResponse.redirect(`${loginUrl}?error=user_info_failed`);
+    }
+
+    const userData: unknown = await userRes.json();
+    const email = readString(userData, 'email') ?? readString(userData, 'userId');
+
+    if (!isAllowedEmailDomain(email)) {
+      return NextResponse.redirect(`${loginUrl}?error=unauthorized_domain`);
+    }
+
+    const { error: createError } = await supabaseAdmin.auth.admin.createUser({
+      email,
+      email_confirm: true,
+      user_metadata: { provider: 'naver-works' },
+    });
+
+    if (createError && !createError.message.includes('already been registered')) {
+      return NextResponse.redirect(`${loginUrl}?error=create_user_failed`);
+    }
+
+    const { data: linkData, error: linkError } =
+      await supabaseAdmin.auth.admin.generateLink({
+        type: 'magiclink',
+        email,
+      });
+
+    if (linkError || !linkData?.properties?.hashed_token) {
+      return NextResponse.redirect(`${loginUrl}?error=session_failed`);
+    }
+
+    const tokenHash = linkData.properties.hashed_token;
+    const callbackUrl = `${url.origin}/auth/callback?token_hash=${encodeURIComponent(tokenHash)}&type=magiclink`;
+
+    return NextResponse.redirect(callbackUrl);
+  } catch {
+    return NextResponse.redirect(`${loginUrl}?error=server_error`);
   }
-
-  const tokenHash = linkData.properties.hashed_token;
-  const callbackUrl = `${url.origin}/auth/callback?token_hash=${encodeURIComponent(tokenHash)}&type=magiclink`;
-
-  return NextResponse.redirect(callbackUrl);
 }
