@@ -10,6 +10,14 @@ import { Settings } from 'lucide-react';
 import { useCategoryFormState, type CategoryFormProps } from '@/hooks/useCategoryFormState';
 
 /**
+ * 마스터 목록(id/name)을 base-ui Select 의 items(value→label) 구조로 변환한다.
+ * items 를 넘기지 않으면 SelectValue 가 팝업을 한 번도 열기 전까지 선택된 value(UUID)를
+ * 그대로 표시하므로, 한글 이름이 보이도록 매핑을 제공한다.
+ */
+const toSelectItems = (list: { id: string; name: string }[]) =>
+  list.map((item) => ({ value: item.id, label: item.name }));
+
+/**
  * 단어 입력 시 카테고리(구분/학년/출판사/학기/단원) 선택 폼 컴포넌트.
  * 마스터 데이터에서 등록된 항목만 선택 가능하다. 데이터 로딩/선택 상태 로직은
  * useCategoryFormState 훅이 담당하고, 이 컴포넌트는 화면만 그린다.
@@ -59,7 +67,7 @@ export default function CategoryForm(props: CategoryFormProps) {
               </div>
               <div className="space-y-2">
                 <Label>출판사</Label>
-                <Select value={s.publisherId} onValueChange={(v) => { if (v) s.handlePublisherSelect(v); }} disabled={!grade}>
+                <Select value={s.publisherId} items={toSelectItems(s.publishers)} onValueChange={(v) => { if (v) s.handlePublisherSelect(v); }} disabled={!grade}>
                   <SelectTrigger><SelectValue placeholder="출판사 선택" /></SelectTrigger>
                   <SelectContent>
                     {s.publishers.map((p) => (
@@ -81,7 +89,7 @@ export default function CategoryForm(props: CategoryFormProps) {
               </div>
               <div className="space-y-2">
                 <Label>대단원</Label>
-                <Select value={s.chapterId} onValueChange={(v) => { if (v) s.handleChapterSelect(v); }} disabled={!semester}>
+                <Select value={s.chapterId} items={toSelectItems(s.chapters)} onValueChange={(v) => { if (v) s.handleChapterSelect(v); }} disabled={!semester}>
                   <SelectTrigger><SelectValue placeholder="대단원 선택" /></SelectTrigger>
                   <SelectContent>
                     {s.chapters.map((c) => (
@@ -92,7 +100,7 @@ export default function CategoryForm(props: CategoryFormProps) {
               </div>
               <div className="space-y-2">
                 <Label>소단원 (선택)</Label>
-                <Select value={s.subChapterId} onValueChange={(v) => { if (v) s.handleSubChapterSelect(v); }} disabled={!s.chapterId}>
+                <Select value={s.subChapterId} items={toSelectItems(s.subChaptersList)} onValueChange={(v) => { if (v) s.handleSubChapterSelect(v); }} disabled={!s.chapterId}>
                   <SelectTrigger><SelectValue placeholder="소단원 선택" /></SelectTrigger>
                   <SelectContent>
                     {s.subChaptersList.map((sub) => (
@@ -106,7 +114,7 @@ export default function CategoryForm(props: CategoryFormProps) {
             <>
               <div className="space-y-2">
                 <Label>학교명</Label>
-                <Select value={s.schoolId} onValueChange={(v) => { if (v) s.handleSchoolSelect(v); }}>
+                <Select value={s.schoolId} items={toSelectItems(s.schools)} onValueChange={(v) => { if (v) s.handleSchoolSelect(v); }}>
                   <SelectTrigger><SelectValue placeholder="학교 선택" /></SelectTrigger>
                   <SelectContent>
                     {s.schools.map((sch) => (
@@ -117,7 +125,7 @@ export default function CategoryForm(props: CategoryFormProps) {
               </div>
               <div className="space-y-2">
                 <Label>프린트/작품명</Label>
-                <Select value={s.materialId} onValueChange={(v) => { if (v) s.handleMaterialSelect(v); }} disabled={!s.schoolId}>
+                <Select value={s.materialId} items={toSelectItems(s.materials)} onValueChange={(v) => { if (v) s.handleMaterialSelect(v); }} disabled={!s.schoolId}>
                   <SelectTrigger><SelectValue placeholder="프린트/작품명 선택" /></SelectTrigger>
                   <SelectContent>
                     {s.materials.map((m) => (

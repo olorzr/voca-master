@@ -5,6 +5,7 @@
 - exam_words SELECT RLS 정책에서 도메인 가드(`public.is_allowed_domain()`)가 빠지던 퇴행 수정 — 적용 순서상 마지막인 `10_migration_lock_exam_words.sql`(및 번들 `archive/00_apply_2026-05-26_security.sql`)이 도메인 조건 없이 정책을 재생성해, 앞선 `08_migration_domain_restriction.sql`의 제한을 덮어쓰고 있었음
 - `04_shared_concept_sheets_audit.sql`이 도메인 가드 없는 concept_sheets 공유 정책을 재생성하던 드리프트 위험 제거 — 정책 정의를 삭제하고 포인터 주석으로 대체(정책 소유권은 01_schema.sql + 02_create_concept_sheets.sql + 08_migration_domain_restriction.sql)
 ### Fixed
+- 카테고리 드롭다운(출판사/대단원/소단원/학교/프린트)에서 선택값이 한글 이름 대신 UUID 로 표시되던 문제 — base-ui Select 는 `items`(value→label) 매핑이 없으면 팝업을 열기 전까지 선택된 value(UUID)를 그대로 표시한다. `CategoryForm` 의 id 기반 Select 5개에 `items` 를 전달해 항상 한글 이름이 보이도록 수정
 - 네이버 웍스 OAuth 콜백의 네트워크/SDK 예외가 500 또는 unhandled rejection 으로 새던 문제 — 서버 콜백 try/catch, 클라이언트 콜백 `.catch()` 추가
 - 시험 이력 날짜 필터가 UTC 변환으로 KST 자정 부근에서 하루 어긋나던 off-by-one — 로컬 날짜 비교(`toLocalDateString`)로 수정
 - 카테고리 필터 변경/초기화 시 선택이 유지되어 숨겨진 시험지가 일괄삭제될 수 있던 문제 — 필터 변경 시 선택 초기화
