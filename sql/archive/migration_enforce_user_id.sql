@@ -74,11 +74,11 @@ DROP FUNCTION IF EXISTS create_exam_with_words(
 );
 
 -- [2026-05-26] 주의: 이 파일에 있던 create_exam_with_words 재정의(advisory lock·
--- DEFINER·서버 검증 없음)는 제거했다. 과거 이 정의가 schema.sql /
--- migration_retake_atomic.sql 의 최신 정의를 실행 순서에 따라 덮어써, 재시험
+-- DEFINER·서버 검증 없음)는 제거했다. 과거 이 정의가 01_schema.sql /
+-- archive/migration_retake_atomic.sql 의 최신 정의를 실행 순서에 따라 덮어써, 재시험
 -- 직렬화나 exam_words 쓰기 차단이 사라지는 퇴행을 일으킬 수 있었다.
 -- create_exam_with_words 의 정식(canonical) 정의는
---   sql/migration_lock_exam_words.sql
+--   sql/10_migration_lock_exam_words.sql
 -- 한 곳에서만 관리한다. 마이그레이션 적용 시 이 파일을 먼저 실행하고,
--- migration_retake_atomic.sql → migration_lock_exam_words.sql 순서로 마지막에
+-- archive/migration_retake_atomic.sql → 10_migration_lock_exam_words.sql 순서로 마지막에
 -- 정식 RPC 를 올릴 것.

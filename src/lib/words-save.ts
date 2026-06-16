@@ -38,7 +38,7 @@ const CATEGORY_NATURAL_KEY =
  * 입력된 카테고리 메타데이터로 단원을 보장한다(있으면 재사용, 없으면 생성).
  * SELECT→INSERT 분리 구조는 동시 저장 시 중복 row 를 만들 수 있어, 자연키
  * 유니크 인덱스 기반 단일 upsert(ON CONFLICT)로 원자적으로 처리한다.
- * (사전 조건: sql/migration_categories_unique.sql 적용)
+ * (사전 조건: sql/09_migration_categories_unique.sql 적용)
  * @returns 카테고리 ID, 실패 시 null
  */
 export async function ensureCategoryId(input: CategoryMatchInput): Promise<string | null> {

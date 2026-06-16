@@ -3,7 +3,7 @@
 -- 두 번째 insert가 실패하면 단어 없는 유령 시험지가 DB에 남는 문제가 있었다.
 -- 본 RPC는 함수 본문이 단일 트랜잭션으로 실행되므로, 어느 insert가 실패해도 전체가 롤백된다.
 --
--- user_id 는 sql/migration_enforce_user_id.sql 에서 정의한 BEFORE INSERT 트리거가
+-- user_id 는 sql/archive/migration_enforce_user_id.sql 에서 정의한 BEFORE INSERT 트리거가
 -- auth.uid() 로 채운다. 본 RPC 는 user_id 컬럼을 명시하지 않는다.
 --
 -- 호출 예 (재시험은 p_parent_exam_id / p_retake_number 를 채워 호출):
@@ -20,5 +20,5 @@
 -- 퇴행이 발생한다.
 --
 -- create_exam_with_words 의 정식(canonical) 정의는
---   sql/migration_lock_exam_words.sql (+ schema.sql 미러)
+--   sql/10_migration_lock_exam_words.sql (+ 01_schema.sql 미러)
 -- 한 곳에서만 관리한다. 이 파일은 더 이상 함수를 정의하지 않는다(역사적 기록용).

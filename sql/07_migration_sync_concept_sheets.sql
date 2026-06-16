@@ -23,7 +23,7 @@
 --   - 이 마이그레이션 적용 전에 기존 공백/표기 변형은 한 번 정리해 둘 것
 --     (예: '비상 (박현숙)' → '비상(박현숙)'). 정리 후 적용해야 향후 rename 이
 --     올바른 표기 기준으로 동기화된다.
---   - 함수 본문은 schema.sql 의 정의와 동일하게 유지한다(미러). 한쪽만 바꾸면
+--   - 함수 본문은 01_schema.sql 의 정의와 동일하게 유지한다(미러). 한쪽만 바꾸면
 --     스키마 재적용 순서에 따라 동기화 로직이 사라지는 퇴행이 생긴다.
 
 -- 출판사명 변경 → categories.publisher + concept_sheets.publisher 동기화
@@ -105,5 +105,5 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- 트리거 자체는 schema.sql 에서 이미 생성됨(AFTER UPDATE). 본 마이그레이션은
+-- 트리거 자체는 01_schema.sql 에서 이미 생성됨(AFTER UPDATE). 본 마이그레이션은
 -- 함수 본문만 CREATE OR REPLACE 로 교체하므로 트리거 재생성은 불필요하다.

@@ -25,7 +25,7 @@
 --
 -- 또한 create_exam_with_words 는 SECURITY DEFINER 라 이 정책들을 우회하므로,
 --   함수 본문에서 public.is_allowed_domain() 을 직접 검사한다
---   (sql/migration_lock_exam_words.sql).
+--   (sql/10_migration_lock_exam_words.sql).
 
 -- ---------------------------------------------
 -- 0) 허용 도메인 판정 헬퍼

@@ -38,8 +38,8 @@
 --     첫머리에서 public.is_allowed_domain() 을 직접 검사해 도메인 우회를 막는다.
 --
 -- 주의: 이 파일이 create_exam_with_words 의 정식(canonical) 정의다.
---   migration_enforce_user_id.sql / migration_retake_atomic.sql / migration_exam_rpc.sql
---   의 옛 정의는 모두 무력화(포인터 주석)했다. migration_retake_atomic.sql 이후 이
+--   archive/migration_enforce_user_id.sql / archive/migration_retake_atomic.sql / archive/migration_exam_rpc.sql
+--   의 옛 정의는 모두 무력화(포인터 주석)했다. archive/migration_retake_atomic.sql 이후 이
 --   파일을 마지막에 실행할 것.
 --
 -- 운영 전제(중요): 이 함수가 잠긴 exam_words RLS 를 우회해 INSERT 하려면 함수
@@ -57,7 +57,7 @@ DROP POLICY IF EXISTS "Authenticated users can read exam_words" ON exam_words;
 -- 도메인 조건(public.is_allowed_domain())을 반드시 포함한다. 이 파일은 적용
 -- 순서상 마지막(나머지 → retake_atomic → domain_restriction → categories_unique
 -- → lock_exam_words)이므로, 여기서 도메인 조건을 빠뜨리면 앞서
--- migration_domain_restriction.sql 이 입힌 도메인 제한을 덮어써 제거하게 된다.
+-- 08_migration_domain_restriction.sql 이 입힌 도메인 제한을 덮어써 제거하게 된다.
 CREATE POLICY "Authenticated users can read exam_words"
   ON exam_words FOR SELECT
   USING (auth.role() = 'authenticated' AND public.is_allowed_domain());

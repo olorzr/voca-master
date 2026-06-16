@@ -6,13 +6,13 @@
 -- (전체를 한 번에 실행해도 되고, 구획별로 끊어 실행해도 된다. 각 구획은
 --  멱등이라 중복 실행해도 안전하다.)
 --
--- 신규(빈) 환경은 이 파일 대신 sql/schema.sql 하나로 부트스트랩하면 된다.
+-- 신규(빈) 환경은 이 파일 대신 sql/01_schema.sql 하나로 부트스트랩하면 된다.
 --
 -- 적용 순서:
---   [1] migration_enforce_user_id.sql    user_id 강제 트리거 + search_path 하드닝
---   [2] migration_domain_restriction.sql 도메인 RLS (is_allowed_domain)
---   [3] migration_categories_unique.sql  categories 중복 병합 + 자연키 유니크
---   [4] migration_lock_exam_words.sql    exam_words 쓰기 잠금 + canonical RPC (마지막)
+--   [1] archive/migration_enforce_user_id.sql    user_id 강제 트리거 + search_path 하드닝
+--   [2] 08_migration_domain_restriction.sql 도메인 RLS (is_allowed_domain)
+--   [3] 09_migration_categories_unique.sql  categories 중복 병합 + 자연키 유니크
+--   [4] 10_migration_lock_exam_words.sql    exam_words 쓰기 잠금 + canonical RPC (마지막)
 --
 -- 주의: [3] 은 기존 중복 카테고리를 병합/삭제하므로 적용 전 백업 권장.
 -- 각 구획의 정식(canonical) 원본은 동일 이름의 개별 파일이다 — 내용 수정은
@@ -21,7 +21,7 @@
 
 
 -- ███████████████████████████████████████████████████████████████████
--- [1/4] migration_enforce_user_id.sql
+-- [1/4] archive/migration_enforce_user_id.sql
 -- ███████████████████████████████████████████████████████████████████
 
 -- =============================================
@@ -100,18 +100,18 @@ DROP FUNCTION IF EXISTS create_exam_with_words(
 );
 
 -- [2026-05-26] 주의: 이 파일에 있던 create_exam_with_words 재정의(advisory lock·
--- DEFINER·서버 검증 없음)는 제거했다. 과거 이 정의가 schema.sql /
--- migration_retake_atomic.sql 의 최신 정의를 실행 순서에 따라 덮어써, 재시험
+-- DEFINER·서버 검증 없음)는 제거했다. 과거 이 정의가 01_schema.sql /
+-- archive/migration_retake_atomic.sql 의 최신 정의를 실행 순서에 따라 덮어써, 재시험
 -- 직렬화나 exam_words 쓰기 차단이 사라지는 퇴행을 일으킬 수 있었다.
 -- create_exam_with_words 의 정식(canonical) 정의는
---   sql/migration_lock_exam_words.sql
+--   sql/10_migration_lock_exam_words.sql
 -- 한 곳에서만 관리한다. 마이그레이션 적용 시 이 파일을 먼저 실행하고,
--- migration_retake_atomic.sql → migration_lock_exam_words.sql 순서로 마지막에
+-- archive/migration_retake_atomic.sql → 10_migration_lock_exam_words.sql 순서로 마지막에
 -- 정식 RPC 를 올릴 것.
 
 
 -- ███████████████████████████████████████████████████████████████████
--- [2/4] migration_domain_restriction.sql
+-- [2/4] 08_migration_domain_restriction.sql
 -- ███████████████████████████████████████████████████████████████████
 
 -- =============================================
@@ -141,7 +141,7 @@ DROP FUNCTION IF EXISTS create_exam_with_words(
 --
 -- 또한 create_exam_with_words 는 SECURITY DEFINER 라 이 정책들을 우회하므로,
 --   함수 본문에서 public.is_allowed_domain() 을 직접 검사한다
---   (sql/migration_lock_exam_words.sql).
+--   (sql/10_migration_lock_exam_words.sql).
 
 -- ---------------------------------------------
 -- 0) 허용 도메인 판정 헬퍼
@@ -233,7 +233,7 @@ CREATE POLICY "Authenticated users can manage school_materials"
 
 
 -- ███████████████████████████████████████████████████████████████████
--- [3/4] migration_categories_unique.sql
+-- [3/4] 09_migration_categories_unique.sql
 -- ███████████████████████████████████████████████████████████████████
 
 -- =============================================
@@ -289,7 +289,7 @@ BEGIN
   WHERE rn > 1;
 
   -- 2a) words 의 UNIQUE(category_id, word) (words_category_word_unique,
-  --     sql/words_concurrency.sql) 충돌 방지: canonical 에 이미 같은 word 가 있으면
+  --     sql/06_words_concurrency.sql) 충돌 방지: canonical 에 이미 같은 word 가 있으면
   --     repoint 시 유니크 충돌이 나므로, dup 쪽 word 를 먼저 삭제(병합)한다.
   DELETE FROM words w
   USING category_dups d
@@ -350,7 +350,7 @@ END $$;
 
 
 -- ███████████████████████████████████████████████████████████████████
--- [4/4] migration_lock_exam_words.sql
+-- [4/4] 10_migration_lock_exam_words.sql
 -- ███████████████████████████████████████████████████████████████████
 
 -- =============================================
@@ -393,8 +393,8 @@ END $$;
 --     첫머리에서 public.is_allowed_domain() 을 직접 검사해 도메인 우회를 막는다.
 --
 -- 주의: 이 파일이 create_exam_with_words 의 정식(canonical) 정의다.
---   migration_enforce_user_id.sql / migration_retake_atomic.sql / migration_exam_rpc.sql
---   의 옛 정의는 모두 무력화(포인터 주석)했다. migration_retake_atomic.sql 이후 이
+--   archive/migration_enforce_user_id.sql / archive/migration_retake_atomic.sql / archive/migration_exam_rpc.sql
+--   의 옛 정의는 모두 무력화(포인터 주석)했다. archive/migration_retake_atomic.sql 이후 이
 --   파일을 마지막에 실행할 것.
 --
 -- 운영 전제(중요): 이 함수가 잠긴 exam_words RLS 를 우회해 INSERT 하려면 함수

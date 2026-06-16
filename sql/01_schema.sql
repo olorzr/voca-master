@@ -115,7 +115,7 @@ CREATE INDEX idx_school_materials_school ON school_materials(school_id);
 
 -- 카테고리 자연키 유니크: 동시 저장 시 같은 단원이 중복 생성되는 것을 막는다.
 -- ensureCategoryId 의 upsert(onConflict) 가 이 인덱스에 의존한다.
--- (기존 DB 의 중복 병합은 sql/migration_categories_unique.sql 참조)
+-- (기존 DB 의 중복 병합은 sql/09_migration_categories_unique.sql 참조)
 CREATE UNIQUE INDEX IF NOT EXISTS idx_categories_natural_key
   ON categories (level, grade, publisher, semester, chapter, sub_chapter, school_name)
   NULLS NOT DISTINCT;
@@ -123,7 +123,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_categories_natural_key
 -- 허용 도메인 판정 헬퍼. 모든 공유 테이블 정책의 USING/WITH CHECK 에서 호출해
 -- @araeducation.co.kr 이메일 세션만 데이터에 접근하도록 강제한다(세션이 localStorage
 -- 라 서버 미들웨어로는 막을 수 없어 RLS 계층에서 강제). auth.jwt() 는 요청 JWT 를
--- 읽으며 SECURITY context 와 무관하다. 자세한 내용은 sql/migration_domain_restriction.sql.
+-- 읽으며 SECURITY context 와 무관하다. 자세한 내용은 sql/08_migration_domain_restriction.sql.
 CREATE OR REPLACE FUNCTION public.is_allowed_domain()
 RETURNS BOOLEAN
 LANGUAGE sql
@@ -159,7 +159,7 @@ CREATE POLICY "Authenticated users can manage exams"
 
 -- 시험지 단어: 읽기만 공유. 쓰기는 SECURITY DEFINER 함수 create_exam_with_words
 -- 를 통해서만 가능하다(직접 INSERT/UPDATE/DELETE 차단). 자세한 내용은
--- sql/migration_lock_exam_words.sql 참고.
+-- sql/10_migration_lock_exam_words.sql 참고.
 CREATE POLICY "Authenticated users can read exam_words"
   ON exam_words FOR SELECT
   USING (auth.role() = 'authenticated' AND public.is_allowed_domain());
@@ -215,7 +215,7 @@ CREATE TRIGGER words_updated_at
 -- =============================================
 
 -- 출판사명 변경 → categories.publisher + concept_sheets.publisher 동기화
--- (concept_sheets 동기화 근거: sql/migration_sync_concept_sheets.sql)
+-- (concept_sheets 동기화 근거: sql/07_migration_sync_concept_sheets.sql)
 CREATE OR REPLACE FUNCTION sync_publisher_name()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -238,7 +238,7 @@ CREATE TRIGGER sync_publisher_name_trigger
   EXECUTE FUNCTION sync_publisher_name();
 
 -- 대단원명 변경 → categories.chapter + concept_sheets.unit 동기화
--- (concept_sheets 동기화 근거: sql/migration_sync_concept_sheets.sql)
+-- (concept_sheets 동기화 근거: sql/07_migration_sync_concept_sheets.sql)
 CREATE OR REPLACE FUNCTION sync_major_chapter_name()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -273,7 +273,7 @@ CREATE TRIGGER sync_major_chapter_name_trigger
   EXECUTE FUNCTION sync_major_chapter_name();
 
 -- 소단원명 변경 → categories.sub_chapter + concept_sheets.subunit 동기화
--- (concept_sheets 동기화 근거: sql/migration_sync_concept_sheets.sql)
+-- (concept_sheets 동기화 근거: sql/07_migration_sync_concept_sheets.sql)
 CREATE OR REPLACE FUNCTION sync_sub_chapter_name()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -363,16 +363,16 @@ CREATE TRIGGER sync_school_material_name_trigger
 -- 서버에서 결정한다. pg_advisory_xact_lock 으로 동일 부모 동시 호출을 직렬화하고,
 -- (parent_exam_id, retake_number) 부분 유일 인덱스가 마지막 안전망으로 동작한다.
 --
--- user_id 는 sql/migration_enforce_user_id.sql 의 BEFORE INSERT 트리거가
+-- user_id 는 sql/archive/migration_enforce_user_id.sql 의 BEFORE INSERT 트리거가
 -- auth.uid() 로 채운다. 본 RPC 는 user_id 컬럼을 명시하지 않는다.
 --
 -- 이 함수는 SECURITY DEFINER 다. exam_words 직접 쓰기를 RLS 로 차단했기 때문에
--- (sql/migration_lock_exam_words.sql), 정상 생성 경로인 이 함수만 잠긴 RLS 를
+-- (sql/10_migration_lock_exam_words.sql), 정상 생성 경로인 이 함수만 잠긴 RLS 를
 -- 우회해 exam_words 에 INSERT 할 수 있다. auth.uid() 는 SECURITY context 와 무관하게
 -- 요청 JWT 클레임을 읽으므로 DEFINER 에서도 호출자 attribution 이 그대로 유지된다.
 -- total_questions / pass_count / word_ids 는 서버가 재계산하고, 신규 생성 경로는
 -- word·meaning 을 canonical words 에서 재조립해 내용 위조를 차단한다.
--- (정식 정의는 sql/migration_lock_exam_words.sql 와 동일하게 유지할 것)
+-- (정식 정의는 sql/10_migration_lock_exam_words.sql 와 동일하게 유지할 것)
 CREATE OR REPLACE FUNCTION create_exam_with_words(
   p_title TEXT,
   p_pass_percentage INT,

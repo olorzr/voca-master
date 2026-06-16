@@ -21,7 +21,7 @@ create table concept_sheets (
 -- RLS 활성화
 alter table concept_sheets enable row level security;
 
--- 도메인 제한 헬퍼(self-contained). schema.sql / migration_domain_restriction.sql
+-- 도메인 제한 헬퍼(self-contained). 01_schema.sql / 08_migration_domain_restriction.sql
 -- 의 정의와 동일하며 CREATE OR REPLACE 라 멱등하다 — 이 파일만 단독 재적용해도
 -- 정책이 깨지지 않도록 함수를 먼저 보장한다.
 create or replace function public.is_allowed_domain()

@@ -51,7 +51,7 @@ BEGIN
   WHERE rn > 1;
 
   -- 2a) words 의 UNIQUE(category_id, word) (words_category_word_unique,
-  --     sql/words_concurrency.sql) 충돌 방지: canonical 에 이미 같은 word 가 있으면
+  --     sql/06_words_concurrency.sql) 충돌 방지: canonical 에 이미 같은 word 가 있으면
   --     repoint 시 유니크 충돌이 나므로, dup 쪽 word 를 먼저 삭제(병합)한다.
   DELETE FROM words w
   USING category_dups d

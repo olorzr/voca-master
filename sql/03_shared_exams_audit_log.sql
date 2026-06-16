@@ -7,14 +7,14 @@
 --
 -- [2026-05-26] 이 파일은 과거 `exams` / `exam_words` 를 `FOR ALL` 공유 정책으로
 --   (재)생성했다. 그러나 이후 exam_words 는 SELECT 전용으로 잠겼고
---   (sql/migration_lock_exam_words.sql), 모든 공유 테이블 정책에 도메인 조건
---   public.is_allowed_domain() 가 추가됐다(sql/migration_domain_restriction.sql).
+--   (sql/10_migration_lock_exam_words.sql), 모든 공유 테이블 정책에 도메인 조건
+--   public.is_allowed_domain() 가 추가됐다(sql/08_migration_domain_restriction.sql).
 --   이 파일이 그 뒤에 재실행되면 exam_words 직접 쓰기를 다시 열고 도메인 조건을
 --   날려버리는 퇴행이 발생한다.
 --
---   따라서 exams / exam_words 의 RLS 정책은 schema.sql(기준 상태) +
---   migration_lock_exam_words.sql(exam_words SELECT 전용) +
---   migration_domain_restriction.sql(도메인 조건) 에서만 관리한다.
+--   따라서 exams / exam_words 의 RLS 정책은 01_schema.sql(기준 상태) +
+--   10_migration_lock_exam_words.sql(exam_words SELECT 전용) +
+--   08_migration_domain_restriction.sql(도메인 조건) 에서만 관리한다.
 --   이 파일은 audit_log 테이블/트리거와 exams 감사 컬럼만 담당한다.
 
 -- 3. exams 테이블에 감사 컬럼 추가
