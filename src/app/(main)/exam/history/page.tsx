@@ -99,21 +99,30 @@ export default function ExamHistoryPage() {
       )}
 
       {h.filteredExams.length > 0 ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {h.filteredExams.map((exam) => (
-            <ExamHistoryCard
-              key={exam.id}
-              exam={exam}
-              retakes={h.retakeMap.get(exam.id)}
-              onDelete={h.handleDelete}
-              onRetest={h.handleRetest}
-              retesting={h.retestingId === exam.id}
-              selectMode={h.selectMode}
-              selected={h.selectedIds.has(exam.id)}
-              onToggleSelect={h.toggleSelect}
-            />
-          ))}
-        </div>
+        <>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {h.visibleExams.map((exam) => (
+              <ExamHistoryCard
+                key={exam.id}
+                exam={exam}
+                retakes={h.retakeMap.get(exam.id)}
+                onDelete={h.handleDelete}
+                onRetest={h.handleRetest}
+                retesting={h.retestingId === exam.id}
+                selectMode={h.selectMode}
+                selected={h.selectedIds.has(exam.id)}
+                onToggleSelect={h.toggleSelect}
+              />
+            ))}
+          </div>
+          {h.hasMore && (
+            <div className="flex justify-center pt-2">
+              <Button variant="outline" onClick={h.showMore}>
+                더 보기 ({h.filteredExams.length - h.visibleExams.length}개 남음)
+              </Button>
+            </div>
+          )}
+        </>
       ) : h.originalExams.length > 0 ? (
         <div className="text-center py-20 text-gray-400">
           <Search className="h-10 w-10 mx-auto mb-3 text-gray-300" />

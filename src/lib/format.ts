@@ -37,6 +37,21 @@ export function groupCategoriesByLevel(categories: Category[]): Record<string, C
 }
 
 /**
+ * ISO 타임스탬프를 사용자의 로컬 타임존 기준 `YYYY-MM-DD` 문자열로 변환한다.
+ * `toISOString().slice(0, 10)` 은 UTC 로 변환해 자정 부근 날짜가 하루 어긋나므로,
+ * `<input type="date">`(로컬 해석) 값과 비교할 때는 이 함수를 사용한다.
+ * @param dateStr - ISO 형식 날짜 문자열
+ * @returns 로컬 기준 `YYYY-MM-DD` 문자열
+ */
+export function toLocalDateString(dateStr: string): string {
+  const d = new Date(dateStr);
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+/**
  * 날짜 문자열을 한국어 포맷으로 변환한다.
  * @param dateStr - ISO 형식 날짜 문자열
  * @returns 한국어 포맷 날짜 문자열

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { formatCategoryLabel, groupCategoriesByLevel } from './format';
+import { formatCategoryLabel, groupCategoriesByLevel, toLocalDateString } from './format';
 import type { Category } from '@/types';
 
 const makeCategory = (overrides: Partial<Category> = {}): Category => ({
@@ -57,5 +57,19 @@ describe('groupCategoriesByLevel', () => {
 
   it('빈 배열이면 빈 객체를 반환한다', () => {
     expect(groupCategoriesByLevel([])).toEqual({});
+  });
+});
+
+describe('toLocalDateString', () => {
+  it('로컬 타임존 기준 날짜를 YYYY-MM-DD 로 반환한다(자정 부근에도 어긋나지 않음)', () => {
+    // 로컬 자정 직후 시각을 ISO(UTC)로 직렬화한 뒤 다시 로컬 날짜로 환산해도
+    // 동일한 로컬 날짜가 나와야 한다. 실행 환경 타임존과 무관하게 검증된다.
+    const local = new Date(2026, 5, 16, 0, 30); // 2026-06-16 00:30 로컬
+    expect(toLocalDateString(local.toISOString())).toBe('2026-06-16');
+  });
+
+  it('월·일을 0으로 패딩한다', () => {
+    const local = new Date(2026, 0, 5, 12, 0); // 2026-01-05 정오 로컬
+    expect(toLocalDateString(local.toISOString())).toBe('2026-01-05');
   });
 });

@@ -5,10 +5,14 @@ import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth-context';
 import { buildCategoryTree } from '@/lib/category-tree';
+import { toLocalDateString } from '@/lib/format';
 import { shuffle } from '@/lib/shuffle';
 import { MIN_EXAM_WORDS } from '@/lib/constants';
 import { toast } from 'sonner';
 import type { Category } from '@/types';
+
+/** 한 번에 렌더링할 원본 시험(스레드) 수 — 렌더 비용 상한 */
+const PAGE_SIZE = 30;
 
 export interface ExamRecord {
   id: string;
@@ -43,6 +47,9 @@ export function useExamHistory() {
   // 선택 모드 상태
   const [selectMode, setSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
+  // 렌더 페이지네이션(스레드 개수 상한)
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 
   useEffect(() => {
     (async () => {
@@ -87,13 +94,10 @@ export function useExamHistory() {
         const q = searchQuery.trim().toLowerCase();
         if (!e.title.toLowerCase().includes(q)) return false;
       }
-      if (dateFrom) {
-        const examDate = new Date(e.created_at).toISOString().slice(0, 10);
-        if (examDate < dateFrom) return false;
-      }
-      if (dateTo) {
-        const examDate = new Date(e.created_at).toISOString().slice(0, 10);
-        if (examDate > dateTo) return false;
+      if (dateFrom || dateTo) {
+        const examDate = toLocalDateString(e.created_at);
+        if (dateFrom && examDate < dateFrom) return false;
+        if (dateTo && examDate > dateTo) return false;
       }
       if (filterCategoryIds.length > 0) {
         const examCatIds = e.category_ids ?? [];
@@ -104,17 +108,30 @@ export function useExamHistory() {
     });
   }, [originalExams, searchQuery, dateFrom, dateTo, filterCategoryIds]);
 
-  const isAllSelected = filteredExams.length > 0 && selectedIds.size === filteredExams.length;
+  // 화면에 실제로 렌더링하는 스레드 목록(상한 적용). 수천 개를 한 번에 그리지 않는다.
+  const visibleExams = useMemo(
+    () => filteredExams.slice(0, visibleCount),
+    [filteredExams, visibleCount],
+  );
+  const hasMore = filteredExams.length > visibleExams.length;
+  const showMore = useCallback(() => setVisibleCount((c) => c + PAGE_SIZE), []);
 
-  // 필터 변경 시 선택을 초기화하는 래퍼들
-  const onSearchChange = (q: string) => { setSearchQuery(q); setSelectedIds(new Set()); };
-  const onDateFromChange = (d: string) => { setDateFrom(d); setSelectedIds(new Set()); };
-  const onDateToChange = (d: string) => { setDateTo(d); setSelectedIds(new Set()); };
+  // 선택/전체선택은 화면에 보이는(visible) 항목 기준으로 동작한다.
+  const isAllSelected = visibleExams.length > 0 && selectedIds.size === visibleExams.length;
 
+  // 필터 변경 시 선택과 페이지 위치를 초기화하는 래퍼들
+  const onSearchChange = (q: string) => { setSearchQuery(q); setSelectedIds(new Set()); setVisibleCount(PAGE_SIZE); };
+  const onDateFromChange = (d: string) => { setDateFrom(d); setSelectedIds(new Set()); setVisibleCount(PAGE_SIZE); };
+  const onDateToChange = (d: string) => { setDateTo(d); setSelectedIds(new Set()); setVisibleCount(PAGE_SIZE); };
+
+  // 필터가 바뀌면 선택을 초기화한다. 그렇지 않으면 숨겨진(필터로 가려진) 행이
+  // selectedIds 에 남아 일괄삭제가 화면에 보이지 않는 시험지를 지울 수 있다.
   const handleCategoryToggle = useCallback((id: string) => {
     setFilterCategoryIds((prev) =>
       prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
     );
+    setSelectedIds(new Set());
+    setVisibleCount(PAGE_SIZE);
   }, []);
 
   const clearFilters = useCallback(() => {
@@ -122,6 +139,8 @@ export function useExamHistory() {
     setDateFrom('');
     setDateTo('');
     setFilterCategoryIds([]);
+    setSelectedIds(new Set());
+    setVisibleCount(PAGE_SIZE);
   }, []);
 
   /** 선택 모드 종료 */
@@ -132,10 +151,10 @@ export function useExamHistory() {
 
   const toggleSelectAll = useCallback(() => {
     setSelectedIds((prev) => {
-      if (prev.size === filteredExams.length && filteredExams.length > 0) return new Set();
-      return new Set(filteredExams.map((e) => e.id));
+      if (prev.size === visibleExams.length && visibleExams.length > 0) return new Set();
+      return new Set(visibleExams.map((e) => e.id));
     });
-  }, [filteredExams]);
+  }, [visibleExams]);
 
   const toggleSelect = useCallback((id: string) => {
     setSelectedIds((prev) => {
@@ -241,6 +260,9 @@ export function useExamHistory() {
     loading,
     originalExams,
     filteredExams,
+    visibleExams,
+    hasMore,
+    showMore,
     categoryTree,
     retakeMap,
     retestingId,
