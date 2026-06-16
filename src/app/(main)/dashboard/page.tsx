@@ -18,18 +18,23 @@ export default function DashboardPage() {
     if (!user) return;
 
     async function loadStats() {
-      const [wordsRes, catsRes, examsRes, conceptsRes] = await Promise.all([
-        supabase.from('words').select('id', { count: 'exact', head: true }),
-        supabase.from('categories').select('id', { count: 'exact', head: true }),
-        supabase.from('exams').select('id', { count: 'exact', head: true }),
-        supabase.from('concept_sheets').select('id', { count: 'exact', head: true }),
-      ]);
-      setStats({
-        words: wordsRes.count ?? 0,
-        categories: catsRes.count ?? 0,
-        exams: examsRes.count ?? 0,
-        concepts: conceptsRes.count ?? 0,
-      });
+      // 통계 조회가 실패해도(네트워크 예외 등) 화면이 깨지지 않도록 0 으로 둔다.
+      try {
+        const [wordsRes, catsRes, examsRes, conceptsRes] = await Promise.all([
+          supabase.from('words').select('id', { count: 'exact', head: true }),
+          supabase.from('categories').select('id', { count: 'exact', head: true }),
+          supabase.from('exams').select('id', { count: 'exact', head: true }),
+          supabase.from('concept_sheets').select('id', { count: 'exact', head: true }),
+        ]);
+        setStats({
+          words: wordsRes.count ?? 0,
+          categories: catsRes.count ?? 0,
+          exams: examsRes.count ?? 0,
+          concepts: conceptsRes.count ?? 0,
+        });
+      } catch {
+        // 통계는 보조 정보이므로 초기값(0)을 유지한다.
+      }
     }
 
     loadStats();

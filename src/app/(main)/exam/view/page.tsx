@@ -37,27 +37,32 @@ function ExamViewContent() {
   useEffect(() => {
     if (!examId) return;
     async function load() {
-      const [examRes, wordsRes] = await Promise.all([
-        supabase.from('exams').select('*').eq('id', examId).single(),
-        supabase.from('exam_words').select('*').eq('exam_id', examId).order('order_index'),
-      ]);
-      if (examRes.error || !examRes.data) {
-        setLoadFailed(true);
-        setLoading(false);
-        return;
-      }
-      setExam(examRes.data);
-      setExamWords(wordsRes.data ?? []);
+      // 네트워크 예외(throw)가 나도 스피너가 멈추도록 finally 에서 loading 을 내린다.
+      try {
+        const [examRes, wordsRes] = await Promise.all([
+          supabase.from('exams').select('*').eq('id', examId).single(),
+          supabase.from('exam_words').select('*').eq('exam_id', examId).order('order_index'),
+        ]);
+        if (examRes.error || !examRes.data) {
+          setLoadFailed(true);
+          return;
+        }
+        setExam(examRes.data);
+        setExamWords(wordsRes.data ?? []);
 
-      // 카테고리 출처 정보 로드
-      if (examRes.data.category_ids?.length) {
-        const catRes = await supabase
-          .from('categories')
-          .select('*')
-          .in('id', examRes.data.category_ids);
-        if (catRes.data) setCategories(catRes.data);
+        // 카테고리 출처 정보 로드
+        if (examRes.data.category_ids?.length) {
+          const catRes = await supabase
+            .from('categories')
+            .select('*')
+            .in('id', examRes.data.category_ids);
+          if (catRes.data) setCategories(catRes.data);
+        }
+      } catch {
+        setLoadFailed(true);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     }
     load();
   }, [examId]);

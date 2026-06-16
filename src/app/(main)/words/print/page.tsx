@@ -20,20 +20,24 @@ function WordsPrintContent() {
   useEffect(() => {
     if (!categoryId) return;
     async function load() {
-      const [catRes, wordsRes] = await Promise.all([
-        supabase.from('categories').select('*').eq('id', categoryId).single(),
-        supabase.from('words').select('*').eq('category_id', categoryId).order('order_index'),
-      ]);
-      // 조회에 실패하거나 행이 없으면 not-found 로 전환한다.
+      // 조회 실패·행 없음·네트워크 예외(throw) 모두 not-found 로 전환한다.
       // (이 처리가 없으면 category 가 영원히 null 이라 스피너가 멈추지 않는다)
-      if (catRes.error || !catRes.data) {
+      try {
+        const [catRes, wordsRes] = await Promise.all([
+          supabase.from('categories').select('*').eq('id', categoryId).single(),
+          supabase.from('words').select('*').eq('category_id', categoryId).order('order_index'),
+        ]);
+        if (catRes.error || !catRes.data) {
+          setLoadFailed(true);
+          return;
+        }
+        setCategory(catRes.data);
+        if (wordsRes.data) {
+          const sorted = [...wordsRes.data].sort((a, b) => a.word.localeCompare(b.word, 'ko'));
+          setWords(sorted);
+        }
+      } catch {
         setLoadFailed(true);
-        return;
-      }
-      setCategory(catRes.data);
-      if (wordsRes.data) {
-        const sorted = [...wordsRes.data].sort((a, b) => a.word.localeCompare(b.word, 'ko'));
-        setWords(sorted);
       }
     }
     load();
