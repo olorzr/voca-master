@@ -63,8 +63,18 @@ export function generateChoices(
   allWords: readonly ExamWord[],
   questionIndex: number,
 ): Choice[] {
-  const others = allWords.filter((w) => w.id !== currentWord.id);
+  // 방해지는 표시 문자열(word)로 노출되므로 word 기준으로 중복을 제거한다.
+  // 같은 단어가 여러 행(다중 카테고리)에 있으면 정답과 똑같이 보이는 오답이
+  // 섞이거나 동일 오답이 중복되어 문항이 모호해지는 것을 막는다.
   const seed = fnv1a(currentWord.id, questionIndex);
+  const seenWords = new Set<string>([currentWord.word]);
+  const others: ExamWord[] = [];
+  for (const w of allWords) {
+    if (w.id === currentWord.id) continue;
+    if (seenWords.has(w.word)) continue;
+    seenWords.add(w.word);
+    others.push(w);
+  }
 
   const shuffledOthers = seededShuffle(others, seed);
   const distractors = shuffledOthers.slice(0, CHOICE_COUNT - 1);
