@@ -1,4 +1,15 @@
 -- =====================================================================
+-- ⚠️ SUPERSEDED — 적용 금지 (보존용 이력)
+-- =====================================================================
+-- 이 통합본의 [4/4] create_exam_with_words 정의는 STALE 다:
+--   (1) 신규 생성 INSERT 가 v_category_ids(서버 재계산) 대신 클라이언트
+--       p_category_ids 를 그대로 저장해 출처/필터 라벨 위조가 가능하고,
+--   (2) 중복 word_id / 표시문자열 distinct 검증이 빠져 객관식 선지가 5개 미만으로
+--       무너질 수 있다.
+-- 따라서 아래 [4/4]의 create_exam_with_words 정의 블록은 실행되지 않도록 주석(/* */)
+-- 처리했다. 신규/기존 환경 모두 번호 파일(sql/01_schema.sql + 08~14)을 순서대로
+-- 적용할 것. canonical RPC 정의는 sql/10_migration_lock_exam_words.sql 이다.
+-- =====================================================================
 -- [운영 적용용 통합 스크립트] 2026-05-26 보안 하드닝
 -- =====================================================================
 -- 이미 운영 중인 Supabase DB 에 이번 보안 수정을 일괄 적용하기 위한 파일.
@@ -177,11 +188,19 @@ CREATE POLICY "Authenticated users can manage words"
   USING (auth.role() = 'authenticated' AND public.is_allowed_domain())
   WITH CHECK (auth.role() = 'authenticated' AND public.is_allowed_domain());
 
+-- [무력화 정정] 과거 이 통합본은 exams 에 FOR ALL 정책을 만들어 직접 INSERT/UPDATE
+-- 를 허용했다. 그 후 sql/14_migration_lock_exams_writes.sql 로 exams 쓰기를 잠갔으므로,
+-- 이 archive 를 실수로 재실행해도 잠금이 풀리지 않도록 여기서도 SELECT/DELETE 전용으로
+-- 맞춘다. (이 파일 자체는 SUPERSEDED — 신규/기존 환경은 번호 파일 01~14 를 적용할 것.)
 DROP POLICY IF EXISTS "Authenticated users can manage exams" ON exams;
-CREATE POLICY "Authenticated users can manage exams"
-  ON exams FOR ALL
-  USING (auth.role() = 'authenticated' AND public.is_allowed_domain())
-  WITH CHECK (auth.role() = 'authenticated' AND public.is_allowed_domain());
+DROP POLICY IF EXISTS "Authenticated users can read exams" ON exams;
+DROP POLICY IF EXISTS "Authenticated users can delete exams" ON exams;
+CREATE POLICY "Authenticated users can read exams"
+  ON exams FOR SELECT
+  USING (auth.role() = 'authenticated' AND public.is_allowed_domain());
+CREATE POLICY "Authenticated users can delete exams"
+  ON exams FOR DELETE
+  USING (auth.role() = 'authenticated' AND public.is_allowed_domain());
 
 -- exam_words 는 읽기 전용(쓰기는 SECURITY DEFINER RPC). SELECT 에 도메인 추가.
 DROP POLICY IF EXISTS "Authenticated users can read exam_words" ON exam_words;
@@ -422,6 +441,9 @@ CREATE POLICY "Authenticated users can read exam_words"
 -- 2) create_exam_with_words: SECURITY DEFINER + 서버 검증
 -- ---------------------------------------------
 -- 옛 시그니처(p_user_id 포함)와 현재 시그니처 모두 제거 후 재생성.
+-- [무력화] 아래 정의는 STALE — 실행 금지(파일 상단 SUPERSEDED 배너 참고).
+--   canonical 정의: sql/10_migration_lock_exam_words.sql
+/*  ↓↓↓ SUPERSEDED create_exam_with_words — DO NOT EXECUTE ↓↓↓
 DROP FUNCTION IF EXISTS create_exam_with_words(
   TEXT, INT, INT, INT, UUID[], UUID[], UUID, JSONB, UUID, INT
 );
@@ -572,5 +594,6 @@ $$;
 GRANT EXECUTE ON FUNCTION create_exam_with_words(
   TEXT, INT, INT, INT, UUID[], UUID[], JSONB, UUID, INT
 ) TO authenticated;
+*/  -- ↑↑↑ end SUPERSEDED create_exam_with_words block ↑↑↑
 
 

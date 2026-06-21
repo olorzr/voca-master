@@ -151,11 +151,18 @@ CREATE POLICY "Authenticated users can manage words"
   USING (auth.role() = 'authenticated' AND public.is_allowed_domain())
   WITH CHECK (auth.role() = 'authenticated' AND public.is_allowed_domain());
 
--- 시험지: 모든 인증된 사용자 공유 (감사 로그로 변경 이력 추적)
-CREATE POLICY "Authenticated users can manage exams"
-  ON exams FOR ALL
-  USING (auth.role() = 'authenticated' AND public.is_allowed_domain())
-  WITH CHECK (auth.role() = 'authenticated' AND public.is_allowed_domain());
+-- 시험지: 읽기/삭제만 직접 공유. 생성(INSERT)·수정(UPDATE)은 SECURITY DEFINER
+-- 함수 create_exam_with_words 로만 가능하다 — 직접 INSERT/UPDATE 를 막아
+-- exam_words 와 매칭되지 않는 가짜 시험지나 메타데이터 위조(pass_count·
+-- category_ids·retake_number·total_questions 등)를 차단한다. 자세한 내용은
+-- sql/14_migration_lock_exams_writes.sql 참고.
+CREATE POLICY "Authenticated users can read exams"
+  ON exams FOR SELECT
+  USING (auth.role() = 'authenticated' AND public.is_allowed_domain());
+
+CREATE POLICY "Authenticated users can delete exams"
+  ON exams FOR DELETE
+  USING (auth.role() = 'authenticated' AND public.is_allowed_domain());
 
 -- 시험지 단어: 읽기만 공유. 쓰기는 SECURITY DEFINER 함수 create_exam_with_words
 -- 를 통해서만 가능하다(직접 INSERT/UPDATE/DELETE 차단). 자세한 내용은
@@ -471,10 +478,12 @@ BEGIN
 
     v_total := jsonb_array_length(p_words);
     v_pass  := CEIL(p_pass_percentage::numeric / 100 * v_total);
+    -- 출제 순서는 클라이언트 order_index 를 신뢰하지 않고 p_words 배열 위치(ordinality)
+    -- 로 서버가 결정한다. 음수/중복/희소 order_index 로 순서를 망가뜨리는 우회를 막는다.
     v_word_ids := ARRAY(
-      SELECT (elem->>'word_id')::UUID
-      FROM jsonb_array_elements(p_words) AS elem
-      ORDER BY (elem->>'order_index')::INT
+      SELECT (t.elem->>'word_id')::UUID
+      FROM jsonb_array_elements(p_words) WITH ORDINALITY AS t(elem, ord)
+      ORDER BY t.ord
     );
 
     IF EXISTS (
@@ -484,6 +493,27 @@ BEGIN
     ) THEN
       RAISE EXCEPTION 'p_words contains word_id not present in words table'
         USING ERRCODE = 'foreign_key_violation';
+    END IF;
+
+    -- 중복 word_id 차단: 같은 단어를 여러 번 넣어 객관식 선지를 5개 미만으로
+    -- 무너뜨리는 우회를 막는다(exam_words 에 (exam_id, word_id) 유니크 제약이 없음).
+    IF cardinality(v_word_ids) <> (
+      SELECT COUNT(DISTINCT wid) FROM unnest(v_word_ids) AS wid
+    ) THEN
+      RAISE EXCEPTION 'p_words contains duplicate word_id'
+        USING ERRCODE = 'check_violation';
+    END IF;
+
+    -- 표시 문자열(words.word) 기준으로도 최소 5개의 서로 다른 단어가 있어야 5지선다가
+    -- 성립한다. exam-choices.ts 가 word 문자열로 선지 중복을 제거하므로, 서로 다른
+    -- word_id 라도 표기가 같으면(예: 동음이의·다중 카테고리) 선지가 5개 미만이 된다.
+    IF (
+      SELECT COUNT(DISTINCT w.word)
+      FROM unnest(v_word_ids) AS wid
+      JOIN words w ON w.id = wid
+    ) < 5 THEN
+      RAISE EXCEPTION 'exam requires at least 5 distinct words by display text'
+        USING ERRCODE = 'check_violation';
     END IF;
 
     -- category_ids 는 클라이언트 입력(p_category_ids)을 신뢰하지 않고, 실제 포함된
@@ -505,11 +535,12 @@ BEGIN
     )
     RETURNING id INTO v_exam_id;
 
+    -- order_index = 배열 위치(ord-1). v_word_ids 정렬과 동일 기준이라 메타·출제 순서가 일치한다.
     INSERT INTO exam_words (exam_id, word_id, word, meaning, order_index)
     SELECT
-      v_exam_id, w.id, w.word, w.meaning, (elem->>'order_index')::INT
-    FROM jsonb_array_elements(p_words) AS elem
-    JOIN words w ON w.id = (elem->>'word_id')::UUID;
+      v_exam_id, w.id, w.word, w.meaning, (t.ord - 1)::INT
+    FROM jsonb_array_elements(p_words) WITH ORDINALITY AS t(elem, ord)
+    JOIN words w ON w.id = (t.elem->>'word_id')::UUID;
   END IF;
 
   RETURN v_exam_id;

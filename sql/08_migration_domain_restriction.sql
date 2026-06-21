@@ -61,11 +61,17 @@ CREATE POLICY "Authenticated users can manage words"
   USING (auth.role() = 'authenticated' AND public.is_allowed_domain())
   WITH CHECK (auth.role() = 'authenticated' AND public.is_allowed_domain());
 
+-- 시험지: 읽기/삭제만 직접 허용. 생성/수정은 SECURITY DEFINER RPC 로만 가능하다
+-- (sql/14_migration_lock_exams_writes.sql). 과거 "manage exams"(FOR ALL) 정책은 제거.
 DROP POLICY IF EXISTS "Authenticated users can manage exams" ON exams;
-CREATE POLICY "Authenticated users can manage exams"
-  ON exams FOR ALL
-  USING (auth.role() = 'authenticated' AND public.is_allowed_domain())
-  WITH CHECK (auth.role() = 'authenticated' AND public.is_allowed_domain());
+DROP POLICY IF EXISTS "Authenticated users can read exams" ON exams;
+DROP POLICY IF EXISTS "Authenticated users can delete exams" ON exams;
+CREATE POLICY "Authenticated users can read exams"
+  ON exams FOR SELECT
+  USING (auth.role() = 'authenticated' AND public.is_allowed_domain());
+CREATE POLICY "Authenticated users can delete exams"
+  ON exams FOR DELETE
+  USING (auth.role() = 'authenticated' AND public.is_allowed_domain());
 
 -- exam_words 는 읽기 전용(쓰기는 SECURITY DEFINER RPC). SELECT 에 도메인 추가.
 DROP POLICY IF EXISTS "Authenticated users can read exam_words" ON exam_words;
